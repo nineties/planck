@@ -1,8 +1,8 @@
 PlanckVM/PlanckIR Specification
 ===============================
 
-Instructions
-------------
+Instruction Types
+-----------------
 
 +---------------------------+---------------------------+
 | name                      | notation                  |
