@@ -4,7 +4,8 @@ Bytecode Encoding
 +--------------+--------------------------------+
 | field length | content                        |
 +==============+================================+
-| 4 byte       | Magic Number                   |
-|              | - object file: 0x706c6b6f      |
-|              | - executable file: 0x706c6b65  |
+| 4 byte       | File magic                     |
+|              |                                |
+|              | * object file: 0x706c6b6f      |
+|              | * executable file: 0x706c6b65  |
 +--------------+--------------------------------+
