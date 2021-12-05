@@ -4,8 +4,8 @@ PlanckVM and IR Specification
 Static Single Assignment (SSA) Form
 -----------------------------------
 
-PlanckVM adopts *Static single assgnment* form or *SSA* form,
-like `LLVM <https://llvm.org>`_, which requires that every
+PlanckVM adopts `*Static single assgnment* <https://en.wikipedia.org/wiki/Static_single_assignment_form>`_
+form or *SSA* form, like `LLVM <https://llvm.org>`_, which requires that every
 variables can be assigned exactly once.
 Since the definition-use analysis of variables in SSA form is explicit,
 optimization of codes become easier.
