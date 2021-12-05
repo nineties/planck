@@ -1,2 +1,2 @@
-PlanckIR Specification
+PlanckVM Specification
 ======================
