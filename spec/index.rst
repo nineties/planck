@@ -11,7 +11,7 @@ variables in SSA form is explicit, optimization of codes become easier.
 
 To represent a program that assigns values to the same variables in paths
 of control flows in SSA form, the *phi function* is used.
-The value ``phi(x1, ..., xn)`` is the one of the argument depending on which
+The value of ``phi(x1, ..., xn)`` is the one of the argument depending on which
 control flow path the program took.
 
 ::
