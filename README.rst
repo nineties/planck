@@ -1,4 +1,4 @@
 Planck Intermediate Representation (PlanckIR)
 =============================================
 
-- `Specification <spec/index>`_
+- `Specification <spec/index.rst>`_
