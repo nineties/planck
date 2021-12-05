@@ -1,0 +1,3 @@
+[submodule "bootstrap/planckforth"]
+	path = bootstrap/planckforth
+	url = https://github.com/nineties/planckforth.git
