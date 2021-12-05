@@ -1,2 +1,0 @@
-PlanckIR Language
-=================

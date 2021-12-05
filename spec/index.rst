@@ -1,5 +1,5 @@
 PlanckVM/PlanckIR Specification
 ===============================
 
-- `PlanckIR Language <language.rst>`_
+- `Language Syntax <syntax.rst>`_
 - `Bytecode Encoding <bytecode.rst>`_
