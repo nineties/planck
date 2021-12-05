@@ -2,6 +2,7 @@ Language Syntax
 ===============
 
 ::
+
     id    ::= [A-Za-z_][A-Za-z0-9_]*
     char  ::= ' [^'\] '
             | '\ [0abtnvfr'\] '
