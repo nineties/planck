@@ -24,6 +24,18 @@ control flow path the program took.
    }
    y = phi(x1, x2)
 
+Type System
+===========
+
+Types
+-----
+
+Regions
+-------
+
+Effects
+-------
+
 Instruction Types
 =================
 
