@@ -50,7 +50,11 @@ Instruction Types
 +---------------------------+---------------------------+
 | phi function              | y = phi(x1, ..., xn)      |
 +---------------------------+---------------------------+
-| return from a function    | return x                  |
+| returning from a function | return x                  |
++---------------------------+---------------------------+
+| unconditional branch      | goto label                |
++---------------------------+---------------------------+
+| conditional branch        | branch cond labl          |
 +---------------------------+---------------------------+
 
 Appendix
