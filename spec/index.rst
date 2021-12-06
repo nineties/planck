@@ -2,6 +2,8 @@
 PlanckVM and IR Specification
 =============================
 
+** This is draft **
+
 Static Single Assignment (SSA) Form
 ===================================
 
