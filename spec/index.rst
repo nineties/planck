@@ -1,8 +1,9 @@
+=============================
 PlanckVM and IR Specification
 =============================
 
 Static Single Assignment (SSA) Form
------------------------------------
+===================================
 
 PlanckVM adopts *Static single assgnment* form or *SSA* form,
 like `LLVM <https://llvm.org>`_, which requires that every variables
@@ -24,7 +25,7 @@ control flow path the program took.
    y = phi(x1, x2)
 
 Instruction Types
------------------
+=================
 
 +---------------------------+---------------------------+
 | name                      | notation                  |
@@ -39,7 +40,7 @@ Instruction Types
 +---------------------------+---------------------------+
 
 Appendix
---------
+========
 
 - `Language Syntax <syntax.rst>`_
 - `Bytecode Encoding <bytecode.rst>`_
