@@ -12,21 +12,18 @@ there is no run-time overhead. Functions, variables and constants which has glob
 typed and the information is used for link time type checking.
 
 PlanckIR's type system is designed by strongly referring to Rust's type system.
-It has a feature of **ownership**, **borrowing**, **reference** and **lifetimes (NLLs)**.
+It has a feature of **ownership**, **borrowing**, **reference** and **lifetimes**.
 In addition to it the type system also has **effects**.
 
-Every reference to a memory region is assigned to a lifetime.
-Lifetimes represents the span of the code where the reference may be used. 
-Effects represent operations with side effects on lifetimes, such as writing values to references
-in the lifetime. Thank to reconstruction of regions and effects features such as
-guarantee of memory safety, advanced code optimization, auto parallelization, etc.
-will be possible.
+Ownership
+=========
+
+Every value in PlanckVM has a variable that is called its **owner** and there is only one owner at a time.
+When the **lifetime** of the owner ends, the value will automatically be dropped.
 
 Types
 =====
 
-Ownership
-=========
 
 Reference
 =========
