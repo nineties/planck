@@ -7,6 +7,8 @@ PlanckVM and IR Specification
 This is a specification of **PlanckVM**, a low-level virtual machine, and **PlanckIR**,
 an intermediate representation for the VM.
 
+.. contents::
+
 Type System
 ===========
 
