@@ -7,7 +7,7 @@ and **concurrency** features.
 
 This is basically the continuation of `PlanckForth <https://github.com/nineties/planckforth>`_,
 which aims to bootstrap a high-level language processor starting from hand-written machine language
-without relying on any existing programming language or library.
+without relying on any existing programming languages or libraries.
 But the specification of VM and IR are designed to be independent of PlanckForth.
 So this system can be implemented in other languages and bytecodes have portable format.
 
