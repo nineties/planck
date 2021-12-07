@@ -2,7 +2,11 @@
 PlanckVM and IR Specification
 =============================
 
-**This is draft**
+**(This is draft)**
+
+This is a specification of **PlanckVM**, a low-level virtual machine, and **PlanckIR**,
+an intermediate representation for the VM.
+
 
 Static Single Assignment (SSA) Form
 ===================================
@@ -28,6 +32,15 @@ control flow path the program took.
 
 Type System
 ===========
+
+PlanckIR has a *static type system* unlike most of other physical/virtual machine languages.
+Thanks to the type system, it is possible to prevent bugs such as accidentally treating an
+integer as a pointer by type checking.
+
+Since the types of local variables are statically inferred, the compiled bytecode does not
+contain any extra bit for type annotation, and there is no run-time overhead.
+Functions, variables and constants which has global linkage have explicit type annotation
+for link time type checking.
 
 Types
 -----
