@@ -35,6 +35,12 @@ Regions
 Effects
 -------
 
+Ownership
+---------
+
+Smart Pointers
+--------------
+
 Static Single Assignment (SSA) Form
 ===================================
 
