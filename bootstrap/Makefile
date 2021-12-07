@@ -1,7 +1,7 @@
 RUNFORTH=./planck < bootstrap.fs
 
 default: planck
-	$(RUNFORTH)
+	$(RUNFORTH) compile.fs
 
 planck:
 	make -C planckforth
