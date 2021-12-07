@@ -11,10 +11,11 @@ contain any extra bit for type annotation, and there is no run-time overhead.
 Functions, variables and constants which has global linkage have explicit type annotation
 for link time type checking.
 
-Also the type system reconstructs **regions** and **effects**.
-Regions represent sets of possibly aliased reference values and effects represent
-operations with side effects on regions, such as writing values to references.
-Thank to reconstruction of regions and effects attractive features such as
+Also the type system reconstructs **lifetimes** and **effects**.
+Every reference to a memory region is assigned to a lifetime.
+Lifetimes represents the span of the code where the reference may be used. 
+Effects represent operations with side effects on lifetimes, such as writing values to references
+in the lifetime. Thank to reconstruction of regions and effects features such as
 guarantee of memory safety, advanced code optimization, auto parallelization, etc.
 will be possible.
 
