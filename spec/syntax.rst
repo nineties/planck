@@ -25,3 +25,11 @@ Types::
     array_type : "[" type ";" expr "]"
     slice_type : "[" type "]"
     
+    type       : never_type
+               | bool_type
+               | char_type
+               | int_type
+               | float_type
+               | tuple_type
+               | array_type
+               | slice_type
