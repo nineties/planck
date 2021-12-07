@@ -4,4 +4,11 @@
 \ Lexer of PlanckIR tokens.
 \ See spec/syntax.rst.
 
-." I'm a lexer" cr
+\ Token types
+0
+    enum IdT
+    enum CharT
+    enum IntT
+    enum FloatT
+    enum StrT
+drop
