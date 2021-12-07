@@ -3,8 +3,8 @@ Type System
 ===========
 
 PlanckIR has a **static type system** unlike most of other physical/virtual machine languages.
-Thanks to the type system, it is possible to prevent bugs such as accidentally treating an
-integer as a pointer by type checking.
+Thanks to the type system, it is possible to prevent bugs, such as accidentally treating an
+integer as a pointer, by type checking.
 
 Since the types of local variables are statically inferred, the compiled bytecode does not
 contain any extra bit for type annotation, and there is no run-time overhead.
