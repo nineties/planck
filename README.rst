@@ -11,4 +11,9 @@ without relying on any existing programming language or library.
 But the specification of VM and IR are designed to be independent of PlanckForth.
 So this system can be implemented in other languages and bytecodes have portable format.
 
+Also, this project started with the idea of what would happen if we combined
+`Rust <https://www.rust-lang.org/>`_'s type system with `LLVM <https://llvm.org>`_'s concepts.
+The challenge is to create a low level virtual machine with a modern static type system
+which enables memory safety and advanced optimization features with zero runtime overhead.
+
 - `Specification <spec/index.rst>`_
