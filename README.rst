@@ -1,16 +1,15 @@
-Planck Virtual Machine (PlanckVM)
-=================================
+Planck Compiler Infrastructure Project
+======================================
 
-This project aims to develop a **Low Level Virtual Machine (PlanckVM)** and
-an **Intermediate Representation (PlanckIR)** which have **memory safety**
-and **concurrency** features.
+This project aims to develop a **Compiler Infrastructure** which have advanced
+**memory safety** and **concurrency** features.
 
 This project started with the idea of what would happen if we combined
 `Rust <https://www.rust-lang.org/>`_'s type system with `LLVM <https://llvm.org>`_'s concepts.
 The challenge is to create a low level virtual machine with a modern static type system
 which enables memory safety and advanced optimization features with zero runtime cost.
 If I dare to write down the concerns of this project, difficulty of developing a language processor
-that uses this vm as a backend may increase because of the strong type system.
+that uses Planck as a backend may increase because of the strong type system.
 I would like to evaluate that in this project.
 
 This project is originally the continuation of `PlanckForth <https://github.com/nineties/planckforth>`_,

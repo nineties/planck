@@ -2,7 +2,7 @@
 Type System
 ===========
 
-PlanckIR has a **static type system** unlike most of other physical/virtual machine languages.
+The language for Planck has a **static type system** unlike most of other assembly language for physical/virtual machine languages.
 Thanks to the type system, it is possible to prevent bugs, such as unintentionally treating an
 integer as a pointer, by type checking.
 
@@ -11,14 +11,14 @@ Therefore the compiled bytecode does not contain any extra bit for type annotati
 there is no run-time overhead. Functions, variables and constants which has global linkage is explicitly
 typed and the information is used for link time type checking.
 
-PlanckIR's type system is designed by strongly referring to Rust's type system.
+Planck's type system is designed by strongly referring to Rust's type system.
 It has a feature of **ownership**, **borrowing**, **reference** and **lifetime**.
 In addition to it the type system also has **effects**.
 
 Ownership
 =========
 
-Every value in PlanckVM has a variable that is called its **owner** and there is only one owner at a time.
+Every value has a variable that is called its **owner** and there is only one owner at a time.
 When the **lifetime** of the owner ends, the value will automatically be dropped.
 
 Types

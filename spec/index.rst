@@ -1,11 +1,10 @@
-=============================
-PlanckVM and IR Specification
-=============================
+====================
+Planck Specification
+====================
 
 **(This is draft)**
 
-This is a specification of **PlanckVM**, a low-level virtual machine, and **PlanckIR**,
-an intermediate representation for the VM.
+This is a specification of **Planck Compiler Infrastructure**.
 
 - `Type System <typesystem.rst>`_
 - `Static Single Assignment Form <ssa.rst>`_
