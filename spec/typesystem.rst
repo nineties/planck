@@ -12,7 +12,7 @@ there is no run-time overhead. Functions, variables and constants which has glob
 typed and the information is used for link time type checking.
 
 PlanckIR's type system is designed by strongly referring to Rust's type system.
-It has a feature of **ownership**, **borrowing**, **reference** and **lifetimes**.
+It has a feature of **ownership**, **borrowing**, **reference** and **lifetime**.
 In addition to it the type system also has **effects**.
 
 Ownership
