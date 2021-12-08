@@ -11,7 +11,7 @@ The challenge is to create a low level virtual machine with a modern static type
 which enables memory safety and advanced optimization features with zero runtime cost.
 If I dare to write down the concerns of this project, difficulty of developing a language processor
 that uses this vm as a backend may increase because of the strong type system.
-I would like to verify that as well in this project.
+I would like to evaluate that in this project.
 
 This project is originally the continuation of `PlanckForth <https://github.com/nineties/planckforth>`_,
 which aims to bootstrap a high-level language processor starting from hand-written machine language
