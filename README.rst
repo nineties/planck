@@ -6,8 +6,8 @@ This project aims to develop a **Compiler Infrastructure** which have advanced
 
 This project started with the idea of what would happen if we combined
 `Rust <https://www.rust-lang.org/>`_'s type system with `LLVM <https://llvm.org>`_'s concepts.
-The challenge is to create a low level virtual machine with a modern static type system
-which enables memory safety and advanced optimization features with zero runtime cost.
+The challenge is to create a language and tools for a low level virtual machine with a modern
+static type system which enables memory safety and advanced optimization features with zero runtime cost.
 If I dare to write down the concerns of this project, difficulty of developing a language processor
 that uses Planck as a backend may increase because of the strong type system.
 I would like to evaluate that in this project.
