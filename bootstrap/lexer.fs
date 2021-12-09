@@ -41,5 +41,3 @@ end-struct lexer%
 \ XXX: Temporary test code
 s" aaaaaaa" make-string constant source
 source make-lexer constant lexer
-
-.s

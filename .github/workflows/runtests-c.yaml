@@ -1,0 +1,16 @@
+name: testing c implementation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore: ['README.md', 'LICENSE', '.gitignore']
+jobs:
+  runtests-c:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: run tests
+      run: |
+        make bootstrap RUNTIME_IMPL=c
+        make test
