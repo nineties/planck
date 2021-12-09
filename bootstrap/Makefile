@@ -3,7 +3,7 @@ RUNFORTH=./planck < bootstrap.fs
 default: planck
 
 planck: planckforth
-	make $(RUNTIME_IMPL) -C planckforth
+	make -C planckforth $(RUNTIME_IMPL)
 	cp planckforth/planck .
 	cp -r planckforth/lib .
 	cp planckforth/bootstrap.fs .

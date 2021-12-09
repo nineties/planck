@@ -11,5 +11,5 @@ jobs:
     - uses: actions/checkout@v1
     - name: run tests
       run: |
-        make bootstrap RUNTIME_IMPL=c
+        make bootstrap RUNTIME_IMPL=i386-linux-handwritten
         make test
