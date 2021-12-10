@@ -9,8 +9,9 @@ jobs:
   runtests-python:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-      submodules: recursive
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: run tests
       run: |
         make bootstrap RUNTIME_IMPL=python
