@@ -26,8 +26,8 @@ struct
     int%  field lexer>pos   ( current position )
     int%  field lexer>line  ( current source line no. )
     cell% field lexer>value ( value of current token )
-    char% field lexer>beg   ( start addr of current token )
-    char% field lexer>end   ( end addr of current token ) 
+    int%  field lexer>beg   ( start addr of current token )
+    int%  field lexer>end   ( end addr of current token )
 end-struct lexer%
 
 : make-lexer ( input -- lexer )
@@ -37,13 +37,10 @@ end-struct lexer%
     tuck lexer>size !
     0 over lexer>pos !
     1 over lexer>line !
+    0 over lexer>value !
+    0 over lexer>beg !
+    0 over lexer>end !
 ; export
-
-\ XXX: Temporary test code
-T{ s" aaaaaaa" make-string constant test-source -> }T
-T{ test-source make-lexer constant lexer -> }T
-T{ lexer lexer>size @ -> 7 }T
-T{ test-source free -> }T
 
 \ Character group
 0
@@ -199,6 +196,34 @@ T{ '~' character-group -> Cother }T
     error state    : 18
     finished state : 19
 )
+
+: lookahead ( lexer -- tag )
+    dup lexer>pos @ swap lexer>input @ + c@ character-group
+;
+
+: current-char ( lexer -- char )
+    dup lexer>pos @ swap lexer>input @ + c@
+;
+
+\ Read a character and update lexer states
+: consume ( lexer -- )
+    dup current-char '\n' = if
+        1 over lexer>line +!
+    then
+    1 over lexer>pos +!
+    1 over lexer>end +!
+    drop
+;
+
+T{ s" abcdefg" make-string constant test-source -> }T
+T{ test-source make-lexer constant lexer -> }T
+T{ lexer current-char -> 'a' }T
+T{ lexer lookahead -> Cescapech }T
+T{ lexer lexer>pos @ -> 0 }T
+T{ lexer consume -> }T
+T{ lexer lexer>pos @ -> 1 }T
+T{ lexer lexer>beg @ -> 0 }T
+T{ lexer lexer>end @ -> 1 }T
 
 \ Read one token, skip following spaces, returns the
 \ code of the token.
