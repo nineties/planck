@@ -4,7 +4,7 @@ Language Syntax
 Lexical Tokens::
 
     id    : [A-Za-z_][A-Za-z0-9_]*
-    char  : "'" [^'\] "'"
+    char  : "'" [^\n'\] "'"
           | "'\\" [0abtnvfr'\] "'"
     int   : [1-9][0-9]*
           | "0" [0-7]*
