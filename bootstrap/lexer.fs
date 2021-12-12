@@ -22,8 +22,8 @@ private{
 
 struct
     cell% field lexer>input ( input string )
-    int%  field lexer>size  ( input string length )
     int%  field lexer>pos   ( current position )
+    int%  field lexer>state
     int%  field lexer>line  ( current source line no. )
     cell% field lexer>value ( value of current token )
     int%  field lexer>beg   ( start addr of current token )
@@ -31,10 +31,9 @@ struct
 end-struct lexer%
 
 : make-lexer ( input -- lexer )
-    dup strlen swap
     lexer% %allocate throw
     tuck lexer>input !
-    tuck lexer>size !
+    0 over lexer>state !
     0 over lexer>pos !
     1 over lexer>line !
     0 over lexer>value !
@@ -145,10 +144,10 @@ T{ '~' character-group -> Cother }T
     +---+    0      +---+
     | 0 +--+------->|@1 |--+--------+----------+
     +---+  |        +---+  |        |          |
-           |          ^    | [0-7]  | [xX]     | [bB]
-           |          +----+        v          v
-           |                      +---+      +---+
-           |                      | 2 |      | 4 |
+      ^    |          ^    | [0-7]  | [xX]     | [bB]
+      |    |          +----+        v          v
+      +----+                      +---+      +---+
+   spaces  |                      | 2 |      | 4 |
            |                      +---+      +---+
            |            [0-9A-Fa-f] |    [01]  |
            |                    +---+      +---+
@@ -187,14 +186,11 @@ T{ '~' character-group -> Cother }T
            |          +---+
            |  [0abtnvfr"'\\]
            |
-           |spaces +---+     +---+
-           +------>| 16+---->| 0 |
-           |       +---+     +---+
            |other  +---+
-           +------>|@17|
+           +------>|@16|
                    +---+
-    error state    : 18
-    finished state : 19
+    error state    : 17
+    finished state : 18
 )
 
 : lookahead ( lexer -- tag )
@@ -224,6 +220,39 @@ T{ lexer consume -> }T
 T{ lexer lexer>pos @ -> 1 }T
 T{ lexer lexer>beg @ -> 0 }T
 T{ lexer lexer>end @ -> 1 }T
+
+create state-transition-table
+(
+ n    i    s    n    s    d    b    0    1    2    8    b    x    h    e    i    o
+ u    n    p    e    q    q    a    :    :    |    9    :    :    e    s    d    t
+ l    v    a    w    u    u    c    :    :    7    :    :    :    x    c    e    h
+ l    l    c    l    o    o    k    :    :    :    :    :    :    :    a    n    e
+ :    i    e    i    t    t    s    :    :    :    :    :    :    :    p    t    r
+ :    d    s    n    e    e    l    :    :    :    :    :    :    :    e    c    :
+ :    :    :    e    :    :    a    :    :    :    :    :    :    :    c    h    :
+ :    :    :    :    :    :    s    :    :    :    :    :    :    :    h    :    :
+ :    :    :    :    :    :    h    :    :    :    :    :    :    :    :    :    :
+ :    :    :    :    :    :    :    :    :    :    :    :    :    :    :    :    :
+)
+17 , 17 ,  0 ,  0 ,  8 , 13 , 16 ,  1 ,  6 ,  6 ,  6 ,  7 ,  7 ,  7 ,  7 ,  7 , 16 , \ from 0
+18 , 17 , 18 , 18 , 18 , 18 , 18 ,  1 ,  1 ,  1 , 17 ,  4 ,  2 , 17 , 17 , 17 , 18 , \ from 1
+17 , 17 , 17 , 17 , 17 , 17 , 17 ,  3 ,  3 ,  3 ,  3 ,  3 , 17 ,  3 , 17 , 17 , 17 , \ from 2
+18 , 17 , 18 , 18 , 18 , 18 , 18 ,  3 ,  3 ,  3 ,  3 ,  3 , 17 ,  3 , 17 , 17 , 18 , \ from 3
+17 , 17 , 17 , 17 , 17 , 17 , 17 ,  5 ,  5 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 4
+18 , 17 , 18 , 18 , 18 , 18 , 18 ,  5 ,  5 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 18 , \ from 5
+18 , 17 , 18 , 18 , 18 , 18 , 18 ,  6 ,  6 ,  6 ,  6 , 17 , 17 , 17 , 17 , 17 , 18 , \ from 6
+18 , 17 , 18 , 18 , 18 , 18 , 18 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 , 18 , \ from 7
+17 , 17 ,  9 , 17 , 17 ,  9 , 10 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 , \ from 8
+17 , 17 , 17 , 17 , 12 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 9
+17 , 17 , 17 , 17 , 11 , 11 , 11 , 11 , 17 , 17 , 17 , 11 , 17 , 17 , 11 , 17 , 17 , \ from 10
+17 , 17 , 17 , 17 , 12 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 11
+18 , 17 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 12
+17 , 17 , 13 , 17 , 13 , 15 , 14 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , \ from 13
+17 , 17 , 17 , 17 , 13 , 13 , 13 , 13 , 17 , 17 , 17 , 13 , 17 , 17 , 13 , 17 , 17 , \ from 14
+18 , 17 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 15
+18 , 17 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 16
+17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 17
+18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 18
 
 \ Read one token, skip following spaces, returns the
 \ code of the token.
