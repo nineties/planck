@@ -20,14 +20,16 @@ drop
 
 private{
 
+64 constant MAX-TOKEN-LEN
+
 struct
     cell% field lexer>input ( input string )
     int%  field lexer>pos   ( current position )
     int%  field lexer>state
     int%  field lexer>line  ( current source line no. )
     cell% field lexer>value ( value of current token )
-    int%  field lexer>beg   ( start addr of current token )
-    int%  field lexer>end   ( end addr of current token )
+    int%  field lexer>token_len
+    char% MAX-TOKEN-LEN * field lexer>token
 end-struct lexer%
 
 : make-lexer ( input -- lexer )
@@ -37,8 +39,7 @@ end-struct lexer%
     0 over lexer>pos !
     1 over lexer>line !
     0 over lexer>value !
-    0 over lexer>beg !
-    0 over lexer>end !
+    0 over lexer>token_len !
 ; export
 
 \ Character group
@@ -206,8 +207,39 @@ T{ '~' character-group -> Cother }T
     dup current-char '\n' = if
         1 over lexer>line +!
     then
+    dup current-char
+    over lexer>token_len @ 2 pick lexer>token + c!
+    1 over lexer>token_len +!
     1 over lexer>pos +!
-    1 over lexer>end +!
+    drop
+;
+
+\ Return ascii-code of corresponding escaped char
+\ e.g '\n' escaped-char -> 10
+: escaped-char ( n -- n )
+    case
+    '0' of 0 endof
+    'a' of 7 endof
+    'b' of 8 endof
+    't' of 9 endof
+    'n' of 10 endof
+    'v' of 11 endof
+    'f' of 12 endof
+    'r' of 13 endof
+    '\"' of '\"' endof
+    '\'' of '\'' endof
+    '\\' of '\\' endof
+    drop -1
+    endcase
+;
+
+\ Read a character which follows back-slack, push
+\ escaped character to the token buffer
+: consume_escaped ( lexer -- )
+    dup current-char escaped-char
+    over lexer>token_len @ 1-
+    2 pick lexer>token + c!
+    1 over lexer>pos +!
     drop
 ;
 
@@ -218,8 +250,6 @@ T{ lexer lookahead -> Cescapech }T
 T{ lexer lexer>pos @ -> 0 }T
 T{ lexer consume -> }T
 T{ lexer lexer>pos @ -> 1 }T
-T{ lexer lexer>beg @ -> 0 }T
-T{ lexer lexer>end @ -> 1 }T
 
 create state-transition-table
 (
