@@ -42,6 +42,10 @@ end-struct lexer%
     0 over lexer>token_len !
 ; export
 
+: reset-token-buf ( lexer -- )
+    0 swap lexer>token_len !
+;
+
 \ Character group
 0
     (  0 ) enum Cnull      \ \0
