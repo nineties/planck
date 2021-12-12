@@ -9,6 +9,8 @@
 
 include lib/string.fs
 
+s" Too long token" exception constant TOO-LONG-TOKEN
+
 \ Token types
 0
     enum Tid
@@ -20,7 +22,7 @@ drop
 
 private{
 
-64 constant MAX-TOKEN-LEN
+64 constant TOKENBUF-SIZE
 
 struct
     cell% field lexer>input ( input string )
@@ -29,7 +31,7 @@ struct
     int%  field lexer>line  ( current source line no. )
     cell% field lexer>value ( value of current token )
     int%  field lexer>token_len
-    char% MAX-TOKEN-LEN * field lexer>token
+    char% TOKENBUF-SIZE * field lexer>token
 end-struct lexer%
 
 : make-lexer ( input -- lexer )
@@ -44,6 +46,19 @@ end-struct lexer%
 
 : reset-token-buf ( lexer -- )
     0 swap lexer>token_len !
+;
+
+\ Add c and \0 to the last of token buffer
+: push-token-buf ( c lexer -- e )
+    dup lexer>token_len @ 1+ TOKENBUF-SIZE >= if
+        2drop TOO-LONG-TOKEN
+    then
+    tuck lexer>token_len @
+    2 pick lexer>token +
+    tuck c!
+    1+ 0 swap c!
+    1 swap lexer>token_len +!
+    success
 ;
 
 \ Character group
@@ -211,11 +226,9 @@ T{ '~' character-group -> Cother }T
     dup current-char '\n' = if
         1 over lexer>line +!
     then
-    dup current-char
-    over lexer>token_len @ 2 pick lexer>token + c!
-    1 over lexer>token_len +!
-    1 over lexer>pos +!
-    drop
+    dup
+    dup current-char swap push-token-buf throw
+    1 swap lexer>pos +!
 ;
 
 \ Return ascii-code of corresponding escaped char
@@ -241,10 +254,9 @@ T{ '~' character-group -> Cother }T
 \ escaped character to the token buffer
 : consume_escaped ( lexer -- )
     dup current-char escaped-char
-    over lexer>token_len @ 1-
-    2 pick lexer>token + c!
-    1 over lexer>pos +!
-    drop
+    1 2 pick lexer>token_len -!
+    over push-token-buf throw
+    1 swap lexer>pos +!
 ;
 
 T{ s" abcdefg" make-string constant test-source -> }T
@@ -253,7 +265,21 @@ T{ lexer current-char -> 'a' }T
 T{ lexer lookahead -> Cescapech }T
 T{ lexer lexer>pos @ -> 0 }T
 T{ lexer consume -> }T
+T{ lexer lexer>token_len @ -> 1 }T
+T{ lexer lexer>token c@ -> 'a' }T
+T{ lexer lexer>token 1+ c@ -> '\0' }T
 T{ lexer lexer>pos @ -> 1 }T
+T{ lexer free -> }T
+T{ test-source free -> }T
+
+T{ s" \\n" make-string constant test-source -> }T
+T{ test-source make-lexer constant lexer -> }T
+T{ lexer consume -> }T
+T{ lexer consume_escaped -> }T
+T{ lexer lexer>pos @ -> 2 }T
+T{ lexer lexer>token_len @ -> 1 }T
+T{ lexer free -> }T
+T{ test-source free -> }T
 
 create state-transition-table
 (
