@@ -1,0 +1,17 @@
+name: testing i386-linux-handwritten implementation
+
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  runtests-i386-linux-handwritten:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: run tests
+      run: |
+        make bootstrap RUNTIME_IMPL=i386-linux-handwritten
+        make test
