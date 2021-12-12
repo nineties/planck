@@ -22,6 +22,7 @@ private{
 
 struct
     cell% field lexer>input ( input string )
+    int%  field lexer>size  ( input string length )
     int%  field lexer>pos   ( current position )
     int%  field lexer>line  ( current source line no. )
     cell% field lexer>value ( value of current token )
@@ -30,11 +31,19 @@ struct
 end-struct lexer%
 
 : make-lexer ( input -- lexer )
+    dup strlen swap
     lexer% %allocate throw
     tuck lexer>input !
+    tuck lexer>size !
     0 over lexer>pos !
     1 over lexer>line !
 ; export
+
+\ XXX: Temporary test code
+T{ s" aaaaaaa" make-string constant test-source -> }T
+T{ test-source make-lexer constant lexer -> }T
+T{ lexer lexer>size @ -> 7 }T
+T{ test-source free -> }T
 
 \ Character group
 0
@@ -200,7 +209,3 @@ T{ '~' character-group -> Cother }T
 
 }private
 
-\ XXX: Temporary test code
-T{ s" aaaaaaa" make-string constant identifier -> }T
-T{ source make-lexer constant lexer -> }T
-T{ lexer lex throw -> Tid }T
