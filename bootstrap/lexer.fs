@@ -144,31 +144,6 @@ align
 
 : character-group ( c -- n ) character-group-table + c@ ;
 
-T{ '\n' character-group -> Cnewline }T
-T{ '\'' character-group -> Csquote }T
-T{ '"' character-group -> Cdquote }T
-T{ '\\' character-group -> Cbackslash }T
-T{ '0' character-group -> C0 }T
-T{ '1' character-group -> C1 }T
-T{ '2' character-group -> C2-7 }T
-T{ '7' character-group -> C2-7 }T
-T{ '8' character-group -> C89 }T
-T{ '9' character-group -> C89 }T
-T{ 'B' character-group -> Cb }T
-T{ 'x' character-group -> Cx }T
-T{ 'X' character-group -> Cx }T
-T{ 'A' character-group -> Chex }T
-T{ 'F' character-group -> Chex }T
-T{ 'g' character-group -> Cidentch }T
-T{ 'z' character-group -> Cidentch }T
-T{ 'G' character-group -> Cidentch }T
-T{ 'Z' character-group -> Cidentch }T
-T{ '_' character-group -> Cidentch }T
-T{ '!' character-group -> Cother }T
-T{ '+' character-group -> Cother }T
-T{ '?' character-group -> Cother }T
-T{ '~' character-group -> Cother }T
-
 (
     state transition diagram:
     +---+
@@ -281,28 +256,6 @@ T{ '~' character-group -> Cother }T
     1 swap lexer>pos +!
 ;
 
-T{ s" abcdefg" make-string constant test-source -> }T
-T{ test-source make-lexer constant lexer -> }T
-T{ lexer current-char -> 'a' }T
-T{ lexer lookahead -> Chex }T
-T{ lexer lexer>pos @ -> 0 }T
-T{ lexer consume -> }T
-T{ lexer lexer>token_len @ -> 1 }T
-T{ lexer lexer>token_buf c@ -> 'a' }T
-T{ lexer lexer>token_buf 1+ c@ -> '\0' }T
-T{ lexer lexer>pos @ -> 1 }T
-T{ lexer free -> }T
-T{ test-source free -> }T
-
-T{ s" \\n" make-string constant test-source -> }T
-T{ test-source make-lexer constant lexer -> }T
-T{ lexer consume -> }T
-T{ lexer consume_escaped -> }T
-T{ lexer lexer>pos @ -> 2 }T
-T{ lexer lexer>token_len @ -> 1 }T
-T{ lexer free -> }T
-T{ test-source free -> }T
-
 create state-transition-table
 (
  n    i    s    n    s    d    b    0    1    2    8    b    x    h    i    o
@@ -340,8 +293,6 @@ create state-transition-table
 : next-state ( c n -- n )
     NUM-CHARACTER-GROUP * + cells state-transition-table + @
 ;
-
-T{ Cspaces 3 next-state -> 19 }T
 
 \ convert hexadecimal character to digit
 : hex-to-int ( c -- n )
@@ -438,14 +389,25 @@ T{ Cspaces 3 next-state -> 19 }T
     again
 ; export
 
-T{ s"    +123 " make-string constant test-source -> }T
+T{ s"    +123 0xabcd '\\n'" make-string constant test-source -> }T
 T{ test-source make-lexer constant lexer -> }T
+
 T{ lexer lex -> Tsymbol }T
 T{ lexer lexer>token_buf s" +" 1 strneq -> true }T
 T{ lexer lexer>token_val @ -> '+' }T
+
 T{ lexer lex -> Tint }T
 T{ lexer lexer>token_buf s" 123" 3 strneq -> true }T
 T{ lexer lexer>token_val @ -> 123 }T
+
+T{ lexer lex -> Tint }T
+T{ lexer lexer>token_buf s" 0xabcd" 6 strneq -> true }T
+T{ lexer lexer>token_val @ -> 43981 }T
+
+T{ lexer lex -> Tchar }T
+T{ lexer lexer>token_buf s" '\\n'" 4 strneq -> true }T
+T{ lexer lexer>token_val @ -> '\n' }T
+
 T{ lexer free -> }T
 T{ test-source free -> }T
 
