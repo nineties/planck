@@ -7,3 +7,5 @@
 include lib/tester.fs
 
 include compile.fs
+
+report-and-exit
