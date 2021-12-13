@@ -375,8 +375,13 @@ T{ Cspaces 3 next-state -> 19 }T
             dup current-char hex-to-int 16 2 pick add-to-value
             dup consume dup lookahead 3 next-state
         endof
-        4 of not-implemented endof
-        5 of not-implemented endof
+        4 of dup consume dup lookahead 4 next-state endof
+        5 of
+            ( binary digit )
+            Tint over set-token-tag
+            dup current-char '0' - 2 2 pick add-to-value
+            dup consume dup lookahead 5 next-state
+        endof
         6 of not-implemented endof
         7 of not-implemented endof
         8 of not-implemented endof
@@ -398,10 +403,10 @@ T{ Cspaces 3 next-state -> 19 }T
     again
 ; export
 
-T{ s"    0xa12" make-string constant test-source -> }T
+T{ s"    0B01011" make-string constant test-source -> }T
 T{ test-source make-lexer constant lexer -> }T
 T{ lexer lex -> Tint }T
-T{ lexer lexer>token_val @ .s -> 2578 }T
+T{ lexer lexer>token_val @ .s -> 11 }T
 T{ lexer free -> }T
 T{ test-source free -> }T
 
