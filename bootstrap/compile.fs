@@ -6,4 +6,4 @@
 \ It compiles PlanckIR programs to object files
 \ for the vm.
 
-include lexer.fs
+include parser.fs
