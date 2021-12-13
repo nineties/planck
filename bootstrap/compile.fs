@@ -1,4 +1,4 @@
-\ planckvm -
+\ planck -
 \ Copyright (C) 2021 nineties
 
 \ This is an implementation of PlanckVM compiler
