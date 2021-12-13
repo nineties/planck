@@ -80,6 +80,7 @@ end-struct lexer%
     ( 14 ) enum Cescapech  \ [abtnvfr] - above
     ( 15 ) enum Cidentch   \ [A-Za-z_] - above above
     ( 16 ) enum Cother
+           enum NUM-CHARACTER-GROUP
 drop
 
 \    2 3 4 5 6 7
@@ -313,6 +314,12 @@ create state-transition-table
 18 , 17 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 16
 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 17
 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 18
+
+: next-state ( c n -- n )
+    NUM-CHARACTER-GROUP * + cells state-transition-table + @
+;
+
+T{ Cspaces 3 next-state .s -> 18 }T
 
 \ Read one token, skip following spaces, returns the
 \ code of the token.
