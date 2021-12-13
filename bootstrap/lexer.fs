@@ -11,6 +11,7 @@ include lib/string.fs
 
 s" Too long token" exception constant TOO-LONG-TOKEN
 s" Invalid token" exception constant INVALID-TOKEN
+s" Invalid escape" exception constant INVALID-ESCAPE
 
 \ Token types
 0
@@ -19,7 +20,8 @@ s" Invalid token" exception constant INVALID-TOKEN
     enum Tchar
     enum Tint
     enum Tfloat
-    enum Tstr
+    enum Tstring
+    enum Tsymbol
 drop
 
 private{
@@ -266,7 +268,7 @@ T{ '~' character-group -> Cother }T
     '\"' of '\"' endof
     '\'' of '\'' endof
     '\\' of '\\' endof
-    drop -1
+    drop INVALID-ESCAPE throw
     endcase
 ;
 
@@ -324,11 +326,11 @@ create state-transition-table
 19 , 18 , 19 , 19 , 19 , 19 , 19 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 , 19 , \ from 7
 18 , 18 ,  9 , 18 , 18 ,  9 , 10 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 , \ from 8
 18 , 18 , 18 , 18 , 12 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 9
-18 , 18 , 18 , 18 , 11 , 11 , 11 , 11 , 18 , 18 , 18 , 11 , 18 , 18 , 18 , 18 , \ from 10
+11 , 18 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , 11 , \ from 10
 18 , 18 , 18 , 18 , 12 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 11
 19 , 18 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , \ from 12
 18 , 18 , 13 , 18 , 13 , 15 , 14 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , \ from 13
-18 , 18 , 18 , 18 , 13 , 13 , 13 , 13 , 18 , 18 , 18 , 13 , 18 , 18 , 18 , 18 , \ from 14
+13 , 18 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , \ from 14
 19 , 18 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , \ from 15
 19 , 18 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , \ from 16
 19 , 18 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , \ from 17
@@ -356,7 +358,7 @@ T{ Cspaces 3 next-state -> 19 }T
 : lex   ( lexer -- tag )
     0 \ initial state
     begin
-        ." state=" dup . ." " over current-char . ." " over lookahead . cr
+        \ ." state=" dup . ." " over current-char . ." " over lookahead . cr
         case
         0 of
             dup reset-token
@@ -382,17 +384,50 @@ T{ Cspaces 3 next-state -> 19 }T
             dup current-char '0' - 2 2 pick add-to-value
             dup consume dup lookahead 5 next-state
         endof
-        6 of not-implemented endof
-        7 of not-implemented endof
-        8 of not-implemented endof
-        9 of not-implemented endof
-        10 of not-implemented endof
-        11 of not-implemented endof
-        12 of not-implemented endof
-        13 of not-implemented endof
-        14 of not-implemented endof
-        15 of not-implemented endof
-        16 of not-implemented endof
+        6 of
+            ( decimal digit )
+            Tint over set-token-tag
+            dup current-char '0' - 10 2 pick add-to-value
+            dup consume dup lookahead 6 next-state
+        endof
+        7 of
+            ( identifier )
+            Tid over set-token-tag
+            dup consume dup lookahead 7 next-state
+        endof
+        8 of dup consume dup lookahead 8 next-state endof
+        9 of
+            ( unescaped character )
+            Tchar over set-token-tag
+            dup current-char 0 2 pick add-to-value
+            dup consume dup lookahead 9 next-state
+        endof
+        10 of dup consume dup lookahead 10 next-state endof
+        11 of
+            ( escaped character )
+            Tchar over set-token-tag
+            dup current-char escaped-char 0 2 pick add-to-value
+            dup consume dup lookahead 11 next-state
+        endof
+        12 of dup consume dup lookahead 12 next-state endof
+        13 of dup consume dup lookahead 13 next-state endof
+        14 of
+            ( ugly code ... )
+            dup consume
+            dup current-char escaped-char
+            over dup lexer>token_buf swap lexer>token_len @ + 1- c!
+            dup skip dup lookahead 13 next-state
+        endof
+        15 of
+            ( string literal )
+            Tstring over set-token-tag
+            dup consume dup lookahead 15 next-state
+        endof
+        16 of
+            Tsymbol over set-token-tag
+            dup current-char 0 2 pick add-to-value
+            dup consume dup lookahead 16 next-state
+        endof
         17 of dup skip dup lookahead 17 next-state endof
         18 of drop INVALID-TOKEN throw endof
         19 of
@@ -403,10 +438,14 @@ T{ Cspaces 3 next-state -> 19 }T
     again
 ; export
 
-T{ s"    0B01011" make-string constant test-source -> }T
+T{ s"    +123 " make-string constant test-source -> }T
 T{ test-source make-lexer constant lexer -> }T
+T{ lexer lex -> Tsymbol }T
+T{ lexer lexer>token_buf s" +" 1 strneq -> true }T
+T{ lexer lexer>token_val @ -> '+' }T
 T{ lexer lex -> Tint }T
-T{ lexer lexer>token_val @ .s -> 11 }T
+T{ lexer lexer>token_buf s" 123" 3 strneq -> true }T
+T{ lexer lexer>token_val @ -> 123 }T
 T{ lexer free -> }T
 T{ test-source free -> }T
 
