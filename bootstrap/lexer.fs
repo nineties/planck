@@ -10,9 +10,11 @@
 include lib/string.fs
 
 s" Too long token" exception constant TOO-LONG-TOKEN
+s" Invalid token" exception constant INVALID-TOKEN
 
 \ Token types
 0
+    enum Tnull
     enum Tid
     enum Tchar
     enum Tint
@@ -27,20 +29,20 @@ private{
 struct
     cell% field lexer>input ( input string )
     int%  field lexer>pos   ( current position )
-    int%  field lexer>state
     int%  field lexer>line  ( current source line no. )
-    cell% field lexer>value ( value of current token )
+    int%  field lexer>token_tag
+    cell% field lexer>token_val
     int%  field lexer>token_len
-    char% TOKENBUF-SIZE * field lexer>token
+    char% TOKENBUF-SIZE * field lexer>token_buf
 end-struct lexer%
 
 : make-lexer ( input -- lexer )
     lexer% %allocate throw
     tuck lexer>input !
-    0 over lexer>state !
     0 over lexer>pos !
     1 over lexer>line !
-    0 over lexer>value !
+    Tnull over lexer>token_tag !
+    0 over lexer>token_val !
     0 over lexer>token_len !
 ; export
 
@@ -54,11 +56,28 @@ end-struct lexer%
         2drop TOO-LONG-TOKEN
     then
     tuck lexer>token_len @
-    2 pick lexer>token +
+    2 pick lexer>token_buf +
     tuck c!
     1+ 0 swap c!
     1 swap lexer>token_len +!
     success
+;
+
+: reset-token ( lexer -- )
+    dup reset-token-buf
+    0 over lexer>token_val !
+    0 over lexer>token_len !
+    0 over lexer>token_buf c!
+    drop
+;
+
+: set-token-tag ( tag lexer -- )
+    lexer>token_tag !
+;
+
+\ value = value*w + v
+: add-to-value ( v w lexer -- )
+    tuck lexer>token_val @ * 2 pick + swap lexer>token_val ! drop
 ;
 
 \ Character group
@@ -167,10 +186,10 @@ T{ '~' character-group -> Cother }T
     +---+  |        +---+  |        |          |
       ^    |          ^    | [0-7]  | [xX]     | [bB]
       |    |          +----+        v          v
-      +----+                      +---+      +---+
-   spaces  |                      | 2 |      | 4 |
-           |                      +---+      +---+
-           |            [0-9A-Fa-f] |    [01]  |
+    +---+  |                      +---+      +---+
+    | 17|<-+                      | 2 |      | 4 |
+    +---+  |                      +---+      +---+
+    spaces |            [0-9A-Fa-f] |    [01]  |
            |                    +---+      +---+
            |                    |   v      |   v
            |                    | +---+    | +---+
@@ -210,8 +229,8 @@ T{ '~' character-group -> Cother }T
            |other  +---+
            +------>|@16|
                    +---+
-    error state    : 17
-    finished state : 18
+    error state    : 18
+    finished state : 19
 )
 
 : lookahead ( lexer -- tag )
@@ -222,13 +241,21 @@ T{ '~' character-group -> Cother }T
     dup lexer>pos @ swap lexer>input @ + c@
 ;
 
-\ Read a character and update lexer states
+\ Read a character which is a part of a token
 : consume ( lexer -- )
     dup current-char '\n' = if
         1 over lexer>line +!
     then
     dup
     dup current-char swap push-token-buf throw
+    1 swap lexer>pos +!
+;
+
+\ Read a character which is not a part of a token
+: skip ( lexer -- )
+    dup current-char '\n' = if
+        1 over lexer>line +!
+    then
     1 swap lexer>pos +!
 ;
 
@@ -267,8 +294,8 @@ T{ lexer lookahead -> Cescapech }T
 T{ lexer lexer>pos @ -> 0 }T
 T{ lexer consume -> }T
 T{ lexer lexer>token_len @ -> 1 }T
-T{ lexer lexer>token c@ -> 'a' }T
-T{ lexer lexer>token 1+ c@ -> '\0' }T
+T{ lexer lexer>token_buf c@ -> 'a' }T
+T{ lexer lexer>token_buf 1+ c@ -> '\0' }T
 T{ lexer lexer>pos @ -> 1 }T
 T{ lexer free -> }T
 T{ test-source free -> }T
@@ -295,38 +322,96 @@ create state-transition-table
  :    :    :    :    :    :    h    :    :    :    :    :    :    :    :    :    :
  :    :    :    :    :    :    :    :    :    :    :    :    :    :    :    :    :
 )
-17 , 17 ,  0 ,  0 ,  8 , 13 , 16 ,  1 ,  6 ,  6 ,  6 ,  7 ,  7 ,  7 ,  7 ,  7 , 16 , \ from 0
-18 , 17 , 18 , 18 , 18 , 18 , 18 ,  1 ,  1 ,  1 , 17 ,  4 ,  2 , 17 , 17 , 17 , 18 , \ from 1
-17 , 17 , 17 , 17 , 17 , 17 , 17 ,  3 ,  3 ,  3 ,  3 ,  3 , 17 ,  3 , 17 , 17 , 17 , \ from 2
-18 , 17 , 18 , 18 , 18 , 18 , 18 ,  3 ,  3 ,  3 ,  3 ,  3 , 17 ,  3 , 17 , 17 , 18 , \ from 3
-17 , 17 , 17 , 17 , 17 , 17 , 17 ,  5 ,  5 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 4
-18 , 17 , 18 , 18 , 18 , 18 , 18 ,  5 ,  5 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 18 , \ from 5
-18 , 17 , 18 , 18 , 18 , 18 , 18 ,  6 ,  6 ,  6 ,  6 , 17 , 17 , 17 , 17 , 17 , 18 , \ from 6
-18 , 17 , 18 , 18 , 18 , 18 , 18 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 , 18 , \ from 7
-17 , 17 ,  9 , 17 , 17 ,  9 , 10 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 , \ from 8
-17 , 17 , 17 , 17 , 12 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 9
-17 , 17 , 17 , 17 , 11 , 11 , 11 , 11 , 17 , 17 , 17 , 11 , 17 , 17 , 11 , 17 , 17 , \ from 10
-17 , 17 , 17 , 17 , 12 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 11
-18 , 17 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 12
-17 , 17 , 13 , 17 , 13 , 15 , 14 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , \ from 13
-17 , 17 , 17 , 17 , 13 , 13 , 13 , 13 , 17 , 17 , 17 , 13 , 17 , 17 , 13 , 17 , 17 , \ from 14
-18 , 17 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 15
-18 , 17 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 16
-17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , 17 , \ from 17
+18 , 18 , 17 , 17 ,  8 , 13 , 16 ,  1 ,  6 ,  6 ,  6 ,  7 ,  7 ,  7 ,  7 ,  7 , 16 , \ from 0
+19 , 18 , 19 , 19 , 19 , 19 , 19 ,  1 ,  1 ,  1 , 18 ,  4 ,  2 , 18 , 18 , 18 , 19 , \ from 1
+18 , 18 , 18 , 18 , 18 , 18 , 18 ,  3 ,  3 ,  3 ,  3 ,  3 , 18 ,  3 , 18 , 18 , 18 , \ from 2
+19 , 18 , 19 , 19 , 19 , 19 , 19 ,  3 ,  3 ,  3 ,  3 ,  3 , 18 ,  3 , 18 , 18 , 19 , \ from 3
+18 , 18 , 18 , 18 , 18 , 18 , 18 ,  5 ,  5 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 4
+19 , 18 , 19 , 19 , 19 , 19 , 19 ,  5 ,  5 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 19 , \ from 5
+19 , 18 , 19 , 19 , 19 , 19 , 19 ,  6 ,  6 ,  6 ,  6 , 18 , 18 , 18 , 18 , 18 , 19 , \ from 6
+19 , 18 , 19 , 19 , 19 , 19 , 19 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 ,  7 , 19 , \ from 7
+18 , 18 ,  9 , 18 , 18 ,  9 , 10 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 ,  9 , \ from 8
+18 , 18 , 18 , 18 , 12 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 9
+18 , 18 , 18 , 18 , 11 , 11 , 11 , 11 , 18 , 18 , 18 , 11 , 18 , 18 , 11 , 18 , 18 , \ from 10
+18 , 18 , 18 , 18 , 12 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 11
+19 , 18 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , \ from 12
+18 , 18 , 13 , 18 , 13 , 15 , 14 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , 13 , \ from 13
+18 , 18 , 18 , 18 , 13 , 13 , 13 , 13 , 18 , 18 , 18 , 13 , 18 , 18 , 13 , 18 , 18 , \ from 14
+19 , 18 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , \ from 15
+19 , 18 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , \ from 16
+19 , 18 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 , \ from 17
 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , 18 , \ from 18
+19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , 19 , \ from 19
 
 : next-state ( c n -- n )
     NUM-CHARACTER-GROUP * + cells state-transition-table + @
 ;
 
-T{ Cspaces 3 next-state .s -> 18 }T
+T{ Cspaces 3 next-state -> 19 }T
 
-\ Read one token, skip following spaces, returns the
-\ code of the token.
-: lex   ( lexer -- tag e )
-    \ stub
-    drop Tid success
+\ convert hexadecimal character to digit
+: hex-to-int ( c -- n )
+    dup case
+    '0' ':' rangeof '0' - endof
+    'A' '[' rangeof 'A' - 10 + endof
+    'a' '{' rangeof 'a' - 10 + endof
+    not-reachable
+    endcase
+;
+
+\ Skip leading spaces, Read one token, returns the
+\ tag of the token.
+: lex   ( lexer -- tag )
+    0 \ initial state
+    begin
+        ." state=" dup . ." " over current-char . ." " over lookahead . cr
+        case
+        0 of
+            dup reset-token
+            dup lookahead 0 next-state
+        endof
+        1 of
+            ( octal digit )
+            Tint over set-token-tag
+            dup current-char '0' - 8 2 pick add-to-value
+            dup consume dup lookahead 1 next-state
+        endof
+        2 of dup consume dup lookahead 2 next-state endof
+        3 of
+            ( hexadecimal digit )
+            Tint over set-token-tag
+            dup current-char hex-to-int 16 2 pick add-to-value
+            dup consume dup lookahead 3 next-state
+        endof
+        4 of not-implemented endof
+        5 of not-implemented endof
+        6 of not-implemented endof
+        7 of not-implemented endof
+        8 of not-implemented endof
+        9 of not-implemented endof
+        10 of not-implemented endof
+        11 of not-implemented endof
+        12 of not-implemented endof
+        13 of not-implemented endof
+        14 of not-implemented endof
+        15 of not-implemented endof
+        16 of not-implemented endof
+        17 of dup skip dup lookahead 17 next-state endof
+        18 of drop INVALID-TOKEN throw endof
+        19 of
+            lexer>token_tag @ exit
+        endof
+        drop not-reachable
+        endcase
+    again
 ; export
+
+T{ s"    0xa12" make-string constant test-source -> }T
+T{ test-source make-lexer constant lexer -> }T
+T{ lexer lex -> Tint }T
+T{ lexer lexer>token_val @ .s -> 2578 }T
+T{ lexer free -> }T
+T{ test-source free -> }T
 
 }private
 
