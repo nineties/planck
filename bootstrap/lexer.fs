@@ -304,9 +304,10 @@ create state-transition-table
     endcase
 ;
 
-\ Skip leading spaces, Read one token, returns the
-\ tag of the token.
-: lex   ( lexer -- tag )
+\ Read one token, returns the tag of the token.
+\ Skip leading spaces when skip_spaces==true.
+
+: lex_impl   ( skip_spaces lexer -- tag )
     0 \ initial state
     begin
         \ ." state=" dup . ." " over current-char . ." " over lookahead . cr
@@ -379,15 +380,30 @@ create state-transition-table
             dup current-char 0 2 pick add-to-value
             dup consume dup lookahead 16 next-state
         endof
-        17 of dup skip dup lookahead 17 next-state endof
-        18 of drop INVALID-TOKEN throw endof
-        19 of
-            lexer>token_tag @ exit
+        17 of
+            over if \ skip spaces
+                dup skip dup lookahead 17 next-state
+            else
+                INVALID-TOKEN throw
+            then
         endof
-        drop not-reachable
+        18 of INVALID-TOKEN throw endof
+        19 of
+            nip lexer>token_tag @ exit
+        endof
+        not-reachable
         endcase
     again
+;
+
+: lex ( lexer -- tag )
+    true swap lex_impl
 ; export
+
+: lex_nospace ( lexer -- tag )
+    false swap lex_impl
+; export
+
 
 T{ s"    +123 0xabcd '\\n'" make-string constant test-source -> }T
 T{ test-source make-lexer constant lexer -> }T
