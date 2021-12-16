@@ -24,8 +24,6 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tsymbol
 drop
 
-private{
-
 64 constant TOKENBUF-SIZE
 
 struct
@@ -37,6 +35,8 @@ struct
     int%  field lexer>token_len
     char% TOKENBUF-SIZE * field lexer>token_buf
 end-struct lexer%
+
+private{
 
 : make-lexer ( input -- lexer )
     lexer% %allocate throw
@@ -304,10 +304,9 @@ create state-transition-table
     endcase
 ;
 
-\ Read one token, returns the tag of the token.
+\ Read one token
 \ Skip leading spaces when skip_spaces==true.
-
-: lex_impl   ( skip_spaces lexer -- tag )
+: lex_impl   ( skip_spaces lexer -- )
     0 \ initial state
     begin
         \ ." state=" dup . ." " over current-char . ." " over lookahead . cr
@@ -388,19 +387,17 @@ create state-transition-table
             then
         endof
         18 of INVALID-TOKEN throw endof
-        19 of
-            nip lexer>token_tag @ exit
-        endof
+        19 of 2drop exit endof
         not-reachable
         endcase
     again
 ;
 
-: lex ( lexer -- tag )
+: lex ( lexer -- )
     true swap lex_impl
 ; export
 
-: lex_nospace ( lexer -- tag )
+: lex_nospace ( lexer -- )
     false swap lex_impl
 ; export
 
@@ -408,19 +405,23 @@ create state-transition-table
 T{ s"    +123 0xabcd '\\n'" make-string constant test-source -> }T
 T{ test-source make-lexer constant lexer -> }T
 
-T{ lexer lex -> Tsymbol }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tsymbol }T
 T{ lexer lexer>token_buf s" +" 1 strneq -> true }T
 T{ lexer lexer>token_val @ -> '+' }T
 
-T{ lexer lex -> Tint }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tint }T
 T{ lexer lexer>token_buf s" 123" 3 strneq -> true }T
 T{ lexer lexer>token_val @ -> 123 }T
 
-T{ lexer lex -> Tint }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tint }T
 T{ lexer lexer>token_buf s" 0xabcd" 6 strneq -> true }T
 T{ lexer lexer>token_val @ -> 43981 }T
 
-T{ lexer lex -> Tchar }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tchar }T
 T{ lexer lexer>token_buf s" '\\n'" 4 strneq -> true }T
 T{ lexer lexer>token_val @ -> '\n' }T
 

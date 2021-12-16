@@ -34,3 +34,14 @@ Types::
                | tuple_type
                | array_type
                | slice_type
+
+Instruction::
+
+   label    : id
+   local    : "%" int
+   operand  : "(" type ")" int
+            | local
+            | copy local
+   place    : label
+            | local
+            | "*" place

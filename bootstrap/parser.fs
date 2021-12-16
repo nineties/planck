@@ -10,3 +10,46 @@
 include lib/string.fs
 include lexer.fs
 include ast.fs
+
+private{
+
+: expect-sym ( lexer c -- bool )
+    over lexer>token_tag @ Tsymbol = unless 2drop false then
+    swap lexer>token_val @ =
+;
+
+: parse-label ( lexer -- node )
+    dup lexer>token_tag @ Tid = if
+        dup lexer>token_buf make-id
+        swap lex
+    else
+        drop 0
+    then
+;
+
+: parse-var ( lexer -- node )
+    dup '%' expect-sym unless drop 0 then
+    dup lex_nospace
+    dup lexer>token_tag @ Tint = if
+        dup lexer>token_val @ make-var
+        swap lex
+    else
+        drop 0
+    then
+;
+
+
+( Parse `input` string and returns abstract syntax tree )
+: parse ( input -- ast )
+    make-lexer
+    dup lex
+    dup parse-label ?dup if nip exit then
+    dup parse-var   ?dup if nip exit then
+    not-implemented
+; export
+
+}private
+
+s"
+%123
+" make-string parse pretty-print
