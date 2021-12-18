@@ -8,7 +8,7 @@ include lib/string.fs
 ( node type )
 0
     enum Nid    ( name )
-    enum Nvar   ( idx )
+    enum Nregister ( idx )
 drop
 
 struct
@@ -33,14 +33,14 @@ private{
     make-string Nid make-node1
 ; export
 
-: make-var ( idx -- node )
-    Nvar make-node1
+: make-register ( idx -- node )
+    Nregister make-node1
 ; export
 
 : pretty-print ( node -- )
     dup ast>tag @ case
     Nid of ast>arg0 @ type endof
-    Nvar of ." %" ast>arg0 @ . endof
+    Nregister of ." %" ast>arg0 @ . endof
     not-implemented
     endcase
 ; export

@@ -38,10 +38,10 @@ Types::
 Instruction::
 
    label    : id
-   local    : "%" int
+   register : "%" int
    operand  : "(" type ")" int
-            | local
-            | copy local
+            | register
+            | copy register
    place    : label
             | local
             | "*" place

@@ -27,11 +27,11 @@ private{
     then
 ;
 
-: parse-var ( lexer -- node )
+: parse-register ( lexer -- node )
     dup '%' expect-sym unless drop 0 then
     dup lex_nospace
     dup lexer>token_tag @ Tint = if
-        dup lexer>token_val @ make-var
+        dup lexer>token_val @ make-register
         swap lex
     else
         drop 0
@@ -44,7 +44,7 @@ private{
     make-lexer
     dup lex
     dup parse-label ?dup if nip exit then
-    dup parse-var   ?dup if nip exit then
+    dup parse-register   ?dup if nip exit then
     not-implemented
 ; export
 
