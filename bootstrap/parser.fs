@@ -9,7 +9,7 @@
 
 include lib/string.fs
 include lexer.fs
-include ast.fs
+include graph.fs
 
 private{
 
@@ -48,7 +48,7 @@ private{
 
 
 ( Parse `input` string and returns abstract syntax tree )
-: parse ( input -- ast )
+: parse ( input -- graph )
     make-lexer
     dup lex
     dup parse-place ?dup if nip exit then
@@ -58,5 +58,5 @@ private{
 }private
 
 s"
-*123
+*x123
 " make-string parse pretty-print

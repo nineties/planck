@@ -1,7 +1,7 @@
 \ planck -
 \ Copyright (C) 2021 nineties
 
-\ Abstract syntax tree of "subset of" PlanckIR 
+\ Control-Flow Graph representation of "subset of" PlanckIR
 
 include lib/string.fs
 
@@ -13,21 +13,21 @@ include lib/string.fs
 drop
 
 struct
-    int%  field ast>tag
-    cell% field ast>arg0
-end-struct ast%
+    int%  field insn>tag
+    cell% field insn>arg0
+end-struct insn%
 
 private{
 
 : make-node0 ( tag -- node )
-    ast% %allocate throw
-    tuck ast>tag !
+    insn% %allocate throw
+    tuck insn>tag !
 ;
 
 : make-node1 ( arg0 tag -- node )
-    ast% %allocate throw
-    tuck ast>tag !
-    tuck ast>arg0 !
+    insn% %allocate throw
+    tuck insn>tag !
+    tuck insn>arg0 !
 ;
 
 : make-id ( c-addr -- node ) make-string Nid make-node1 ; export
@@ -35,10 +35,10 @@ private{
 : make-deref ( node -- node ) Nderef make-node1 ; export
 
 : pretty-print ( node -- )
-    dup ast>tag @ case
-    Nid of ast>arg0 @ type endof
-    Nregister of ." %" ast>arg0 @ . endof
-    Nderef of ." *" ast>arg0 @ recurse endof
+    dup insn>tag @ case
+    Nid of insn>arg0 @ type endof
+    Nregister of ." %" insn>arg0 @ . endof
+    Nderef of ." *" insn>arg0 @ recurse endof
     not-implemented
     endcase
 ; export
