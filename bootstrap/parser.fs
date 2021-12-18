@@ -14,7 +14,7 @@ include ast.fs
 private{
 
 : expect-sym ( lexer c -- bool )
-    over lexer>token_tag @ Tsymbol = unless 2drop false then
+    over lexer>token_tag @ Tsymbol = unless 2drop false exit then
     swap lexer>token_val @ =
 ;
 
@@ -28,7 +28,7 @@ private{
 ;
 
 : parse-register ( lexer -- node )
-    dup '%' expect-sym unless drop 0 then
+    dup '%' expect-sym unless drop 0 exit then
     dup lex_nospace
     dup lexer>token_tag @ Tint = if
         dup lexer>token_val @ make-register
@@ -38,18 +38,25 @@ private{
     then
 ;
 
+: parse-place ( lexer -- node )
+    dup parse-label ?dup if nip exit then
+    dup parse-register ?dup if nip exit then
+    dup '*' expect-sym unless drop 0 exit then
+    dup lex
+    recurse ?dup if make-deref else 0 then
+;
+
 
 ( Parse `input` string and returns abstract syntax tree )
 : parse ( input -- ast )
     make-lexer
     dup lex
-    dup parse-label ?dup if nip exit then
-    dup parse-register   ?dup if nip exit then
+    dup parse-place ?dup if nip exit then
     not-implemented
 ; export
 
 }private
 
 s"
-%123
+*123
 " make-string parse pretty-print

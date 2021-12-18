@@ -7,8 +7,9 @@ include lib/string.fs
 
 ( node type )
 0
-    enum Nid    ( name )
-    enum Nregister ( idx )
+    enum Nid        ( name )
+    enum Nregister  ( idx )
+    enum Nderef     ( node )
 drop
 
 struct
@@ -29,18 +30,15 @@ private{
     tuck ast>arg0 !
 ;
 
-: make-id ( c-addr -- node )
-    make-string Nid make-node1
-; export
-
-: make-register ( idx -- node )
-    Nregister make-node1
-; export
+: make-id ( c-addr -- node ) make-string Nid make-node1 ; export
+: make-register ( idx -- node ) Nregister make-node1 ; export
+: make-deref ( node -- node ) Nderef make-node1 ; export
 
 : pretty-print ( node -- )
     dup ast>tag @ case
     Nid of ast>arg0 @ type endof
     Nregister of ." %" ast>arg0 @ . endof
+    Nderef of ." *" ast>arg0 @ recurse endof
     not-implemented
     endcase
 ; export
