@@ -43,5 +43,5 @@ Instruction::
             | register
             | copy register
    place    : label
-            | local
+            | register
             | "*" place
