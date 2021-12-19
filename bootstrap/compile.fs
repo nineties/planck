@@ -6,4 +6,11 @@
 \ It compiles PlanckIR programs to object files
 \ for the vm.
 
-include lexer.fs
+include parser.fs
+
+s"
+function main(): i32 {
+block:
+    return
+}
+" make-string parse pp-node

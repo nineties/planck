@@ -8,6 +8,7 @@
 \ See spec/syntax.rst.
 
 include lib/string.fs
+include lib/table.fs
 
 s" Too long token" exception constant TOO-LONG-TOKEN
 s" Invalid token" exception constant INVALID-TOKEN
@@ -22,9 +23,24 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tfloat
     enum Tstring
     enum Tsymbol
+    \ reserved words
+    enum Ttrue
+    enum Tfalse
+    enum Tchar
+    enum Ti8
+    enum Tu8
+    enum Ti16
+    enum Tu16
+    enum Ti32
+    enum Tu32
+    enum Ti64
+    enum Tu64
+    enum Tf32
+    enum Tf64
+    enum Treturn
+    enum Texport
+    enum Tfunction
 drop
-
-private{
 
 64 constant TOKENBUF-SIZE
 
@@ -37,6 +53,26 @@ struct
     int%  field lexer>token_len
     char% TOKENBUF-SIZE * field lexer>token_buf
 end-struct lexer%
+
+private{
+
+make-string-table constant reserved-words
+Ttrue s" true" make-string reserved-words table!
+Tfalse s" false" make-string reserved-words table!
+Tchar s" char" make-string reserved-words table!
+Ti8 s" i8" make-string reserved-words table!
+Tu8 s" u8" make-string reserved-words table!
+Ti16 s" i16" make-string reserved-words table!
+Tu16 s" u16" make-string reserved-words table!
+Ti32 s" i32" make-string reserved-words table!
+Tu32 s" u32" make-string reserved-words table!
+Ti64 s" i64" make-string reserved-words table!
+Tu64 s" u64" make-string reserved-words table!
+Tf32 s" f32" make-string reserved-words table!
+Tf64 s" f64" make-string reserved-words table!
+Treturn s" return" make-string reserved-words table!
+Texport s" export" make-string reserved-words table!
+Tfunction s" function" make-string reserved-words table!
 
 : make-lexer ( input -- lexer )
     lexer% %allocate throw
@@ -65,16 +101,17 @@ end-struct lexer%
     success
 ;
 
+: set-token-tag ( tag lexer -- )
+    lexer>token_tag !
+;
+
 : reset-token ( lexer -- )
     dup reset-token-buf
+    Tnull over set-token-tag
     0 over lexer>token_val !
     0 over lexer>token_len !
     0 over lexer>token_buf c!
     drop
-;
-
-: set-token-tag ( tag lexer -- )
-    lexer>token_tag !
 ;
 
 \ value = value*w + v
@@ -304,9 +341,9 @@ create state-transition-table
     endcase
 ;
 
-\ Skip leading spaces, Read one token, returns the
-\ tag of the token.
-: lex   ( lexer -- tag )
+\ Read one token
+\ Skip leading spaces when skip_spaces==true.
+: lex_impl   ( skip_spaces lexer -- )
     0 \ initial state
     begin
         \ ." state=" dup . ." " over current-char . ." " over lookahead . cr
@@ -379,32 +416,59 @@ create state-transition-table
             dup current-char 0 2 pick add-to-value
             dup consume dup lookahead 16 next-state
         endof
-        17 of dup skip dup lookahead 17 next-state endof
-        18 of drop INVALID-TOKEN throw endof
-        19 of
-            lexer>token_tag @ exit
+        17 of
+            over if \ skip spaces
+                dup skip dup lookahead 17 next-state
+            else
+                INVALID-TOKEN throw
+            then
         endof
-        drop not-reachable
+        18 of INVALID-TOKEN throw endof
+        19 of
+            ( accept state )
+            dup lexer>token_tag @ Tid = if
+                dup lexer>token_buf reserved-words 2dup ?table-in if
+                    table@ over set-token-tag
+                else
+                    2drop
+                then
+            then
+            2drop exit
+        endof
+        not-reachable
         endcase
     again
+;
+
+: lex ( lexer -- )
+    true swap lex_impl
 ; export
+
+: lex_nospace ( lexer -- )
+    false swap lex_impl
+; export
+
 
 T{ s"    +123 0xabcd '\\n'" make-string constant test-source -> }T
 T{ test-source make-lexer constant lexer -> }T
 
-T{ lexer lex -> Tsymbol }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tsymbol }T
 T{ lexer lexer>token_buf s" +" 1 strneq -> true }T
 T{ lexer lexer>token_val @ -> '+' }T
 
-T{ lexer lex -> Tint }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tint }T
 T{ lexer lexer>token_buf s" 123" 3 strneq -> true }T
 T{ lexer lexer>token_val @ -> 123 }T
 
-T{ lexer lex -> Tint }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tint }T
 T{ lexer lexer>token_buf s" 0xabcd" 6 strneq -> true }T
 T{ lexer lexer>token_val @ -> 43981 }T
 
-T{ lexer lex -> Tchar }T
+T{ lexer lex -> }T
+T{ lexer lexer>token_tag @ -> Tchar }T
 T{ lexer lexer>token_buf s" '\\n'" 4 strneq -> true }T
 T{ lexer lexer>token_val @ -> '\n' }T
 

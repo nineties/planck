@@ -14,6 +14,8 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
+    keyword : "return" | "export" | "function"
+
 Types::
 
     never_type : "!"
@@ -34,3 +36,36 @@ Types::
                | tuple_type
                | array_type
                | slice_type
+
+Instruction::
+
+   label    : id
+   register : "%" int
+   operand  : "(" type ")" int
+            | register
+   place    : label
+            | register
+            | "*" place
+
+   instruction : place "=" place
+
+   jump_instruction : "return"
+
+Basic Block::
+
+   basic_block : label ":" instruction* jump_instruction
+
+Function::
+
+   function_params :
+                   | register ":" type ( "," function_params )*
+
+   function_definition :
+      "export"?
+      "function" label "(" function_params ")" ":" type
+      "{" basic_block+ "}"
+
+Program::
+
+   toplevel_definition : function_definition
+   program : toplevel_definition*
