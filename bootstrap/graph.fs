@@ -43,12 +43,6 @@ struct
     cell% field node>arg4
 end-struct node%
 
-struct
-    cell% field basicblock>name  ( ID )
-    cell% field basicblock>insns ( vector of instructions )
-    cell% field basicblock>jump  ( the last instruction )
-end-struct basicblock%
-
 private{
 
 : make-node0 ( tag -- node )
