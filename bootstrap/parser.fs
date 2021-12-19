@@ -63,7 +63,7 @@ private{
 ;
 
 : parse-basic-block ( lexer -- node )
-    dup parse-label ?dup unless 2drop 0 exit then
+    dup parse-label ?dup unless drop 0 exit then
     over ':' expect-sym unless SYNTAX-ERROR throw then
     over lex
     
