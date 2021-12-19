@@ -24,7 +24,22 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tstring
     enum Tsymbol
     \ reserved words
+    enum Ttrue
+    enum Tfalse
+    enum Tchar
+    enum Ti8
+    enum Tu8
+    enum Ti16
+    enum Tu16
+    enum Ti32
+    enum Tu32
+    enum Ti64
+    enum Tu64
+    enum Tf32
+    enum Tf64
     enum Treturn
+    enum Texport
+    enum Tfunction
 drop
 
 64 constant TOKENBUF-SIZE
@@ -42,7 +57,22 @@ end-struct lexer%
 private{
 
 make-string-table constant reserved-words
+Ttrue s" true" make-string reserved-words table!
+Tfalse s" false" make-string reserved-words table!
+Tchar s" char" make-string reserved-words table!
+Ti8 s" i8" make-string reserved-words table!
+Tu8 s" u8" make-string reserved-words table!
+Ti16 s" i16" make-string reserved-words table!
+Tu16 s" u16" make-string reserved-words table!
+Ti32 s" i32" make-string reserved-words table!
+Tu32 s" u32" make-string reserved-words table!
+Ti64 s" i64" make-string reserved-words table!
+Tu64 s" u64" make-string reserved-words table!
+Tf32 s" f32" make-string reserved-words table!
+Tf64 s" f64" make-string reserved-words table!
 Treturn s" return" make-string reserved-words table!
+Texport s" export" make-string reserved-words table!
+Tfunction s" function" make-string reserved-words table!
 
 : make-lexer ( input -- lexer )
     lexer% %allocate throw
