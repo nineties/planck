@@ -8,6 +8,7 @@
 \ See spec/syntax.rst.
 
 include lib/string.fs
+include lib/table.fs
 
 s" Too long token" exception constant TOO-LONG-TOKEN
 s" Invalid token" exception constant INVALID-TOKEN
@@ -22,6 +23,8 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tfloat
     enum Tstring
     enum Tsymbol
+    \ reserved words
+    enum Treturn
 drop
 
 64 constant TOKENBUF-SIZE
@@ -37,6 +40,9 @@ struct
 end-struct lexer%
 
 private{
+
+make-string-table constant reserved-words
+Treturn s" return" make-string reserved-words table!
 
 : make-lexer ( input -- lexer )
     lexer% %allocate throw
@@ -387,7 +393,17 @@ create state-transition-table
             then
         endof
         18 of INVALID-TOKEN throw endof
-        19 of 2drop exit endof
+        19 of
+            ( accept state )
+            dup lexer>token_tag @ Tid = if
+                dup lexer>token_buf reserved-words 2dup ?table-in if
+                    table@ over set-token-tag
+                else
+                    2drop
+                then
+            then
+            2drop exit
+        endof
         not-reachable
         endcase
     again
