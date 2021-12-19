@@ -22,6 +22,7 @@ Section Format
 | field length | content                        |
 +==============+================================+
 | 4 bytes      | Section type                   |
+|              |                                |
 |              | 4 ascii characters like "Code" |
 +--------------+--------------------------------+
 | 4 bytes      | Section size (N)               |
