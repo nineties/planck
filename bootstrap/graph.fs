@@ -156,7 +156,7 @@ TyF64 make-node0 constant f64-type export
         else
             ." ("
             0 over array@ recurse
-            dup array-size 1 do
+            dup array-size 1 ?do
                 ." , " i over array@ recurse
             loop
             ." )"
@@ -165,13 +165,14 @@ TyF64 make-node0 constant f64-type export
         ." : "
         dup node>arg3 @ recurse
         ."  {" cr
-        dup node>arg4 @ dup array-size 0 do
+        dup node>arg4 @ dup array-size 0 ?do
             i over array@ recurse
         loop
         ." }" cr
+        2drop
     endof
     Nprogram of
-        node>arg0 @ dup array-size 0 do
+        node>arg0 @ dup array-size 0 ?do
             i over array@ recurse cr
         loop
         drop

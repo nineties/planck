@@ -174,7 +174,7 @@ private{
 }private
 
 s"
-export function main(%0:i8, %1:char): i32 {
+export function main(%0:i8): i32 {
 block:
     %0 = %1
     return
@@ -185,4 +185,14 @@ block2:
     return
 }
 
+export function main(%0:i8): i32 {
+block:
+    %0 = %1
+    return
+
+block3:
+
+    %2 = %3
+    return
+}
 " make-string parse pp-node
