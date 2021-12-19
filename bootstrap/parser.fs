@@ -172,27 +172,3 @@ private{
 ; export
 
 }private
-
-s"
-export function main(%0:i8): i32 {
-block:
-    %0 = %1
-    return
-
-block2:
-
-    %2 = %3
-    return
-}
-
-export function main(%0:i8): i32 {
-block:
-    %0 = %1
-    return
-
-block3:
-
-    %2 = %3
-    return
-}
-" make-string parse pp-node

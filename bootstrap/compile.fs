@@ -7,3 +7,10 @@
 \ for the vm.
 
 include parser.fs
+
+s"
+function main(): i32 {
+block:
+    return
+}
+" make-string parse pp-node
