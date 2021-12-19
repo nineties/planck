@@ -14,7 +14,7 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
-    keyword : "return"
+    keyword : "return" | "export" | "function"
 
 Types::
 
@@ -54,3 +54,12 @@ Instruction::
 Basic Block::
 
    basic_block : label ":" instruction* jump_instruction
+
+Function::
+   function_params :
+                   | register ":" type ( "," function_params )*
+
+   function_definition :
+      "export"?
+      "function" label "(" function_params ")" ":" type
+      "{" basic_block+ "}"

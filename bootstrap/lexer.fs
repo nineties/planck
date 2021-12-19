@@ -343,6 +343,7 @@ create state-transition-table
 \ Read one token
 \ Skip leading spaces when skip_spaces==true.
 : lex_impl   ( skip_spaces lexer -- )
+    Tnull over set-token-tag
     0 \ initial state
     begin
         \ ." state=" dup . ." " over current-char . ." " over lookahead . cr
