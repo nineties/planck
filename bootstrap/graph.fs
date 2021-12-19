@@ -35,13 +35,13 @@ include lib/string.fs
 drop
 
 struct
-    int%  field insn>tag
-    cell% field insn>arg0
-    cell% field insn>arg1
-    cell% field insn>arg2
-    cell% field insn>arg3
-    cell% field insn>arg4
-end-struct insn%
+    int%  field node>tag
+    cell% field node>arg0
+    cell% field node>arg1
+    cell% field node>arg2
+    cell% field node>arg3
+    cell% field node>arg4
+end-struct node%
 
 struct
     cell% field basicblock>name  ( ID )
@@ -52,48 +52,48 @@ end-struct basicblock%
 private{
 
 : make-node0 ( tag -- node )
-    insn% %allocate throw
-    tuck insn>tag !
+    node% %allocate throw
+    tuck node>tag !
 ;
 
 : make-node1 ( arg0 tag -- node )
-    insn% %allocate throw
-    tuck insn>tag !
-    tuck insn>arg0 !
+    node% %allocate throw
+    tuck node>tag !
+    tuck node>arg0 !
 ;
 
 : make-node2 ( arg0 arg1 tag -- node )
-    insn% %allocate throw
-    tuck insn>tag !
-    tuck insn>arg1 !
-    tuck insn>arg0 !
+    node% %allocate throw
+    tuck node>tag !
+    tuck node>arg1 !
+    tuck node>arg0 !
 ;
 
 : make-node3 ( arg0 arg1 arg2 tag -- node )
-    insn% %allocate throw
-    tuck insn>tag !
-    tuck insn>arg2 !
-    tuck insn>arg1 !
-    tuck insn>arg0 !
+    node% %allocate throw
+    tuck node>tag !
+    tuck node>arg2 !
+    tuck node>arg1 !
+    tuck node>arg0 !
 ;
 
 : make-node4 ( arg0 arg1 arg2 arg3 tag -- node )
-    insn% %allocate throw
-    tuck insn>tag !
-    tuck insn>arg3 !
-    tuck insn>arg2 !
-    tuck insn>arg1 !
-    tuck insn>arg0 !
+    node% %allocate throw
+    tuck node>tag !
+    tuck node>arg3 !
+    tuck node>arg2 !
+    tuck node>arg1 !
+    tuck node>arg0 !
 ;
 
 : make-node5 ( arg0 arg1 arg2 arg3 arg4 tag -- node )
-    insn% %allocate throw
-    tuck insn>tag !
-    tuck insn>arg4 !
-    tuck insn>arg3 !
-    tuck insn>arg2 !
-    tuck insn>arg1 !
-    tuck insn>arg0 !
+    node% %allocate throw
+    tuck node>tag !
+    tuck node>arg4 !
+    tuck node>arg3 !
+    tuck node>arg2 !
+    tuck node>arg1 !
+    tuck node>arg0 !
 ;
 
 : make-id ( c-addr -- node ) make-string Nid make-node1 ; export
@@ -124,34 +124,34 @@ TyF32 make-node0 constant f32-type export
 TyF64 make-node0 constant f64-type export
 
 : pp-node ( node -- )
-    dup insn>tag @ case
-    Nid of insn>arg0 @ type endof
-    Nregister of ." %" insn>arg0 @ 10 swap print-int endof
-    Nderef of ." *" insn>arg0 @ recurse endof
+    dup node>tag @ case
+    Nid of node>arg0 @ type endof
+    Nregister of ." %" node>arg0 @ 10 swap print-int endof
+    Nderef of ." *" node>arg0 @ recurse endof
     Nreturn of drop ." return" endof
     Nassign of
-        dup insn>arg0 @ recurse
+        dup node>arg0 @ recurse
         ."  = "
-        insn>arg1 @ recurse
+        node>arg1 @ recurse
     endof
     Nparamdecl of
-        dup insn>arg0 @ recurse
+        dup node>arg0 @ recurse
         ." : "
-        insn>arg1 @ recurse
+        node>arg1 @ recurse
     endof
     Nbblock of
-        dup insn>arg0 @ recurse ." :" cr
-        dup insn>arg1 @
+        dup node>arg0 @ recurse ." :" cr
+        dup node>arg1 @
         dup array-size 0 ?do
             ." \t" i over array@ recurse cr
         loop drop
-        ." \t" dup insn>arg2 @ recurse cr
+        ." \t" dup node>arg2 @ recurse cr
         drop
     endof
     Nfundecl of
-        dup insn>arg0 @ if ." export " then
-        dup insn>arg1 @ recurse
-        dup insn>arg2 @ dup array-size 0= if
+        dup node>arg0 @ if ." export " then
+        dup node>arg1 @ recurse
+        dup node>arg2 @ dup array-size 0= if
             drop ." ()"
         else
             ." ("
@@ -163,15 +163,15 @@ TyF64 make-node0 constant f64-type export
             drop
         then
         ." : "
-        dup insn>arg3 @ recurse
+        dup node>arg3 @ recurse
         ."  {" cr
-        dup insn>arg4 @ dup array-size 0 do
+        dup node>arg4 @ dup array-size 0 do
             i over array@ recurse
         loop
         ." }" cr
     endof
     Nprogram of
-        insn>arg0 @ dup array-size 0 do
+        node>arg0 @ dup array-size 0 do
             i over array@ recurse cr
         loop
         drop
