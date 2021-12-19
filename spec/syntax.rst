@@ -14,6 +14,8 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
+    keyword : "return"
+
 Types::
 
     never_type : "!"
@@ -41,7 +43,14 @@ Instruction::
    register : "%" int
    operand  : "(" type ")" int
             | register
-            | copy register
    place    : label
             | register
             | "*" place
+
+   instruction :
+
+   jump_instruction : "return"
+
+Basic Block::
+
+   basic_block : label ":" instruction* jump_instruction
