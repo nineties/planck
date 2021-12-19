@@ -43,6 +43,19 @@ struct
     cell% field node>arg4
 end-struct node%
 
+struct
+    int%  field fundecl>tag
+    int%  field fundecl>export
+    cell% field fundecl>name
+    cell% field fundecl>params
+    cell% field fundecl>body
+end-struct fundecl%
+
+struct
+    int%  field program>tag
+    cell% field program>defs
+end-struct program%
+
 private{
 
 : make-node0 ( tag -- node )
