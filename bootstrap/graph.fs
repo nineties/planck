@@ -14,6 +14,10 @@ include lib/string.fs
     enum Nreturn
     enum Nparamdecl ( reg type )
 
+    enum Nbblock    ( name insns jump )
+    enum Nfundecl   ( export name params body )
+    enum Nprogram   ( defs )
+
     enum TyNever
     enum TyTrue
     enum TyFalse
@@ -34,6 +38,9 @@ struct
     int%  field insn>tag
     cell% field insn>arg0
     cell% field insn>arg1
+    cell% field insn>arg2
+    cell% field insn>arg3
+    cell% field insn>arg4
 end-struct insn%
 
 struct
@@ -41,14 +48,6 @@ struct
     cell% field basicblock>insns ( vector of instructions )
     cell% field basicblock>jump  ( the last instruction )
 end-struct basicblock%
-
-struct
-    int%  field fundef>export   ( bool )
-    cell% field fundef>name     ( ID )
-    cell% field fundef>params
-    cell% field fundef>rettype
-    cell% field fundef>graph
-end-struct fundef%
 
 private{
 
@@ -63,19 +62,51 @@ private{
     tuck insn>arg0 !
 ;
 
-: make-node2 ( arg1 arg0 tag -- node )
+: make-node2 ( arg0 arg1 tag -- node )
     insn% %allocate throw
     tuck insn>tag !
-    tuck insn>arg0 !
     tuck insn>arg1 !
+    tuck insn>arg0 !
+;
+
+: make-node3 ( arg0 arg1 arg2 tag -- node )
+    insn% %allocate throw
+    tuck insn>tag !
+    tuck insn>arg2 !
+    tuck insn>arg1 !
+    tuck insn>arg0 !
+;
+
+: make-node4 ( arg0 arg1 arg2 arg3 tag -- node )
+    insn% %allocate throw
+    tuck insn>tag !
+    tuck insn>arg3 !
+    tuck insn>arg2 !
+    tuck insn>arg1 !
+    tuck insn>arg0 !
+;
+
+: make-node5 ( arg0 arg1 arg2 arg3 arg4 tag -- node )
+    insn% %allocate throw
+    tuck insn>tag !
+    tuck insn>arg4 !
+    tuck insn>arg3 !
+    tuck insn>arg2 !
+    tuck insn>arg1 !
+    tuck insn>arg0 !
 ;
 
 : make-id ( c-addr -- node ) make-string Nid make-node1 ; export
 : make-register ( idx -- node ) Nregister make-node1 ; export
 : make-deref ( node -- node ) Nderef make-node1 ; export
 : make-return ( -- node ) Nreturn make-node0 ; export
-: make-assign ( rhs lhs -- node ) Nassign make-node2 ; export
-: make-paramdecl ( type reg -- node ) Nparamdecl make-node2 ; export
+: make-assign ( lhs rhs -- node ) Nassign make-node2 ; export
+: make-paramdecl ( reg type -- node ) Nparamdecl make-node2 ; export
+: make-bblock ( name insns jump -- node ) Nbblock make-node3 ; export
+: make-fundecl ( export name params rettype body -- node )
+    Nfundecl make-node5
+; export
+: make-program ( defs -- node ) Nprogram make-node1 ; export
 
 TyNever make-node0 constant never-type export
 TyTrue make-node0 constant true-type export
@@ -108,6 +139,43 @@ TyF64 make-node0 constant f64-type export
         ." : "
         insn>arg1 @ recurse
     endof
+    Nbblock of
+        dup insn>arg0 @ recurse ." :" cr
+        dup insn>arg1 @
+        dup array-size 0 ?do
+            ." \t" i over array@ recurse cr
+        loop drop
+        ." \t" dup insn>arg2 @ recurse cr
+        drop
+    endof
+    Nfundecl of
+        dup insn>arg0 @ if ." export " then
+        dup insn>arg1 @ recurse
+        dup insn>arg2 @ dup array-size 0= if
+            drop ." ()"
+        else
+            ." ("
+            0 over array@ recurse
+            dup array-size 1 do
+                ." , " i over array@ recurse
+            loop
+            ." )"
+            drop
+        then
+        ." : "
+        dup insn>arg3 @ recurse
+        ."  {" cr
+        dup insn>arg4 @ dup array-size 0 do
+            i over array@ recurse
+        loop
+        ." }" cr
+    endof
+    Nprogram of
+        insn>arg0 @ dup array-size 0 do
+            i over array@ recurse cr
+        loop
+        drop
+    endof
     TyNever of drop ." !" endof
     TyTrue of drop ." true" endof
     TyFalse of drop ." false" endof
@@ -124,39 +192,6 @@ TyF64 make-node0 constant f64-type export
     TyF64 of drop ." f64" endof
     not-implemented
     endcase
-; export
-
-: pp-basic-block ( bb -- )
-    dup basicblock>name @ pp-node ." :" cr
-    dup basicblock>insns @
-    dup array-size 0 ?do
-        ." \t" i over array@ pp-node cr
-    loop drop
-    ." \t" dup basicblock>jump @ pp-node cr
-    drop
-; export
-
-: pp-fundef ( fundef -- )
-    dup fundef>export @ if ." export " then
-    dup fundef>name @ pp-node
-    dup fundef>params @ dup array-size 0= if
-        drop ." ()"
-    else
-        ." ("
-        0 over array@ pp-node
-        dup array-size 1 do
-            ." , " i over array@ pp-node
-        loop
-        ." )"
-        drop
-    then
-    ." : "
-    dup fundef>rettype @ pp-node
-    ."  {" cr
-    dup fundef>graph @ dup array-size 0 do
-        i over array@ pp-basic-block
-    loop
-    ." }" cr
 ; export
 
 }private

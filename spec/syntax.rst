@@ -56,6 +56,7 @@ Basic Block::
    basic_block : label ":" instruction* jump_instruction
 
 Function::
+
    function_params :
                    | register ":" type ( "," function_params )*
 
@@ -63,3 +64,8 @@ Function::
       "export"?
       "function" label "(" function_params ")" ":" type
       "{" basic_block+ "}"
+
+Program::
+
+   toplevel_definition : function_definition
+   program : toplevel_definition*

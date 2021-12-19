@@ -87,7 +87,7 @@ private{
     over '=' expect-sym unless SYNTAX-ERROR throw then
     over lex
     over parse-expression ?dup unless SYNTAX-ERROR throw then
-    swap make-assign
+    make-assign
     swap drop
 ;
 
@@ -109,11 +109,8 @@ private{
     begin 2 pick parse-instruction ?dup while over array-push repeat
     2 pick parse-jump-instruction ?dup unless SYNTAX-ERROR throw then
     ( lexer label array jump )
-    basicblock% %allocate throw
-    tuck basicblock>jump !
-    tuck basicblock>insns !
-    tuck basicblock>name !
-    swap drop
+    make-bblock
+    nip
 ;
 
 : parse-function-params ( lexer -- node )
@@ -123,7 +120,7 @@ private{
         over ':' expect-sym if over lex else SYNTAX-ERROR throw then
         over parse-type ?dup unless SYNTAX-ERROR throw then
         ( arr lexer reg type )
-        swap make-paramdecl 2 pick array-push
+        make-paramdecl 2 pick array-push
         dup ',' expect-sym unless drop exit then
         dup lex
     again
@@ -131,7 +128,7 @@ private{
 
 : parse-function-definition ( lexer -- node )
     dup lexer>token_tag @ Texport = if dup lex true else false then swap
-    dup lexer>token_tag @ Tfunction = if dup lex else  SYNTAX-ERROR throw then
+    dup lexer>token_tag @ Tfunction = if dup lex else 2drop 0 exit then
     dup parse-label ?dup if swap else SYNTAX-ERROR throw then
     dup '(' expect-sym if dup lex else SYNTAX-ERROR throw then
     dup parse-function-params ?dup if swap else SYNTAX-ERROR throw then
@@ -146,24 +143,32 @@ private{
     begin
         dup parse-basic-block ?dup if 2 pick array-push false else true then
     until
+    dup '}' expect-sym if dup lex else SYNTAX-ERROR throw then
 
     drop
     ( export label params rettype body )
-    fundef% %allocate throw
-    tuck fundef>graph !
-    tuck fundef>rettype !
-    tuck fundef>params !
-    tuck fundef>name !
-    tuck fundef>export !
+    make-fundecl
+;
+
+: parse-toplevel-definition ( lexer -- node )
+    parse-function-definition
 ;
 
 ( Parse `input` string and returns abstract syntax tree )
 : parse ( input -- graph )
     make-lexer
+    0 make-array swap
     dup lex
-    dup parse-function-definition ?dup if nip exit then
-    ." hoge" cr
-    not-implemented
+    begin
+        dup parse-toplevel-definition ?dup if
+            2 pick array-push false
+        else
+            dup lexer>token_tag @ Tnull <> if SYNTAX-ERROR throw then
+            true
+        then
+    until
+    free
+    make-program
 ; export
 
 }private
@@ -173,9 +178,11 @@ export function main(%0:i8, %1:char): i32 {
 block:
     %0 = %1
     return
+
 block2:
+
     %2 = %3
     return
 }
 
-" make-string parse pp-fundef
+" make-string parse pp-node
