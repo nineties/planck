@@ -12,6 +12,21 @@ include lib/string.fs
     enum Nderef     ( node )
     enum Nassign    ( lhs rhs )
     enum Nreturn
+
+    enum TyNever
+    enum TyTrue
+    enum TyFalse
+    enum TyChar
+    enum TyI8
+    enum TyU8
+    enum TyI16
+    enum TyU16
+    enum TyI32
+    enum TyU32
+    enum TyI64
+    enum TyU64
+    enum TyF32
+    enum TyF64
 drop
 
 struct
@@ -51,6 +66,21 @@ private{
 : make-deref ( node -- node ) Nderef make-node1 ; export
 : make-return ( -- node ) Nreturn make-node0 ; export
 : make-assign ( rhs lhs -- node ) Nassign make-node2 ; export
+
+TyNever make-node0 constant never-type export
+TyTrue make-node0 constant true-type export
+TyFalse make-node0 constant false-type export
+TyChar make-node0 constant char-type export
+TyI8 make-node0 constant i8-type export
+TyU8 make-node0 constant u8-type export
+TyI16 make-node0 constant i16-type export
+TyU16 make-node0 constant u16-type export
+TyI32 make-node0 constant i32-type export
+TyU32 make-node0 constant u32-type export
+TyI64 make-node0 constant i64-type export
+TyU64 make-node0 constant u64-type export
+TyF32 make-node0 constant f32-type export
+TyF64 make-node0 constant f64-type export
 
 : pp-node ( node -- )
     dup insn>tag @ case
