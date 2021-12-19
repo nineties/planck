@@ -47,7 +47,7 @@ Instruction::
             | register
             | "*" place
 
-   instruction :
+   instruction : place "=" place
 
    jump_instruction : "return"
 

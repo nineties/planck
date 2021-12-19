@@ -50,7 +50,12 @@ private{
 ;
 
 : parse-instruction ( lexer -- node )
-    drop 0
+    dup parse-place ?dup unless drop 0 exit then
+    over '=' expect-sym unless SYNTAX-ERROR throw then
+    over lex
+    over parse-place ?dup unless SYNTAX-ERROR throw then
+    swap make-assign
+    swap drop
 ;
 
 : parse-jump-instruction ( lexer -- node )
@@ -90,5 +95,6 @@ private{
 
 s"
 block:
+    %0 = %1
     return
 " make-string parse pp-basic-block
