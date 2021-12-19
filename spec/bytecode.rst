@@ -8,14 +8,14 @@ File format
 +--------------+--------------------------------+
 | field length | content                        |
 +==============+================================+
-| 4 byte       | File magic                     |
+| 4 bytes      | File magic                     |
 |              |                                |
 |              | * object file: "PLKO"          |
 |              | * executable file: "PLKE"      |
 +--------------+--------------------------------+
-| 4 byte       | File size                      |
+| 4 bytes      | Data size (N)                  |
 +--------------+--------------------------------+
-|              | Sections                       |
+| N bytes      | Sections                       |
 +--------------+--------------------------------+
 
 Section Format
@@ -24,10 +24,13 @@ Section Format
 +--------------+--------------------------------+
 | field length | content                        |
 +==============+================================+
-| 4 byte       | Section type                   |
+| 4 bytes      | Section type                   |
 |              | 4 ascii characters like "Code" |
 +--------------+--------------------------------+
-| 4 byte       | Section size (4-byte aligned)  |
+| 4 bytes      | Section size (N)               |
 +--------------+--------------------------------+
-|              | Section dependent data         |
+| N bytes      | Section dependent data         |
++--------------+--------------------------------+
+| (N - 3)/4*4  | Padding to fit 4-byte boundary |
+| bytes        |                                |
 +--------------+--------------------------------+
