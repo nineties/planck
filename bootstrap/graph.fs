@@ -144,6 +144,7 @@ TyF64 make-node0 constant f64-type export
     endof
     Nfundecl of
         dup node>arg0 @ if ." export " then
+        ." function "
         dup node>arg1 @ recurse
         dup node>arg2 @ dup array-size 0= if
             drop ." ()"
