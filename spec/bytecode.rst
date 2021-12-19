@@ -1,19 +1,33 @@
+=================
 Bytecode Encoding
 =================
+
+File format
+===========
 
 +--------------+--------------------------------+
 | field length | content                        |
 +==============+================================+
 | 4 byte       | File magic                     |
 |              |                                |
-|              | * object file: 0x706c6b6f      |
-|              | * executable file: 0x706c6b65  |
+|              | * object file: "PLKO"          |
+|              | * executable file: "PLKE"      |
 +--------------+--------------------------------+
-| 2 byte       | Minor version                  |
+| 4 byte       | File size                      |
 +--------------+--------------------------------+
-| 2 byte       | Major version                  |
+|              | Sections                       |
 +--------------+--------------------------------+
-| 2 byte       | Function definition count      |
+
+Section Format
+==============
+
 +--------------+--------------------------------+
-|              | Function definitions           |
+| field length | content                        |
++==============+================================+
+| 4 byte       | Section type                   |
+|              | 4 ascii characters like "Code" |
++--------------+--------------------------------+
+| 4 byte       | Section size (4-byte aligned)  |
++--------------+--------------------------------+
+|              | Section dependent data         |
 +--------------+--------------------------------+
