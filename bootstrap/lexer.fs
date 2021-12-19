@@ -101,16 +101,17 @@ Tfunction s" function" make-string reserved-words table!
     success
 ;
 
+: set-token-tag ( tag lexer -- )
+    lexer>token_tag !
+;
+
 : reset-token ( lexer -- )
     dup reset-token-buf
+    Tnull over set-token-tag
     0 over lexer>token_val !
     0 over lexer>token_len !
     0 over lexer>token_buf c!
     drop
-;
-
-: set-token-tag ( tag lexer -- )
-    lexer>token_tag !
 ;
 
 \ value = value*w + v
@@ -343,7 +344,6 @@ create state-transition-table
 \ Read one token
 \ Skip leading spaces when skip_spaces==true.
 : lex_impl   ( skip_spaces lexer -- )
-    Tnull over set-token-tag
     0 \ initial state
     begin
         \ ." state=" dup . ." " over current-char . ." " over lookahead . cr
