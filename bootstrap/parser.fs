@@ -49,11 +49,15 @@ private{
     recurse ?dup if make-deref else 0 then
 ;
 
+: parse-expression ( lexer -- node )
+    parse-place
+;
+
 : parse-instruction ( lexer -- node )
     dup parse-place ?dup unless drop 0 exit then
     over '=' expect-sym unless SYNTAX-ERROR throw then
     over lex
-    over parse-place ?dup unless SYNTAX-ERROR throw then
+    over parse-expression ?dup unless SYNTAX-ERROR throw then
     swap make-assign
     swap drop
 ;
