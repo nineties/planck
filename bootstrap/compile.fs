@@ -46,6 +46,10 @@ private{
     sp@ cell + swap 4 memcpy drop
 ;
 
+: u32@ ( addr -- n )
+    @ $ffffffff and
+;
+
 \ align n1 to u-byte boundary
 : aligned-by ( n1 u -- n2 )
     1- dup invert   \ ( n1 u-1 ~(u-1) )
@@ -53,12 +57,12 @@ private{
 ;
 
 : section-size ( section -- n )
-    section>bytes @ 4 aligned-by 8 +
+    section>bytes u32@ 4 aligned-by 8 +
 ;
 
 : make-section ( type bytes -- section )
     dup 4 aligned-by section% rot + %allocate throw
-    tuck section>bytes !
+    tuck section>bytes u32!
     tuck section>type 4 memcpy
 ;
 
