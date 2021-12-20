@@ -19,7 +19,8 @@ drop
 
 struct
     char% 4 * field section>type
-    u32% field section>bytes
+    u32%      field section>bytes
+    byte% 0 * field section>data
 end-struct section%
 
 private{
@@ -28,6 +29,10 @@ private{
 : aligned-by ( n1 u -- n2 )
     1- dup invert   \ ( n1 u-1 ~(u-1) )
     -rot + and
+;
+
+: section-size ( section -- n )
+    section>bytes @ 4 aligned-by 8 +
 ;
 
 \ Construct Control-Flow Graph from an array of basic blocks
@@ -90,7 +95,7 @@ private{
     ( compiler section )
     r>
     ( compiler section num-id )
-    sp@ 2 pick 8 + 4 memcpy drop
+    sp@ 2 pick section>data 4 memcpy drop
     dup 12 + >r
     over compiler>IdT @ table-keys
     begin ?dup while
@@ -108,7 +113,7 @@ private{
     \ compute data size
     0 >r
     begin ?dup while
-        dup car section>bytes @ 4 aligned-by 8 + r> + >r
+        dup car section-size r> + >r
         cdr
     repeat
     \ write data size field
@@ -117,7 +122,7 @@ private{
     r>
     begin ?dup while
         ." writing: \"" dup car section>type 4 typen ." \" section" cr
-        dup car dup section>bytes @ 4 aligned-by 8 + 3 pick write-file throw
+        dup car dup section-size 3 pick write-file throw
         cdr
     repeat
     2drop
