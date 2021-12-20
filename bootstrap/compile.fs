@@ -19,7 +19,7 @@ drop
 
 struct
     char% 4 * field section>type
-    int% field section>bytes
+    u32% field section>bytes
 end-struct section%
 
 private{
