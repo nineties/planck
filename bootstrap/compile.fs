@@ -78,8 +78,8 @@ private{
     sp@ cell + 4 2 pick write-file throw 2drop
 ;
 
-: build-IdT ( compiler -- section )
-    ." build-IdT" cr
+: compile-IdT ( compiler -- section )
+    ." compiling \" IdT\" section" cr
     dup compiler>IdT @ table-keys
     4 swap  ( 4 bytes for id count )
     0 >r    ( R: id count )
@@ -99,7 +99,9 @@ private{
     dup 12 + >r
     over compiler>IdT @ table-keys
     begin ?dup while
-        dup car dup strlen 1+ r> 2dup + >r swap memcpy
+        dup car
+            ." > add: " dup type cr
+            dup strlen 1+ r> 2dup + >r swap memcpy
         cdr
     repeat
     r> drop
@@ -109,7 +111,7 @@ private{
 : codegen ( compiler file -- )
     s" PLNK" 4 2 pick write-file throw
     \ compile sections
-    0 2 pick build-IdT swap cons dup >r
+    0 2 pick compile-IdT swap cons dup >r
     \ compute data size
     0 >r
     begin ?dup while
