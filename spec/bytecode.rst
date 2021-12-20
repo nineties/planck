@@ -75,6 +75,7 @@ Each entry has following format.
 |              | * 'V': variable                |
 |              | * 'C': constant                |
 |              | * 'F': function                |
+|              | * 'G': generic function        |
 |              | * 'T': type                    |
 +--------------+--------------------------------+
 | u32          | Index of definition            |
