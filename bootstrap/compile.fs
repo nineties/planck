@@ -134,11 +134,7 @@ private{
         r> 1+ >r
         cdr
     repeat
-    dup 4 aligned-by
-    section% rot + %allocate throw
-    s" Name" over section>type 4 memcpy
-    tuck section>bytes !
-    ( compiler section )
+    s" Name" swap make-section
     r>
     ( compiler section num-id )
     sp@ 2 pick section>data 4 memcpy drop
