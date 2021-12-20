@@ -13,7 +13,7 @@ include lib/table.fs
 
 struct
     cell% field compiler>Name    ( name table: string -> ID )
-    cell% field compiler>ExpT    ( list of (type, ID idx, def idx) )
+    cell% field compiler>ExpT    ( array of (type, ID idx, def idx) )
     cell% field compiler>fundefs ( array of function definitions )
 end-struct compiler%
 
@@ -33,6 +33,19 @@ end-struct tuple%
 
 private{
 
+: list-length ( list -- n )
+    0 >r
+    begin ?dup while
+        r> 1+ >r
+        cdr
+    repeat
+    r>
+;
+
+: u32! ( n addr -- )
+    sp@ cell + swap 4 memcpy drop
+;
+
 \ align n1 to u-byte boundary
 : aligned-by ( n1 u -- n2 )
     1- dup invert   \ ( n1 u-1 ~(u-1) )
@@ -43,6 +56,12 @@ private{
     section>bytes @ 4 aligned-by 8 +
 ;
 
+: make-section ( type bytes -- section )
+    dup 4 aligned-by section% rot + %allocate throw
+    tuck section>bytes !
+    tuck section>type 4 memcpy
+;
+
 \ Construct Control-Flow Graph from an array of basic blocks
 : construct-CFG ( arr -- graph )
 ;
@@ -50,7 +69,7 @@ private{
 : make-compiler ( -- compiler )
     compiler% %allocate throw
     make-string-table over compiler>Name !
-    0 over compiler>ExpT !
+    0 make-array over compiler>ExpT !
     0 make-array over compiler>fundefs !
 ;
 
@@ -68,8 +87,8 @@ private{
     tuck tuple1 !
     tuck tuple0 !
     r>
-    tuck compiler>ExpT cons
-    swap compiler>ExpT !
+    tuck compiler>ExpT @ array-push
+    drop
 ;
 
 : compile-fundecl ( node compiler -- )
@@ -135,38 +154,59 @@ private{
     nip
 ;
 
+: compile-ExpT ( compiler -- section )
+    ." compiling \"ExpT\" section" cr
+    compiler>ExpT @
+    dup array-size
+    dup 8 * 4 + s" ExpT" swap make-section dup >r
+
+    \ write data field
+    section>data
+    tuck u32! 4 +  \ entry count
+    over array-size 0 ?do
+        i 2 pick array@
+        tuck
+            dup tuple1 @ swap tuple0 @ 24 lshift or
+        over u32! 4 +
+        swap tuple2 @ over u32! 4 +
+    loop
+    2drop
+    r>
+;
+
 : codegen ( compiler file -- )
     s" PLNK" 4 2 pick write-file throw
     \ compile sections
-    0 2 pick compile-Name swap cons dup >r
+    0 make-array
+    2 pick compile-Name over array-push
+    2 pick compile-ExpT over array-push
     \ compute data size
-    0 >r
-    begin ?dup while
-        dup car section-size r> + >r
-        cdr
-    repeat
+    0
+    over array-size 0 ?do
+        i 2 pick array@ section-size +
+    loop
     \ write data size field
-    r> over write-u32
+    2 pick write-u32
     \ Write sections
-    r>
-    begin ?dup while
-        ." writing: \"" dup car section>type 4 typen ." \" section" cr
-        dup car dup section-size 3 pick write-file throw
-        cdr
-    repeat
-    2drop
+    dup array-size 0 ?do
+        i over array@
+        ." writing: \"" dup section>type 4 typen ." \" section" cr
+        dup section-size 3 pick write-file throw
+    loop
+    drop 2drop
 ; export
 
 }private
 
 s" test.pk" W/O open-file throw constant testfile
 
-s" function main(): i32 {
+s"
+export function main(): i32 {
 block:
     return
 }
 
-export function hoge(%0: i8): i32 {
+function hoge(%0: i8): i32 {
 root:
     return
 }
