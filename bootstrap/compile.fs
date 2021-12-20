@@ -23,6 +23,14 @@ struct
     byte% 0 * field section>data
 end-struct section%
 
+struct
+    cell% field tuple0
+    cell% field tuple1
+    cell% field tuple2
+    cell% field tuple3
+    cell% field tuple4
+end-struct tuple%
+
 private{
 
 \ align n1 to u-byte boundary
@@ -54,14 +62,25 @@ private{
 ;
 
 : add-export ( type id-idx def-idx compiler -- )
+    >r
     3 cells allocate throw
-    not-implemented
+    tuck tuple2 !
+    tuck tuple1 !
+    tuck tuple0 !
+    r>
+    tuck compiler>ExpT cons
+    swap compiler>ExpT !
 ;
 
 : compile-fundecl ( node compiler -- )
     ." compiling function: " over fundecl>name @ pp-node cr
-    over fundecl>name @ over get-id
-    ." > name idx: " . cr
+    over fundecl>export @ if
+        dup compiler>fundefs array-size dup >r
+        ." > fundef idx: " . cr
+        over fundecl>name @ over get-id dup >r
+        ." > name idx: " . cr
+        'F' r> r> 3 pick add-export
+    then
     2drop
     \ over fundecl>body construct-CFG
     \ not-implemented
@@ -87,7 +106,7 @@ private{
 ;
 
 : compile-Name ( compiler -- section )
-    ." compiling \" Name\" section" cr
+    ." compiling \"Name\" section" cr
     dup compiler>Name @ table-keys
     4 swap  ( 4 bytes for id count )
     0 >r    ( R: id count )
@@ -147,7 +166,7 @@ block:
     return
 }
 
-function hoge(%0: i8): i32 {
+export function hoge(%0: i8): i32 {
 root:
     return
 }
