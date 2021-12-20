@@ -6,16 +6,16 @@
 \ It compiles PlanckIR programs to object files
 \ for the vm.
 
+\ See spec/bytecode.rst
+
 include parser.fs
 include lib/table.fs
 
 struct
-    cell% field compiler>IdT    ( identifier table )
+    cell% field compiler>Name    ( name table: string -> ID )
+    cell% field compiler>ExpT    ( list of (type, ID idx, def idx) )
+    cell% field compiler>fundefs ( array of function definitions )
 end-struct compiler%
-
-0
-    enum SecIdT
-drop
 
 struct
     char% 4 * field section>type
@@ -41,19 +41,27 @@ private{
 
 : make-compiler ( -- compiler )
     compiler% %allocate throw
-    make-string-table over compiler>IdT !
+    make-string-table over compiler>Name !
+    0 over compiler>ExpT !
+    0 make-array over compiler>fundefs !
 ;
 
-\ Add an id to IdT section if not exist. Returns index of the id.
+\ Add an id to Name section if not exist. Returns index of the id.
 : get-id ( id compiler -- n )
-    swap node>arg0 @ swap compiler>IdT @
+    swap node>arg0 @ swap compiler>Name @
     2dup ?table-in if table@ exit then
     dup table-size dup >r -rot table! r>
 ;
 
+: add-export ( type id-idx def-idx compiler -- )
+    3 cells allocate throw
+    not-implemented
+;
+
 : compile-fundecl ( node compiler -- )
     ." compiling function: " over fundecl>name @ pp-node cr
-    over fundecl>name @ over get-id drop
+    over fundecl>name @ over get-id
+    ." > name idx: " . cr
     2drop
     \ over fundecl>body construct-CFG
     \ not-implemented
@@ -78,9 +86,9 @@ private{
     sp@ cell + 4 2 pick write-file throw 2drop
 ;
 
-: compile-IdT ( compiler -- section )
-    ." compiling \" IdT\" section" cr
-    dup compiler>IdT @ table-keys
+: compile-Name ( compiler -- section )
+    ." compiling \" Name\" section" cr
+    dup compiler>Name @ table-keys
     4 swap  ( 4 bytes for id count )
     0 >r    ( R: id count )
     begin ?dup while
@@ -90,14 +98,14 @@ private{
     repeat
     dup 4 aligned-by
     section% rot + %allocate throw
-    s"  IdT" over section>type 4 memcpy
+    s" Name" over section>type 4 memcpy
     tuck section>bytes !
     ( compiler section )
     r>
     ( compiler section num-id )
     sp@ 2 pick section>data 4 memcpy drop
     dup 12 + >r
-    over compiler>IdT @ table-keys
+    over compiler>Name @ table-keys
     begin ?dup while
         dup car
             ." > add: " dup type cr
@@ -111,7 +119,7 @@ private{
 : codegen ( compiler file -- )
     s" PLNK" 4 2 pick write-file throw
     \ compile sections
-    0 2 pick compile-IdT swap cons dup >r
+    0 2 pick compile-Name swap cons dup >r
     \ compute data size
     0 >r
     begin ?dup while

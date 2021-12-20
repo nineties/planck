@@ -10,7 +10,7 @@ File format
 +==============+================================+
 | 4 bytes      | File magic "PLNK"              |
 +--------------+--------------------------------+
-| 4 bytes      | Data size (N)                  |
+| u32          | Data size (N)                  |
 +--------------+--------------------------------+
 | N bytes      | Sections                       |
 +--------------+--------------------------------+
@@ -25,7 +25,7 @@ Section Format
 |              |                                |
 |              | 4 ascii characters like "Code" |
 +--------------+--------------------------------+
-| 4 bytes      | Section size (N)               |
+| u32          | Section size (N)               |
 +--------------+--------------------------------+
 | N bytes      | Section dependent data         |
 +--------------+--------------------------------+
@@ -33,19 +33,49 @@ Section Format
 | bytes        |                                |
 +--------------+--------------------------------+
 
-" IdT" - Identifier Table
--------------------------
+"Name" - Name Table
+-------------------
 
-Identifiers used for variable names, function names, type names, etc.
+Identifiers used for variables, constants, functions, types, etc.
+
++--------------+---------------------------------+
+| field length | content                         |
++==============+=================================+
+| u32          | Name count (N)                  |
++--------------+---------------------------------+
+| ...          | Name 0 (null-terminated string) |
++--------------+---------------------------------+
+| ...          | ...                             |
++--------------+---------------------------------+
+| ...          | Name N-1                        |
++--------------+---------------------------------+
+
+"ExpT" - Export Table
+---------------------
+
+Table of variables, constants, functions, types, etc. which are exported.
 
 +--------------+--------------------------------+
 | field length | content                        |
 +==============+================================+
-| 4 bytes      | Identifier Count (N)           |
+| u32          | Entry count (N)                |
 +--------------+--------------------------------+
-| ...          | ID 0 (null-terminated)         |
+| ...          | N entries                      |
 +--------------+--------------------------------+
-| ...          | ...                            |
+
+Each entry has following format.
+
 +--------------+--------------------------------+
-| ...          | ID N-1 (null-terminated)       |
+| field length | content                        |
++==============+================================+
+| u24          | Index of Name                  |
++--------------+--------------------------------+
+| u8           | Entry type                     |
+|              |                                |
+|              | * 'V': variable                |
+|              | * 'C': constant                |
+|              | * 'F': function                |
+|              | * 'T': type                    |
++--------------+--------------------------------+
+| u32          | Index of definition            |
 +--------------+--------------------------------+
