@@ -6,7 +6,7 @@
 \ It compiles PlanckIR programs to object files
 \ for the vm.
 
-\ See spec/bytecode.rst
+\ See spec/object.rst and spec/bytecode.rst
 
 include parser.fs
 include lib/table.fs
