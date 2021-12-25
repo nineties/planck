@@ -27,11 +27,13 @@ Types
 Primitive Types
 ---------------
 
+- never: `!`
 - boolean: `bool`
 - character: `char`
 - unsigned integers: `u8`, `u32`, `u32`, `u64`
 - signed integers: `i8`, `i32`, `i32`, `i64`
 - IEE754 floating point number: `f32`, `f64`
+- string: `str`
 
 Reference
 =========
