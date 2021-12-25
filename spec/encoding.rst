@@ -2,10 +2,17 @@
 Object File Format
 ==================
 
-**The byte-order is always little endian.**
+The bytecode encoding of PlanckIR has the following characteristics.
+
+- It has complete information of types. Enables strict type inference, type checking,
+  and other program analysis at link time and runtime.
+- It does not use information that depends on the location of the data, such as address or offset.
+- Fast and compact.
 
 Encoding of Types
 ==================
+
+**The byte-order is always little endian.**
 
 +----------+------------------+------------------------------------------------+
 | 1st byte | following bytes  | type constructor                               |
@@ -51,9 +58,10 @@ Encoding of Types
 |          | ret + args       | upto 255                                       |
 +----------+------------------+------------------------------------------------+
 
-
 Encoding of Values
 ==================
+
+**The byte-order is always little endian.**
 
 +----------+----------+------------------+-------------------------------------+
 | type     | 1st byte | following bytes  |                                     |
