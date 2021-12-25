@@ -5,10 +5,14 @@ Object File Format
 Encoding of Builtin Data
 ========================
 
-::
+Integers::
 
     +-----------+
     | 0xxxxxxxx | unsigned 7-bit integer
+    +-----------+
+
+    +-----------+
+    | 111xxxxxx | signed 7-bit integer
     +-----------+
 
 File Format
