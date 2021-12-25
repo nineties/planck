@@ -5,15 +5,91 @@ Object File Format
 Encoding of Builtin Data
 ========================
 
+The byte-order is always little endian.
+
 Integers::
 
-    +-----------+
-    | 0xxxxxxxx | unsigned 7-bit integer
-    +-----------+
+   **u8**: unsigned 7-bit integer
+   +-----------+
+   | 0xxxxxxxx |
+   +-----------+
 
-    +-----------+
-    | 111xxxxxx | signed 7-bit integer
-    +-----------+
+   **i8**: signed 7-bit integer
+   +-----------+
+   | 111xxxxxx |
+   +-----------+
+
+   **u8**: unsigned 8-bit integer
+   +------+------+
+   | 0x80 | 0xXX |
+   +------+------+
+
+   **i8**: signed 8-bit integer
+   +------+------+
+   | 0x81 | 0xXX |
+   +------+------+
+
+   **u16**: unsigned 16-bit integer
+   +------+------+------+
+   | 0x82 | 0xXX | 0xXX |
+   +------+------+------+
+
+   **i16**: signed 16-bit integer
+   +------+------+------+
+   | 0x83 | 0xXX | 0xXX |
+   +------+------+------+
+
+   **u32**: unsigned 32-bit integer
+   +------+------+------+------+------+
+   | 0x84 | 0xXX | 0xXX | 0xXX | 0xXX |
+   +------+------+------+------+------+
+
+   **i32**: signed 32-bit integer
+   +------+------+------+------+------+
+   | 0x85 | 0xXX | 0xXX | 0xXX | 0xXX |
+   +------+------+------+------+------+
+
+   **u64**: unsigned 64-bit integer
+   +------+------+------+------+------+------+------+------+------+
+   | 0x86 | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX |
+   +------+------+------+------+------+------+------+------+------+
+
+   **i64**: signed 64-bit integer
+   +------+------+------+------+------+------+------+------+------+
+   | 0x87 | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX |
+   +------+------+------+------+------+------+------+------+------+
+
+Floating Poit Numbers::
+
+   **f32** IEEE 754 single-precision floating point number
+   +------+------+------+------+------+
+   | 0x8A | 0xXX | 0xXX | 0xXX | 0xXX |
+   +------+------+------+------+------+
+
+   **f64** IEEE 754 double-precision floating point number
+   +------+------+------+------+------+------+------+------+------+
+   | 0x8B | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX | 0xXX |
+   +------+------+------+------+------+------+------+------+------+
+
+Booleans::
+
+   **bool**: true
+   +------+
+   | 0x90 |
+   +------+
+
+   **bool**: false
+   +------+
+   | 0x91 |
+   +------+
+
+Character::
+
+   **char*:: UTF-8 character
+   +------+~~~~~~~~~~~~~~~~~~+
+   | 0x92 | u8 or u16 or u32 |
+   +------+~~~~~~~~~~~~~~~~~~+
+
 
 File Format
 ===========

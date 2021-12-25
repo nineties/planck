@@ -24,6 +24,14 @@ When the **lifetime** of the owner ends, the value will automatically be dropped
 Types
 =====
 
+Primitive Types
+---------------
+
+- boolean: `bool`
+- character: `char`
+- unsigned integers: `u8`, `u32`, `u32`, `u64`
+- signed integers: `i8`, `i32`, `i32`, `i64`
+- IEE754 floating point number: `f32`, `f64`
 
 Reference
 =========
