@@ -10,5 +10,4 @@ This is a specification of **Planck Compiler Infrastructure**.
 - `Static Single Assignment Form <ssa.rst>`_
 - `Language Syntax <syntax.rst>`_
 - `Instructions <instruction.rst>`_
-- `Object File Format <object.rst>`_
-- `Bytecode Encoding <bytecode.rst>`_
+- `Bytecode Encoding <encoding.rst>`_
