@@ -158,9 +158,9 @@ ID table
 
 Identifiers used for variables, constants, functions, types, etc.::
 
-   +------+---------+~~~~~~~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~~~~~+
    | 0x00 | uint(n) | n str objects |
-   +------+---------+~~~~~~~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~~~~~+
 
 Export table
 ------------
@@ -177,15 +177,27 @@ The kind of ID is one of following ascii code.
 
 ::
 
-   +------+---------+~~~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~+
    | 0x01 | uint(n) | 2*n uints |
-   +------+---------+~~~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~+
 
 Function table
 --------------
 
 ::
 
-   +------+---------+~~~~~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~~~+
    | 0x02 | uint(n) | n functions |
-   +------+---------+~~~~~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~~~+
+
+   Each function consists of its type and basic blocks.
+   Block 0 is always the entry and block n-1 is the exit.
+   +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
+   | type | uint(n) | n basic blocks |
+   +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
+
+   Each basic block consists of zero or more non-branch
+   instructions and one branch instruction.
+   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
+   | uint (n) | n non-branch instructions | branch instruction |
+   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
