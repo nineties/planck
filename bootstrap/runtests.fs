@@ -6,7 +6,7 @@
 
 include lib/tester.fs
 
-include encode.fs
+include encoding.fs
 \ include compile.fs
 
 report-and-exit
