@@ -147,30 +147,38 @@ File Format
 Sections
 ========
 
-::
+ID table
+--------
 
-   == ID table section ==
-   Identifiers used for variables, constants, functions, types, etc.::
+Identifiers used for variables, constants, functions, types, etc.::
+
    +------+---------+~~~~~~~~~~~~~~~+
    | 0x00 | uint(n) | n str objects |
    +------+---------+~~~~~~~~~~~~~~~+
 
-   == Export table section ==
-   Table of variables, constants, functions, types, etc. which are exported.
-   Each uint pair represents kind of exported ID and the index of the ID.
-   The kind of ID is one of following ascii code.
+Export table
+------------
 
-   'V': variable
-   'C': constant
-   'F': function
-   'G': generic function
-   'T': type
+Table of variables, constants, functions, types, etc. which are exported.
+Each uint pair represents kind of exported ID and the index of the ID.
+The kind of ID is one of following ascii code.
+
+- 'V': variable
+- 'C': constant
+- 'F': function
+- 'G': generic function
+- 'T': type
+
+::
 
    +------+---------+~~~~~~~~~~~+
    | 0x01 | uint(n) | 2*n uints |
    +------+---------+~~~~~~~~~~~+
 
-   == Function table section ==
+Function table
+--------------
+
+::
 
    +------+---------+~~~~~~~~~~~~~+
    | 0x02 | uint(n) | n functions |
