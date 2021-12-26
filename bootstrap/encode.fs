@@ -40,6 +40,8 @@ private{
     2drop
 ;
 : u16@ ( p -- u ) @ 0xffff and ;
+: u32! ( u p -- ) ! ;
+: u32@ ( p -- u ) @ ;
 
 \ mapping from 1st byte of object to types
 create value-encoding-table
@@ -89,9 +91,11 @@ create value-encoding-table
         %11000011 over u8! 1+ u8! 2
     else over $ffff u<= if
         %11000101 over u8! 1+ u16! 3
+    else over $ffffff u<= if
+        %11000111 over u8! 1+ u32! 5
     else
         not-implemented
-    then then then
+    then then then then
 ;
 
 T{ create test-buf 1024 allot -> }T
@@ -113,5 +117,13 @@ T{ test-buf 1+ u8@ -> 255 }T
 T{ 256 test-buf encode-uint -> 3 }T
 T{ test-buf decode-value-type -> Vu16 }T
 T{ test-buf 1+ u16@ -> 256 }T
+
+T{ 65535 test-buf encode-uint -> 3 }T
+T{ test-buf decode-value-type -> Vu16 }T
+T{ test-buf 1+ u16@ -> 65535 }T
+
+T{ 65536 test-buf encode-uint -> 5 }T
+T{ test-buf decode-value-type -> Vu32 }T
+T{ test-buf 1+ u32@ -> 65536 }T
 
 }private
