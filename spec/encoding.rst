@@ -147,77 +147,31 @@ File Format
 Sections
 ========
 
-"Name" - Name Table
--------------------
+::
 
-Identifiers used for variables, constants, functions, types, etc.
+   == ID table section ==
+   Identifiers used for variables, constants, functions, types, etc.::
+   +------+---------+~~~~~~~~~~~~~~~+
+   | 0x00 | uint(n) | n str objects |
+   +------+---------+~~~~~~~~~~~~~~~+
 
-+--------------+----------------------------------+
-| field length | content                          |
-+==============+==================================+
-| u32          | Name count (N)                   |
-+--------------+----------------------------------+
-| ...          | Name 0 (null-terminated string)  |
-+--------------+----------------------------------+
-| ...          | ...                              |
-+--------------+----------------------------------+
-| ...          | Name N-1                         |
-+--------------+----------------------------------+
+   == Export table section ==
+   Table of variables, constants, functions, types, etc. which are exported.
+   Each uint pair represents kind of exported ID and the index of the ID.
+   The kind of ID is one of following ascii code.
 
-"ExpT" - Export Table
----------------------
+   'V': variable
+   'C': constant
+   'F': function
+   'G': generic function
+   'T': type
 
-Table of variables, constants, functions, types, etc. which are exported.
+   +------+---------+~~~~~~~~~~~+
+   | 0x01 | uint(n) | 2*n uints |
+   +------+---------+~~~~~~~~~~~+
 
-+--------------+----------------------------------+
-| field length | content                          |
-+==============+==================================+
-| u32          | Entry count (N)                  |
-+--------------+----------------------------------+
-| ...          | N entries                        |
-+--------------+----------------------------------+
+   == Function table section ==
 
-Each entry has following format.
-
-+--------------+----------------------------------+
-| field length | content                          |
-+==============+==================================+
-| u24          | Index of Name                    |
-+--------------+----------------------------------+
-| u8           | Entry type                       |
-|              |                                  |
-|              | * 'V': variable                  |
-|              | * 'C': constant                  |
-|              | * 'F': function                  |
-|              | * 'G': generic function          |
-|              | * 'T': type                      |
-+--------------+----------------------------------+
-| u32          | Index of definition              |
-+--------------+----------------------------------+
-
-"Func" - Function Table
------------------------
-
-+--------------+----------------------------------+
-| field length | content                          |
-+==============+==================================+
-| u32          | Function count (N)               |
-+--------------+----------------------------------+
-| ...          | N entries                        |
-+--------------+----------------------------------+
-
-Each entry has following format.
-
-+--------------+----------------------------------+
-| field length | content                          |
-+==============+==================================+
-| u32          | Function count (N)               |
-+--------------+----------------------------------+
-| ...          | Byte-encoding of function type   |
-+--------------+----------------------------------+
-| ...          | Byte-encoding of basic block 0   |
-+--------------+----------------------------------+
-| ...          |                                  |
-+--------------+----------------------------------+
-| ...          | Byte-encoding of basic block N-1 |
-+--------------+----------------------------------+
+   +------+---------+~~~~~~~~~~~~~+
+   | 0x02 | uint(n) | n functions |
+   +------+---------+~~~~~~~~~~~~~+
