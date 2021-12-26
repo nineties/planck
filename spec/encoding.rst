@@ -7,7 +7,8 @@ The bytecode encoding of PlanckIR has the following characteristics.
 - It has complete information of types. Enables strict type inference, type checking,
   and other program analysis at link time and runtime.
 - It does not use information that depends on the location of the data, such as address or offset.
-- Fast and compact.
+- The entire object file is also represented as a one of PlanckIR object.
+- Fast and compact serialization format.
 
 Encoding of Types
 ==================
@@ -128,33 +129,21 @@ Encoding of Values
 File Format
 ===========
 
-+--------------+----------------------------------+
-| field length | content                          |
-+==============+==================================+
-| 4 bytes      | File magic "PLNK"                |
-+--------------+----------------------------------+
-| u32          | Data size (N)                    |
-+--------------+----------------------------------+
-| N bytes      | Sections                         |
-+--------------+----------------------------------+
+::
 
-Section Format
-==============
+   File format
+   +------------------------+----------+~~~~~~~~~~~~+
+   | "PLNK" (4-bytes magic) | uint (N) | N sections |
+   +------------------------+----------+~~~~~~~~~~~~+
 
-+--------------+----------------------------------+
-| field length | content                          |
-+==============+==================================+
-| 4 bytes      | Section type                     |
-|              |                                  |
-|              | 4 ascii characters like "Code"   |
-+--------------+----------------------------------+
-| u32          | Section size (N)                 |
-+--------------+----------------------------------+
-| N bytes      | Section dependent data           |
-+--------------+----------------------------------+
-| (N - 3)/4*4  | Padding to fit 4-byte boundary   |
-| bytes        |                                  |
-+--------------+----------------------------------+
+   Section
+   +---------------------+----------+~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+   | uint (section type) | uint (N) | N bytes (                 |
+   +---------------------+----------+~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+
+Sections
+========
+
 
 "Name" - Name Table
 -------------------
