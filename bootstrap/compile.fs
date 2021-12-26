@@ -1,10 +1,9 @@
 \ planck -
 \ Copyright (C) 2021 nineties
 
-\ This is an implementation of PlanckVM compiler
+\ This is an implementation of PlanckIR compiler
 \ in PlanckForth.
-\ It compiles PlanckIR programs to object files
-\ for the vm.
+\ It compiles a PlanckIR program to an object file.
 
 \ See spec/encoding.rst
 
