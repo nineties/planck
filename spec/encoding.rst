@@ -7,7 +7,7 @@ The bytecode encoding of PlanckIR has the following characteristics.
 - It has complete information of types. Enables strict type inference, type checking,
   and other program analysis at link time and runtime.
 - It does not use information that depends on the location of the data, such as address or offset.
-- The entire object file is also represented as a one of PlanckIR object.
+- The entire object file is also represented as a one of Planck object.
 - Fast and compact serialization format.
 
 Encoding of Types
@@ -25,7 +25,7 @@ Encoding of Types
 | 1001xxxx | 1 arg            | Array type whose length is upto 15             |
 +----------+------------------+------------------------------------------------+
 | 101xxxxx | ret + args       | Function type whose number of arguments is     |
-|          |                  | upto 15                                        |
+|          |                  | upto 31                                        |
 +----------+------------------+------------------------------------------------+
 | 11000000 |                  | never, bool, char, u8, i8, u16, i16, u32, i32, |
 | -        |                  | u64, i64, f32, f64, str                        |
@@ -57,6 +57,12 @@ Encoding of Types
 +----------+------------------+------------------------------------------------+
 | 11011010 | 1 byte +         | Function type whose number of arguments is     |
 |          | ret + args       | upto 255                                       |
++----------+------------------+------------------------------------------------+
+| 11011011 |                  | reserved                                       |
+| -        |                  |                                                |
+| 11111110 |                  |                                                |
++----------+------------------+------------------------------------------------+
+| 11111111 |                  | Obect file type                                |
 +----------+------------------+------------------------------------------------+
 
 Encoding of Values
@@ -122,6 +128,8 @@ Encoding of Values
 +----------+----------+------------------+-------------------------------------+
 | register | 11010101 | 2 byte           | Register whose index is upto 2^16-1 |
 +----------+----------+------------------+-------------------------------------+
+| user     | 11011111 | type + bytes     | User defined serializable data      |
++----------+----------+------------------+-------------------------------------+
 | i8       | 111xxxxx |                  | 5-bit signed int                    |
 +----------+----------+------------------+-------------------------------------+
 
@@ -131,19 +139,13 @@ File Format
 
 ::
 
-   File format
-   +------------------------+----------+~~~~~~~~~~~~+
-   | "PLNK" (4-bytes magic) | uint (N) | N sections |
-   +------------------------+----------+~~~~~~~~~~~~+
-
-   Section
-   +---------------------+----------+~~~~~~~~~~~~~~~~~~~~~~~~~~~+
-   | uint (section type) | uint (N) | N bytes (                 |
-   +---------------------+----------+~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+   Object file
+   +----------+----------+---------+~~~~~~~~~~~~+
+   | 11011111 | 11111111 | uint(n) | n sections |
+   +----------+----------+---------+~~~~~~~~~~~~+
 
 Sections
 ========
-
 
 "Name" - Name Table
 -------------------
