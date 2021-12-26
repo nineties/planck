@@ -8,6 +8,7 @@
 \ See spec/encoding.rst
 
 include parser.fs
+include encoding.fs
 include lib/table.fs
 
 struct
