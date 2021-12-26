@@ -201,3 +201,5 @@ Function table
    +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
    | uint (n) | n non-branch instructions | branch instruction |
    +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
+
+See `Instructions <instruction.rst>`_ for encoding of instructions.
