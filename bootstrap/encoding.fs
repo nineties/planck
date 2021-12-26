@@ -5,6 +5,8 @@
 
 \ See spec/encoding.rst
 
+s" Decode Error" exception constant DECODE-ERROR
+
 \ value types
 0
     enum Vundef
@@ -31,17 +33,16 @@ drop
 
 private{
 
-\ Utilities
-: u8! ( u p -- ) c! ;
-: u8@ ( p -- u ) c@ $ff and ;
+: u8! ( u p -- ) c! ; export
+: u8@ ( p -- u ) c@ $ff and ; export
 : u16! ( u p -- )
     over 0xff and over c!
     over 8 rshift over 1+ c!
     2drop
-;
-: u16@ ( p -- u ) @ 0xffff and ;
-: u32! ( u p -- ) ! ;
-: u32@ ( p -- u ) @ ;
+; export
+: u16@ ( p -- u ) @ 0xffff and ; export
+: u32! ( u p -- ) ! ; export
+: u32@ ( p -- u ) @ ; export
 
 \ mapping from 1st byte of object to types
 create value-encoding-table
@@ -96,7 +97,7 @@ create value-encoding-table
     else
         not-implemented
     then then then then
-;
+; export
 
 T{ create test-buf 1024 allot -> }T
 
