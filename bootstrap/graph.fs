@@ -15,7 +15,7 @@ include lib/string.fs
     enum Nparamdecl ( reg type )
 
     enum Nbblock    ( name insns jump )
-    enum Nfundecl   ( export name params rettype body )
+    enum Nfundecl   ( export name params rettype blocks )
     enum Nprogram   ( defs )
 
     enum TyNever
@@ -49,7 +49,7 @@ struct
     cell% field fundecl>name
     cell% field fundecl>params
     cell% field fundecl>retty
-    cell% field fundecl>body    ( array of basic blocks )
+    cell% field fundecl>blocks  ( array of basic blocks )
 end-struct fundecl%
 
 struct
@@ -111,7 +111,7 @@ private{
 : make-assign ( lhs rhs -- node ) Nassign make-node2 ; export
 : make-paramdecl ( reg type -- node ) Nparamdecl make-node2 ; export
 : make-bblock ( name insns jump -- node ) Nbblock make-node3 ; export
-: make-fundecl ( export name params rettype body -- node )
+: make-fundecl ( export name params rettype blocks -- node )
     Nfundecl make-node5
 ; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
