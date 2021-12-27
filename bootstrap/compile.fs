@@ -12,7 +12,7 @@ include encoding.fs
 include lib/table.fs
 
 struct
-    cell% field compiler>Name    ( name table: string -> ID )
+    cell% field compiler>IdTable ( name table: string -> ID )
     cell% field compiler>ExpT    ( array of (type, ID idx, def idx) )
     cell% field compiler>fundefs ( array of function definitions )
 
@@ -42,35 +42,21 @@ private{
     r>
 ;
 
-: u32! ( n addr -- )
-    sp@ cell + swap 4 memcpy drop
-;
-
-: u32@ ( addr -- n )
-    @ $ffffffff and
-;
-
-\ align n1 to u-byte boundary
-: aligned-by ( n1 u -- n2 )
-    1- dup invert   \ ( n1 u-1 ~(u-1) )
-    -rot + and
-;
-
 \ Construct Control-Flow Graph from an array of basic blocks
 : construct-CFG ( arr -- graph )
 ;
 
 : make-compiler ( -- compiler )
     compiler% %allocate throw
-    make-string-table over compiler>Name !
+    make-string-table over compiler>IdTable !
     0 make-array over compiler>ExpT !
     0 make-array over compiler>fundefs !
     dup compiler>buf over compiler>pos !
 ;
 
-\ Add an id to Name section if not exist. Returns index of the id.
+\ Add an id to IdTable section if not exist. Returns index of the id.
 : get-id ( id compiler -- n )
-    swap node>arg0 @ swap compiler>Name @
+    swap node>arg0 @ swap compiler>IdTable @
     2dup ?table-in if table@ exit then
     dup table-size dup >r -rot table! r>
 ;
@@ -115,36 +101,6 @@ private{
     drop
 ; export
 
-: write-u32 ( n file -- )
-    sp@ cell + 4 2 pick write-file throw 2drop
-;
-
-\ : compile-Name ( compiler -- section )
-\     ." compiling \"Name\" section" cr
-\     dup compiler>Name @ table-keys
-\     4 swap  ( 4 bytes for id count )
-\     0 >r    ( R: id count )
-\     begin ?dup while
-\         swap over car strlen 1+ + swap
-\         r> 1+ >r
-\         cdr
-\     repeat
-\     s" Name" swap make-section
-\     r>
-\     ( compiler section num-id )
-\     sp@ 2 pick section>data 4 memcpy drop
-\     dup 12 + >r
-\     over compiler>Name @ table-keys
-\     begin ?dup while
-\         dup car
-\             ." > add: " dup type cr
-\             dup strlen 1+ r> 2dup + >r swap memcpy
-\         cdr
-\     repeat
-\     r> drop
-\     nip
-\ ;
-\ 
 \ : compile-ExpT ( compiler -- section )
 \     ." compiling \"ExpT\" section" cr
 \     compiler>ExpT @
@@ -165,19 +121,31 @@ private{
 \     r>
 \ ;
 
+: emit ( compiler w 'encoder -- compiler )
+    >r over compiler>pos @ r> execute over compiler>pos +!
+;
+
 : codegen ( compiler file -- )
     >r
-    %11011111 over compiler>pos @ u8! 1 over compiler>pos +!
+    %11011111 ['] encode-u8 emit
+    %11111111 ['] encode-u8 emit
+    1 ['] encode-uint emit
+
+    \ write ID section
+    0 ['] encode-uint emit  \ section type
+    dup compiler>IdTable @ table-keys dup >r
+    list-length ['] encode-uint emit
+    r> begin ?dup while
+        dup >r car ['] encode-str emit r> cdr
+    repeat
 
     \ write buf to file
     dup compiler>buf over compiler>pos @ over - r> write-file throw drop
     drop exit
     not-implemented
 
-\    s" PLNK" 4 2 pick write-file throw
 \    \ compile sections
-\    0 make-array
-\    2 pick compile-Name over array-push
+\    2 pick compile-IdTable over array-push
 \    2 pick compile-ExpT over array-push
 \    \ compute data size
 \    0
@@ -205,11 +173,11 @@ block:
     return
 }
 
-function hoge(%0: i8): i32 {
+export function hoge(%0: i8): i32 {
 root:
     return
 }
 "
-make-string parse compile-program testfile codegen
+make-string parse .s compile-program .s testfile .s codegen
 
 testfile flush-file throw

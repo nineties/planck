@@ -5,6 +5,7 @@
 
 \ See spec/encoding.rst
 
+s" Encode Error" exception constant ENCODE-ERROR
 s" Decode Error" exception constant DECODE-ERROR
 
 \ value types
@@ -43,6 +44,10 @@ private{
 : u16@ ( p -- u ) @ 0xffff and ; export
 : u32! ( u p -- ) ! ; export
 : u32@ ( p -- u ) @ ; export
+
+: encode-u8 ( u p -- n ) u8! 1 ; export
+: encode-u16 ( u p -- n ) u16! 2 ; export
+: encode-u32 ( u p -- n ) u32! 4 ; export
 
 \ mapping from 1st byte of object to types
 create value-encoding-table
@@ -126,5 +131,34 @@ T{ test-buf 1+ u16@ -> 65535 }T
 T{ 65536 test-buf encode-uint -> 5 }T
 T{ test-buf decode-value-type -> Vu32 }T
 T{ test-buf 1+ u32@ -> 65536 }T
+
+\ Encode null-terminated string to `buf`
+\ and returns number of bytes.
+: encode-str ( c-addr buf -- n )
+    over strlen
+    dup 32 < if
+        dup >r $a0 or over u8! 1+ strcpy r> 1+
+    else dup 256 < if
+        dup >r >r
+        %11001110 over u8! 1+   \ tag
+        r> over u8! 1+          \ bytes
+        strcpy
+        r> 2 +
+    else dup $ffff < if
+        dup >r >r
+        %11001111 over u8! 1+   \ tag
+        r> over u16! 2 +          \ bytes
+        strcpy
+        r> 3 +
+    else dup $ffffff < if
+        dup >r >r
+        %11010000 over u8! 1+   \ tag
+        r> over u32! 4 +          \ bytes
+        strcpy
+        r> 5 +
+    else
+        ENCODE-ERROR throw
+    then then then then
+; export
 
 }private

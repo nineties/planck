@@ -42,7 +42,7 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tfunction
 drop
 
-64 constant TOKENBUF-SIZE
+1024 constant TOKENBUF-SIZE
 
 struct
     cell% field lexer>input ( input string )

@@ -13,7 +13,9 @@ The bytecode encoding of PlanckIR has the following characteristics.
 Encoding of Types
 ==================
 
-**The byte-order is always little endian.**
+- **The byte-order is always little endian.**
+- str object is represented by length-prefixed format and they do not include
+  null byte at the last.
 
 ::
 
