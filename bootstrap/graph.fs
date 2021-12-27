@@ -15,7 +15,7 @@ include lib/string.fs
     enum Nparamdecl ( reg type )
 
     enum Nbblock    ( name insns jump )
-    enum Nfundecl   ( export name params body )
+    enum Nfundecl   ( export name params rettype body )
     enum Nprogram   ( defs )
 
     enum TyNever
@@ -48,7 +48,8 @@ struct
     int%  field fundecl>export
     cell% field fundecl>name
     cell% field fundecl>params
-    cell% field fundecl>body
+    cell% field fundecl>retty
+    cell% field fundecl>body    ( array of basic blocks )
 end-struct fundecl%
 
 struct
