@@ -147,7 +147,7 @@ private{
 
     drop
     ( export label params rettype body )
-    make-fundecl
+    make-fundef
 ;
 
 : parse-toplevel-definition ( lexer -- node )

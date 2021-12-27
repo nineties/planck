@@ -42,10 +42,6 @@ private{
     r>
 ;
 
-\ Construct Control-Flow Graph from an array of basic blocks
-: construct-CFG ( arr -- graph )
-;
-
 : make-compiler ( -- compiler )
     compiler% %allocate throw
     make-string-table over compiler>idtable !
@@ -72,23 +68,37 @@ private{
     drop
 ;
 
-: compile-fundecl ( node compiler -- )
-    ." compiling function: " over fundecl>name @ pp-node cr
-    over fundecl>export @ if
-        dup compiler>fundefs array-size dup >r
+: construct-function-type ( node -- type )
+    0 make-array swap
+    dup fundef>params @ array-size 0 ?do
+        i over fundef>params @ array@
+        dup node>tag @ Nparamdecl <> if not-reachable then
+        node>arg1 @ 2 pick array-push
+    loop
+    TyTuple make-node1 swap fundef>retty @ TyFunc make-node2
+;
+
+: compile-fundef ( node compiler -- )
+    over fundef>tag @ Nfundef <> if not-reachable then
+    ." compiling function: " over fundef>name @ pp-node cr
+    over fundef>export @ if
+        dup compiler>fundefs @ array-size dup >r
         ." > fundef idx: " . cr
-        over fundecl>name @ over get-id dup >r
+        over fundef>name @ over get-id dup >r
         ." > name idx: " . cr
         'F' r> r> 3 pick add-export
     then
+    over construct-function-type
+    3 cells allocate throw
+    tuck tuple0 ! \ function type
+    ( XXX )
+    over compiler>fundefs @ array-push
     2drop
-    \ over fundecl>body construct-CFG
-    \ not-implemented
 ;
 
 : compile-definition ( def compiler -- )
     over node>tag @ case
-    Nfundecl of compile-fundecl endof
+    Nfundef of compile-fundef endof
         not-reachable
     endcase
 ;
@@ -129,6 +139,10 @@ private{
         r> tuple2 @ ['] encode-uint emit \ index of corresponding def
     loop
 
+    \ write function section
+    $02 ['] encode-u8 emit \ section type
+
+
     \ write buf to file
     dup compiler>buf over compiler>pos @ over - r> write-file throw drop
     drop exit
@@ -139,12 +153,12 @@ private{
 s" test.pk" W/O open-file throw constant testfile
 
 s"
-export function main(): i32 {
-block:
+export function main(%0: i8): i32 {
+root:
     return
 }
 
-export function hoge(%0: i8): i32 {
+export function test(): i32 {
 root:
     return
 }
