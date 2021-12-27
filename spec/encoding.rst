@@ -167,8 +167,10 @@ Export table
 ------------
 
 Table of variables, constants, functions, types, etc. which are exported.
-Each uint pair represents kind of exported ID and the index of the ID.
-The kind of ID is one of following ascii code.
+Each uint triplet represents type of exported ID, the index of the ID and
+the index of corresponding definition.
+
+The type of ID is one of following ascii code.
 
 - 'V': variable
 - 'C': constant
@@ -179,7 +181,7 @@ The kind of ID is one of following ascii code.
 ::
 
    +------+~~~~~~~~~+~~~~~~~~~~~+
-   | 0x01 | uint(n) | 2*n uints |
+   | 0x01 | uint(n) | 3*n uints |
    +------+~~~~~~~~~+~~~~~~~~~~~+
 
 Function table

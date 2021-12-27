@@ -12,8 +12,8 @@ include encoding.fs
 include lib/table.fs
 
 struct
-    cell% field compiler>IdTable ( name table: string -> ID )
-    cell% field compiler>ExpT    ( array of (type, ID idx, def idx) )
+    cell% field compiler>idtable ( name table: string -> ID )
+    cell% field compiler>export  ( array of (type, ID idx, def idx) )
     cell% field compiler>fundefs ( array of function definitions )
 
     \ NB: Since this script is only for bootstrapping, we allocate a buffer
@@ -48,15 +48,15 @@ private{
 
 : make-compiler ( -- compiler )
     compiler% %allocate throw
-    make-string-table over compiler>IdTable !
-    0 make-array over compiler>ExpT !
+    make-string-table over compiler>idtable !
+    0 make-array over compiler>export !
     0 make-array over compiler>fundefs !
     dup compiler>buf over compiler>pos !
 ;
 
-\ Add an id to IdTable section if not exist. Returns index of the id.
+\ Add an id to idtable section if not exist. Returns index of the id.
 : get-id ( id compiler -- n )
-    swap node>arg0 @ swap compiler>IdTable @
+    swap node>arg0 @ swap compiler>idtable @
     2dup ?table-in if table@ exit then
     dup table-size dup >r -rot table! r>
 ;
@@ -68,7 +68,7 @@ private{
     tuck tuple1 !
     tuck tuple0 !
     r>
-    tuck compiler>ExpT @ array-push
+    tuck compiler>export @ array-push
     drop
 ;
 
@@ -101,26 +101,6 @@ private{
     drop
 ; export
 
-\ : compile-ExpT ( compiler -- section )
-\     ." compiling \"ExpT\" section" cr
-\     compiler>ExpT @
-\     dup array-size
-\     dup 8 * 4 + s" ExpT" swap make-section dup >r
-\ 
-\     \ write data field
-\     section>data
-\     tuck u32! 4 +  \ entry count
-\     over array-size 0 ?do
-\         i 2 pick array@
-\         tuck
-\             dup tuple1 @ swap tuple0 @ 24 lshift or
-\         over u32! 4 +
-\         swap tuple2 @ over u32! 4 +
-\     loop
-\     2drop
-\     r>
-\ ;
-
 : emit ( compiler w 'encoder -- compiler )
     >r over compiler>pos @ r> execute over compiler>pos +!
 ;
@@ -129,38 +109,29 @@ private{
     >r
     %11011111 ['] encode-u8 emit
     %11111111 ['] encode-u8 emit
-    1 ['] encode-uint emit
+    2 ['] encode-uint emit
 
     \ write ID section
-    0 ['] encode-uint emit  \ section type
-    dup compiler>IdTable @ table-keys dup >r
+    $00 ['] encode-u8 emit  \ section type
+    dup compiler>idtable @ table-keys dup >r
     list-length ['] encode-uint emit
     r> begin ?dup while
         dup >r car ['] encode-str emit r> cdr
     repeat
 
+    \ write export section
+    $01 ['] encode-u8 emit  \ section type
+    dup compiler>export @ array-size ['] encode-uint emit
+    dup compiler>export @ array-size 0 ?do
+        i over compiler>export @ array@ dup dup >r >r
+        tuple0 @ ['] encode-uint emit    \ type of the ID
+        r> tuple1 @ ['] encode-uint emit \ index of the ID
+        r> tuple2 @ ['] encode-uint emit \ index of corresponding def
+    loop
+
     \ write buf to file
     dup compiler>buf over compiler>pos @ over - r> write-file throw drop
     drop exit
-    not-implemented
-
-\    \ compile sections
-\    2 pick compile-IdTable over array-push
-\    2 pick compile-ExpT over array-push
-\    \ compute data size
-\    0
-\    over array-size 0 ?do
-\        i 2 pick array@ section-size +
-\    loop
-\    \ write data size field
-\    2 pick write-u32
-\    \ Write sections
-\    dup array-size 0 ?do
-\        i over array@
-\        ." writing: \"" dup section>type 4 typen ." \" section" cr
-\        dup section-size 3 pick write-file throw
-\    loop
-\    drop 2drop
 ; export
 
 }private
@@ -178,6 +149,6 @@ root:
     return
 }
 "
-make-string parse .s compile-program .s testfile .s codegen
+make-string parse compile-program testfile codegen
 
 testfile flush-file throw
