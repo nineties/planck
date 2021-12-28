@@ -26,6 +26,7 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     \ reserved words
     enum Ttrue
     enum Tfalse
+    enum Tbool
     enum Tchar
     enum Ti8
     enum Tu8
@@ -59,6 +60,7 @@ private{
 make-string-table constant reserved-words
 Ttrue s" true" make-string reserved-words table!
 Tfalse s" false" make-string reserved-words table!
+Tbool s" bool" make-string reserved-words table!
 Tchar s" char" make-string reserved-words table!
 Ti8 s" i8" make-string reserved-words table!
 Tu8 s" u8" make-string reserved-words table!

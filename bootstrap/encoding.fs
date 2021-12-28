@@ -161,4 +161,34 @@ T{ test-buf 1+ u32@ -> 65536 }T
     then then then then
 ; export
 
+: encode-type ( ty buf -- n )
+    over node>tag @ case
+    TyNever of %11000000 over u8! 2drop 1 endof
+    TyBool  of %11000001 over u8! 2drop 1 endof
+    TyChar  of %11000010 over u8! 2drop 1 endof
+    TyU8    of %11000011 over u8! 2drop 1 endof
+    TyI8    of %11000100 over u8! 2drop 1 endof
+    TyU16   of %11000101 over u8! 2drop 1 endof
+    TyI16   of %11000110 over u8! 2drop 1 endof
+    TyU32   of %11000111 over u8! 2drop 1 endof
+    TyI32   of %11001000 over u8! 2drop 1 endof
+    TyU64   of %11001001 over u8! 2drop 1 endof
+    TyI64   of %11001010 over u8! 2drop 1 endof
+    TyF32   of %11001011 over u8! 2drop 1 endof
+    TyF64   of %11001100 over u8! 2drop 1 endof
+    TyStr   of %11001101 over u8! 2drop 1 endof
+    TyFunc of
+        %11011010 over u8! 1+
+        over node>arg0 @ over recurse dup 1+ >r + r> \ return type
+        ( ty buf n )
+        2 pick node>arg1 @ array-size 2 pick u8! 1+ >r 1+ r> \ number of args
+        2 pick node>arg1 @ array-size 0 ?do
+            i 3 pick node>arg1 @ array@ 2 pick recurse tuck + >r + r>
+        loop
+        nip nip
+    endof
+    .s not-implemented
+    endcase
+; export
+
 }private

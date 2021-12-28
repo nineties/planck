@@ -75,7 +75,7 @@ private{
         dup node>tag @ Nparamdecl <> if not-reachable then
         node>arg1 @ 2 pick array-push
     loop
-    TyTuple make-node1 swap fundef>retty @ TyFunc make-node2
+    fundef>retty @ swap TyFunc make-node2
 ;
 
 : compile-fundef ( node compiler -- )
@@ -119,7 +119,7 @@ private{
     >r
     %11011111 ['] encode-u8 emit
     %11111111 ['] encode-u8 emit
-    2 ['] encode-uint emit
+    3 ['] encode-uint emit  \ number of sections
 
     \ write ID section
     $00 ['] encode-u8 emit  \ section type
@@ -141,7 +141,12 @@ private{
 
     \ write function section
     $02 ['] encode-u8 emit \ section type
-
+    dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
+    dup compiler>fundefs @ array-size 0 ?do
+        i over compiler>fundefs @ array@ dup dup >r >r
+        tuple0 @ ['] encode-type emit   \ emit function type
+        r> r> 2drop
+    loop
 
     \ write buf to file
     dup compiler>buf over compiler>pos @ over - r> write-file throw drop
@@ -158,7 +163,7 @@ root:
     return
 }
 
-export function test(): i32 {
+function test(): bool {
 root:
     return
 }

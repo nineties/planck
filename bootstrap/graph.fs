@@ -19,8 +19,7 @@ include lib/string.fs
     enum Nprogram   ( defs )
 
     enum TyNever
-    enum TyTrue
-    enum TyFalse
+    enum TyBool
     enum TyChar
     enum TyI8
     enum TyU8
@@ -35,7 +34,7 @@ include lib/string.fs
     enum TyStr
     enum TyArray ( type )
     enum TyTuple ( array of types)
-    enum TyFunc  ( args, ret )
+    enum TyFunc  ( ret args )
 drop
 
 struct
@@ -49,7 +48,7 @@ end-struct node%
 
 struct
     int%  field fundef>tag
-    int%  field fundef>export
+    cell% field fundef>export
     cell% field fundef>name
     cell% field fundef>params
     cell% field fundef>retty
@@ -121,8 +120,7 @@ private{
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 
 TyNever make-node0 constant never-type export
-TyTrue make-node0 constant true-type export
-TyFalse make-node0 constant false-type export
+TyBool make-node0 constant bool-type export
 TyChar make-node0 constant char-type export
 TyI8 make-node0 constant i8-type export
 TyU8 make-node0 constant u8-type export
@@ -191,8 +189,7 @@ TyF64 make-node0 constant f64-type export
         drop
     endof
     TyNever of drop ." !" endof
-    TyTrue of drop ." true" endof
-    TyFalse of drop ." false" endof
+    TyBool of drop ." bool" endof
     TyChar of drop ." char" endof
     TyI8 of drop ." i8" endof
     TyU8 of drop ." u8" endof
