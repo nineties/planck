@@ -163,6 +163,29 @@ Identifiers used for variables, constants, functions, types, etc.::
    | 0x00 | uint(n) | n str objects |
    +------+~~~~~~~~~+~~~~~~~~~~~~~~~+
 
+Function table
+--------------
+
+::
+
+   +------+~~~~~~~~~+~~~~~~~~~~~~~+
+   | 0x01 | uint(n) | n functions |
+   +------+~~~~~~~~~+~~~~~~~~~~~~~+
+
+   Each function consists of its type and basic blocks.
+   Block 0 is always the entry block.
+   +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
+   | type | uint(n) | n basic blocks |
+   +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
+
+   Each basic block consists of zero or more non-branch
+   instructions and one branch instruction.
+   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
+   | uint (n) | n non-branch instructions | branch instruction |
+   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
+
+See `Instructions <instruction.rst>`_ for encoding of instructions.
+
 Export table
 ------------
 
@@ -181,28 +204,6 @@ The type of ID is one of following ascii code.
 ::
 
    +------+~~~~~~~~~+~~~~~~~~~~~+
-   | 0x01 | uint(n) | 3*n uints |
+   | 0x02 | uint(n) | 3*n uints |
    +------+~~~~~~~~~+~~~~~~~~~~~+
 
-Function table
---------------
-
-::
-
-   +------+~~~~~~~~~+~~~~~~~~~~~~~+
-   | 0x02 | uint(n) | n functions |
-   +------+~~~~~~~~~+~~~~~~~~~~~~~+
-
-   Each function consists of its type and basic blocks.
-   Block 0 is always the entry block.
-   +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
-   | type | uint(n) | n basic blocks |
-   +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
-
-   Each basic block consists of zero or more non-branch
-   instructions and one branch instruction.
-   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
-   | uint (n) | n non-branch instructions | branch instruction |
-   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
-
-See `Instructions <instruction.rst>`_ for encoding of instructions.

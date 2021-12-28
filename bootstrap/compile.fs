@@ -135,23 +135,23 @@ private{
         dup >r car ['] encode-str emit r> cdr
     repeat
 
+    \ write function section
+    $01 ['] encode-u8 emit \ section type
+    dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
+    dup compiler>fundefs @ array-size 0 ?do
+        i over compiler>fundefs @ array@ dup >r
+        tuple0 @ ['] encode-type emit           \ emit function type
+        r> tuple1 @ ['] encode-basicblocks emit
+    loop
+
     \ write export section
-    $01 ['] encode-u8 emit  \ section type
+    $02 ['] encode-u8 emit  \ section type
     dup compiler>export @ array-size ['] encode-uint emit
     dup compiler>export @ array-size 0 ?do
         i over compiler>export @ array@ dup dup >r >r
         tuple0 @ ['] encode-uint emit    \ type of the ID
         r> tuple1 @ ['] encode-uint emit \ index of the ID
         r> tuple2 @ ['] encode-uint emit \ index of corresponding def
-    loop
-
-    \ write function section
-    $02 ['] encode-u8 emit \ section type
-    dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
-    dup compiler>fundefs @ array-size 0 ?do
-        i over compiler>fundefs @ array@ dup >r
-        tuple0 @ ['] encode-type emit           \ emit function type
-        r> tuple1 @ ['] encode-basicblocks emit
     loop
 
     \ write buf to file
