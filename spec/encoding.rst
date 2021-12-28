@@ -194,7 +194,7 @@ Function table
    +------+~~~~~~~~~+~~~~~~~~~~~~~+
 
    Each function consists of its type and basic blocks.
-   Block 0 is always the entry and block n-1 is the exit.
+   Block 0 is always the entry block.
    +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
    | type | uint(n) | n basic blocks |
    +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+

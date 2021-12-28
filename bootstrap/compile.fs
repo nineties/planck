@@ -68,7 +68,7 @@ private{
     drop
 ;
 
-: construct-function-type ( node -- type )
+: compile-function-type ( node -- type )
     0 make-array swap
     dup fundef>params @ array-size 0 ?do
         i over fundef>params @ array@
@@ -76,6 +76,10 @@ private{
         node>arg1 @ 2 pick array-push
     loop
     fundef>retty @ swap TyFunc make-node2
+;
+
+: compile-function-body ( node -- basicblocks )
+    fundef>blocks @
 ;
 
 : compile-fundef ( node compiler -- )
@@ -88,10 +92,12 @@ private{
         ." > name idx: " . cr
         'F' r> r> 3 pick add-export
     then
-    over construct-function-type
-    3 cells allocate throw
-    tuck tuple0 ! \ function type
-    ( XXX )
+    over compile-function-type >r
+    over compile-function-body >r
+    r> r>
+    2 cells allocate throw
+    tuck tuple0 !
+    tuck tuple1 !
     over compiler>fundefs @ array-push
     2drop
 ;
@@ -143,9 +149,9 @@ private{
     $02 ['] encode-u8 emit \ section type
     dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
     dup compiler>fundefs @ array-size 0 ?do
-        i over compiler>fundefs @ array@ dup dup >r >r
-        tuple0 @ ['] encode-type emit   \ emit function type
-        r> r> 2drop
+        i over compiler>fundefs @ array@ dup >r
+        tuple0 @ ['] encode-type emit           \ emit function type
+        r> tuple1 @ ['] encode-basicblocks emit
     loop
 
     \ write buf to file
@@ -163,7 +169,7 @@ root:
     return
 }
 
-function test(): bool {
+export function hoge(): u8 {
 root:
     return
 }

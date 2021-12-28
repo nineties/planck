@@ -191,4 +191,32 @@ T{ test-buf 1+ u32@ -> 65536 }T
     endcase
 ; export
 
+: encode-insn ( insn buf -- n )
+    over node>tag @ case
+    Nreturn of %10000000 over u8! 2drop 1 endof
+    not-implemented
+    endcase
+;
+
+: encode-basicblock ( block buf -- n )
+    over node>tag @ Nbblock <> if not-reachable then
+    over node>arg1 @ array-size over encode-uint dup >r + r>
+    ( block buf n )
+    2 pick node>arg1 @ array-size 0 ?do
+        i 3 pick node>arg1 @ array@ 2 pick encode-insn tuck + >r + r>
+    loop
+    2 pick node>arg2 @ 2 pick encode-insn tuck + >r + r>
+    nip nip
+;
+
+: encode-basicblocks ( blocks buf -- n )
+    over array-size over encode-uint dup >r + r>
+    2 pick array-size 0 ?do
+        ( blocks buf n )
+        ." compiling basic block: " i . cr
+        i 3 pick array@ 2 pick encode-basicblock tuck + >r + r>
+    loop
+    nip nip
+; export
+
 }private
