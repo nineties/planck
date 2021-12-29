@@ -19,10 +19,11 @@ Lexical Tokens::
 Types::
 
     never_type : "!"
-    bool_type  : "true" | "false"
+    bool_type  : "bool"
     char_type  : "char"
     int_type   : "i8" | "u8" | "i16" | "u16" | "i32" | "u32" | "i64" | "u64"
     float_type : "f32" | "f64"
+    str_type   : "str"
     tuple_type : "(" ")"
                | "(" type ("," type)* ")"
     array_type : "[" type ";" expr "]"

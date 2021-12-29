@@ -15,12 +15,11 @@ include lib/string.fs
     enum Nparamdecl ( reg type )
 
     enum Nbblock    ( name insns jump )
-    enum Nfundecl   ( export name params body )
+    enum Nfundef    ( export name params rettype blocks )
     enum Nprogram   ( defs )
 
     enum TyNever
-    enum TyTrue
-    enum TyFalse
+    enum TyBool
     enum TyChar
     enum TyI8
     enum TyU8
@@ -32,6 +31,10 @@ include lib/string.fs
     enum TyU64
     enum TyF32
     enum TyF64
+    enum TyStr
+    enum TyArray ( type )
+    enum TyTuple ( array of types)
+    enum TyFunc  ( ret args )
 drop
 
 struct
@@ -44,30 +47,38 @@ struct
 end-struct node%
 
 struct
-    cell% field basicblock>name  ( ID )
-    cell% field basicblock>insns ( vector of instructions )
-    cell% field basicblock>jump  ( the last instruction )
-end-struct basicblock%
+    int%  field fundef>tag
+    cell% field fundef>export
+    cell% field fundef>name
+    cell% field fundef>params
+    cell% field fundef>retty
+    cell% field fundef>blocks  ( array of basic blocks )
+end-struct fundef%
+
+struct
+    int%  field program>tag
+    cell% field program>defs
+end-struct program%
 
 private{
 
 : make-node0 ( tag -- node )
     node% %allocate throw
     tuck node>tag !
-;
+; export
 
 : make-node1 ( arg0 tag -- node )
     node% %allocate throw
     tuck node>tag !
     tuck node>arg0 !
-;
+; export
 
 : make-node2 ( arg0 arg1 tag -- node )
     node% %allocate throw
     tuck node>tag !
     tuck node>arg1 !
     tuck node>arg0 !
-;
+; export
 
 : make-node3 ( arg0 arg1 arg2 tag -- node )
     node% %allocate throw
@@ -75,7 +86,7 @@ private{
     tuck node>arg2 !
     tuck node>arg1 !
     tuck node>arg0 !
-;
+; export
 
 : make-node4 ( arg0 arg1 arg2 arg3 tag -- node )
     node% %allocate throw
@@ -84,7 +95,7 @@ private{
     tuck node>arg2 !
     tuck node>arg1 !
     tuck node>arg0 !
-;
+; export
 
 : make-node5 ( arg0 arg1 arg2 arg3 arg4 tag -- node )
     node% %allocate throw
@@ -94,7 +105,7 @@ private{
     tuck node>arg2 !
     tuck node>arg1 !
     tuck node>arg0 !
-;
+; export
 
 : make-id ( c-addr -- node ) make-string Nid make-node1 ; export
 : make-register ( idx -- node ) Nregister make-node1 ; export
@@ -103,14 +114,13 @@ private{
 : make-assign ( lhs rhs -- node ) Nassign make-node2 ; export
 : make-paramdecl ( reg type -- node ) Nparamdecl make-node2 ; export
 : make-bblock ( name insns jump -- node ) Nbblock make-node3 ; export
-: make-fundecl ( export name params rettype body -- node )
-    Nfundecl make-node5
+: make-fundef ( export name params rettype blocks -- node )
+    Nfundef make-node5
 ; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 
 TyNever make-node0 constant never-type export
-TyTrue make-node0 constant true-type export
-TyFalse make-node0 constant false-type export
+TyBool make-node0 constant bool-type export
 TyChar make-node0 constant char-type export
 TyI8 make-node0 constant i8-type export
 TyU8 make-node0 constant u8-type export
@@ -148,8 +158,9 @@ TyF64 make-node0 constant f64-type export
         ." \t" dup node>arg2 @ recurse cr
         drop
     endof
-    Nfundecl of
+    Nfundef of
         dup node>arg0 @ if ." export " then
+        ." function "
         dup node>arg1 @ recurse
         dup node>arg2 @ dup array-size 0= if
             drop ." ()"
@@ -178,8 +189,7 @@ TyF64 make-node0 constant f64-type export
         drop
     endof
     TyNever of drop ." !" endof
-    TyTrue of drop ." true" endof
-    TyFalse of drop ." false" endof
+    TyBool of drop ." bool" endof
     TyChar of drop ." char" endof
     TyI8 of drop ." i8" endof
     TyU8 of drop ." u8" endof

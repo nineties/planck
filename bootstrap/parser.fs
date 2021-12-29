@@ -55,8 +55,7 @@ private{
 
 : parse-prim-type ( lexer -- node )
     dup lexer>token_tag @ case
-    Ttrue of lex true-type endof
-    Tfalse of lex false-type endof
+    Tbool of lex bool-type endof
     Tchar of lex char-type endof
     Ti8 of lex i8-type endof
     Tu8 of lex u8-type endof
@@ -147,7 +146,7 @@ private{
 
     drop
     ( export label params rettype body )
-    make-fundecl
+    make-fundef
 ;
 
 : parse-toplevel-definition ( lexer -- node )
