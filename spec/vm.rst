@@ -17,13 +17,21 @@ registers, stack memory regions, heap memory regions and so on.
 Compiler backends determine the actual locations for the specific target hardware
 based on the information of type inference.
 
-Overview
-========
-
-
-
 Memory Model
 ============
 
 Calling Convention
 ==================
+
+Since PlanckVM does not have stack memory, all function call arguments are
+passed by registers.
+
+In many register machines, registers with the same name always point to the same
+physical location, so when one function calls another, registers in use may be
+overwritten. Therefore, the concept of a *callee-save register* to save and restore
+registers on the called function side and a *caller-save register* to save and restore registers on the caller side are necessary.
+
+On the other hand, registers of PlanckVM are not physical registers, but actually
+function-local variables. Registers with the same name used in different functions
+point different locations and will not be overwritten by function calls.
+Therefore, there are no special function call conventions in PlanckVM.
