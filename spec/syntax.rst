@@ -48,9 +48,10 @@ Instruction::
             | register
             | "*" place
 
-   instruction : place "=" place
+   instruction : "nop"
+               | place "=" place
 
-   jump_instruction : "nop"
+   jump_instruction : "goto" label
                     | "return"
 
 Basic Block::

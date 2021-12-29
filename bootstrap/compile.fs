@@ -190,6 +190,7 @@ s" test.pk" W/O open-file throw constant testfile
 s"
 export function main(%0: i8): i32 {
 root:
+    nop
     goto exit
 exit:
     return

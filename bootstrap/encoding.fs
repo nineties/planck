@@ -193,7 +193,8 @@ T{ test-buf 1+ u32@ -> 65536 }T
 
 : encode-insn ( insn buf -- n )
     over node>tag @ case
-    Ngoto   of
+    Nnop of %00000000 over u8! 2drop 1 endof
+    Ngoto of
         %10000000 over u8! 1+
         over node>arg0 @ over encode-uint 1+
         nip nip
