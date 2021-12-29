@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore: ['README.md', 'LICENSE', '.gitignore']
+    paths-ignore: ['README.md', 'LICENSE', '.gitignore', 'spec/**']
 jobs:
   runtests-c:
     runs-on: ubuntu-latest
