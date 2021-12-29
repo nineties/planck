@@ -14,7 +14,7 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
-    keyword : "return" | "export" | "function"
+    keyword : "nop" | "pass" | "return" | "export" | "function"
 
 Types::
 
@@ -50,7 +50,8 @@ Instruction::
 
    instruction : place "=" place
 
-   jump_instruction : "return"
+   jump_instruction : "nop"
+                    | "return"
 
 Basic Block::
 
