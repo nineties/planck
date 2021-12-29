@@ -91,12 +91,16 @@ private{
 ;
 
 : parse-jump-instruction ( lexer -- node )
-    dup lexer>token_tag @ Treturn = if
+    dup lexer>token_tag @ Tgoto = if
+        dup lex
+        parse-label ?dup unless SYNTAX-ERROR throw then
+        make-goto
+    else dup lexer>token_tag @ Treturn = if
+        lex
         make-return
-        swap lex
     else
         drop 0
-    then
+    then then
 ;
 
 : parse-basic-block ( lexer -- node )

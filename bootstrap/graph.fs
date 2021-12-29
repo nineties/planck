@@ -10,7 +10,10 @@ include lib/string.fs
     enum Nid        ( name )
     enum Nregister  ( idx )
     enum Nderef     ( node )
+
+    enum Nnop
     enum Nassign    ( lhs rhs )
+    enum Ngoto
     enum Nreturn
     enum Nparamdecl ( reg type )
 
@@ -110,6 +113,7 @@ private{
 : make-id ( c-addr -- node ) make-string Nid make-node1 ; export
 : make-register ( idx -- node ) Nregister make-node1 ; export
 : make-deref ( node -- node ) Nderef make-node1 ; export
+: make-goto ( label -- node ) Ngoto make-node1 ; export
 : make-return ( -- node ) Nreturn make-node0 ; export
 : make-assign ( lhs rhs -- node ) Nassign make-node2 ; export
 : make-paramdecl ( reg type -- node ) Nparamdecl make-node2 ; export

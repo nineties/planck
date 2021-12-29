@@ -79,6 +79,30 @@ private{
 ;
 
 : compile-function-body ( node -- basicblocks )
+    \ replace labels with basicblock index
+    make-string-table
+    over fundef>blocks @ array-size 0 ?do
+        i 2 pick fundef>blocks @ array@
+        node>arg0 @ node>arg0 @ ( label-name )
+        i swap 2 pick table!
+    loop
+    over fundef>blocks @ array-size 0 ?do
+        i 2 pick fundef>blocks @ array@
+        node>arg2 @ ( jump-insn )
+        dup node>tag @ case
+        Ngoto of
+            dup
+            ( node table node idx )
+            node>arg0 @ node>arg0 @ 2 pick table@
+            over node>arg0 !
+            drop
+        endof
+        Nreturn of drop endof
+        not-reachable
+        endcase
+    loop
+    drop
+
     fundef>blocks @
 ;
 
@@ -166,6 +190,8 @@ s" test.pk" W/O open-file throw constant testfile
 s"
 export function main(%0: i8): i32 {
 root:
+    goto exit
+exit:
     return
 }
 
