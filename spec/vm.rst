@@ -10,7 +10,7 @@ register machine with infinitely many registers.
 Registers
 =========
 
-PlanckVM has an infinite number of registers `%0`, `%1`, `%2`, and so on.
+PlanckVM has an infinite number of registers ``%0``, ``%1``, ``%2``, and so on.
 Bit width and type of each register is not fixed. They are simply used as variable
 names associated to some places where values are stored. The places may be physical
 registers, stack memory regions, heap memory regions and so on.
