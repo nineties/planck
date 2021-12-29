@@ -82,6 +82,9 @@ private{
 ;
 
 : parse-instruction ( lexer -- node )
+    dup lexer>token_tag @ Tnop = if
+        lex make-nop exit
+    then
     dup parse-place ?dup unless drop 0 exit then
     over '=' expect-sym unless SYNTAX-ERROR throw then
     over lex
