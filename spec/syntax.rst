@@ -14,7 +14,7 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
-    keyword : "nop" | "goto" | "return" | "export" | "function"
+    keyword : "nop" | "phi" | "goto" | "return" | "export" | "function"
             | "bool" | "char" "i8" | "u8" | "i16" | "u16" | "i32" | "u32"
             | "i64" | "u64" | "f32" | "f64" | "str"
 
@@ -54,12 +54,17 @@ Instruction::
    instruction : "nop"
                | place "=" place
 
+   phi_instruction : place "=" "phi" "(" phi_args ")"
+   phi_args : phi_arg ( "," phi_arg )*
+   phi_arg : label ":" place
+
    branch_instruction : "goto" label
                       | "return"
 
 Basic Block::
 
    basic_block : label ":"
+                 phi_instruction*
                  instruction*
                  branch_instruction
 

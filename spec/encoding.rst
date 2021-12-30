@@ -178,11 +178,13 @@ Function table
    | type | uint(n) | n basic blocks |
    +~~~~~~+~~~~~~~~~+~~~~~~~~~~~~~~~~+
 
-   Each basic block consists of zero or more non-branch
-   instructions and one branch instruction.
-   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
-   | uint (n) | n non-branch instructions | branch instruction |
-   +~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
+   Each basic block consists of
+   - zero or more phi instructions
+   - zero or more non-branch instructions
+   - one branch instruction
+   +~~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
+   | uint (n) | n phi insns | uint (m) | m non-branch insns | branch instruction |
+   +~~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
 
 See `Instructions <instruction.rst>`_ for encoding of instructions.
 

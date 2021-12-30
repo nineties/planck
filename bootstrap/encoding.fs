@@ -209,8 +209,20 @@ T{ test-buf 1+ u32@ -> 65536 }T
 : encode-insn ( insn buf -- n )
     over node>tag @ case
     Nnop of %00000000 over u8! 2drop 1 endof
+    Nphi of
+        %00000001 over u8! 1+ 1
+        2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
+        2 pick node>arg1 @ array-size 2 pick encode-uint tuck + >r + r>
+        2 pick node>arg1 @ array-size 0 ?do
+            i 3 pick node>arg1 @ array@
+            dup >r
+            tuple0 @ 2 pick encode-uint tuck + >r + r>
+            r> tuple1 @ 2 pick encode-operand tuck + >r + r>
+        loop
+        nip nip
+    endof
     Nmove of
-        %00000001 over u8! 1+
+        %00000010 over u8! 1+
         1 >r
         over node>arg0 @ over encode-operand dup r> + >r +
         over node>arg1 @ over encode-operand r> + nip nip
@@ -227,12 +239,24 @@ T{ test-buf 1+ u32@ -> 65536 }T
 
 : encode-basicblock ( block buf -- n )
     over node>tag @ Nbblock <> if not-reachable then
-    over node>arg1 @ array-size over encode-uint dup >r + r>
+
+    0
+    \ write phi instructions
+    2 pick node>arg1 @ array-size 2 pick encode-uint tuck + >r + r>
     ( block buf n )
     2 pick node>arg1 @ array-size 0 ?do
         i 3 pick node>arg1 @ array@ 2 pick encode-insn tuck + >r + r>
     loop
-    2 pick node>arg2 @ 2 pick encode-insn tuck + >r + r>
+
+    \ write non-branch instructions
+    2 pick node>arg2 @ array-size 2 pick encode-uint tuck + >r + r>
+    ( block buf n )
+    2 pick node>arg2 @ array-size 0 ?do
+        i 3 pick node>arg2 @ array@ 2 pick encode-insn tuck + >r + r>
+    loop
+
+    \ write branch instruction
+    2 pick node>arg3 @ 2 pick encode-insn tuck + >r + r>
     nip nip
 ;
 

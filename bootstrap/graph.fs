@@ -13,6 +13,7 @@ include lib/string.fs
 
     enum Nnop
     enum Nmove      ( lhs rhs )
+    enum Nphi       ( lhs args )
     enum Ngoto
     enum Nreturn
 
@@ -61,6 +62,14 @@ struct
     int%  field program>tag
     cell% field program>defs
 end-struct program%
+
+struct
+    cell% field tuple0
+    cell% field tuple1
+    cell% field tuple2
+    cell% field tuple3
+    cell% field tuple4
+end-struct tuple%
 
 private{
 
@@ -116,7 +125,8 @@ private{
 : make-goto ( label -- node ) Ngoto make-node1 ; export
 : make-return ( -- node ) Nreturn make-node0 ; export
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
-: make-bblock ( name insns jump -- node ) Nbblock make-node3 ; export
+: make-phi ( lhs args -- node ) Nphi make-node2 ; export
+: make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
 : make-fundef ( export name params rettype blocks -- node )
     Nfundef make-node5
 ; export
