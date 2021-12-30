@@ -42,6 +42,7 @@ Instruction::
 
    label    : id
    register : "%" int
+   arguments : "$" int
    operand  : "(" type ")" int
             | register
    place    : label
@@ -63,7 +64,7 @@ Basic Block::
 Function::
 
    function_params :
-                   | register ":" type ( "," function_params )*
+                   | type ( "," function_params )*
 
    function_definition :
       "export"?

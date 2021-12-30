@@ -67,14 +67,14 @@ private{
     Tu64 of lex u64-type endof
     Tf32 of lex f32-type endof
     Tf64 of lex f64-type endof
-    2drop 0
+    2drop 0 exit
     endcase
 ;
 
 : parse-type ( lexer -- node )
     dup parse-never-type ?dup if nip exit then
     dup parse-prim-type ?dup if nip exit then
-    not-implemented
+    drop 0
 ;
 
 : parse-expression ( lexer -- node )
@@ -121,14 +121,14 @@ private{
 
 : parse-function-params ( lexer -- node )
     0 make-array swap
+    dup parse-type ?dup unless drop exit then
+    2 pick array-push
     begin
-        dup parse-register ?dup unless drop exit then
-        over ':' expect-sym if over lex else SYNTAX-ERROR throw then
-        over parse-type ?dup unless SYNTAX-ERROR throw then
-        ( arr lexer reg type )
-        make-paramdecl 2 pick array-push
         dup ',' expect-sym unless drop exit then
         dup lex
+        dup parse-type ?dup unless SYNTAX-ERROR throw then
+        ( arr lexer type )
+        2 pick array-push
     again
 ;
 

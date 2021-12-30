@@ -162,7 +162,6 @@ T{ test-buf 1+ u32@ -> 65536 }T
 ; export
 
 : encode-register ( reg buf -- n )
-    ." encode-register" cr
     over node>arg0 @ dup 16 < if
         %10000000 or over u8! 2drop 1
     else
@@ -171,7 +170,6 @@ T{ test-buf 1+ u32@ -> 65536 }T
 ;
 
 : encode-operand ( opd buf -- n )
-    ." encode-operand" cr
     over node>tag @ case
     Nregister of encode-register endof
     not-reachable
@@ -204,7 +202,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
         loop
         nip nip
     endof
-    .s not-implemented
+    not-implemented
     endcase
 ; export
 

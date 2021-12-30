@@ -15,7 +15,6 @@ include lib/string.fs
     enum Nmove      ( lhs rhs )
     enum Ngoto
     enum Nreturn
-    enum Nparamdecl ( reg type )
 
     enum Nbblock    ( name insns jump )
     enum Nfundef    ( export name params rettype blocks )
@@ -117,7 +116,6 @@ private{
 : make-goto ( label -- node ) Ngoto make-node1 ; export
 : make-return ( -- node ) Nreturn make-node0 ; export
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
-: make-paramdecl ( reg type -- node ) Nparamdecl make-node2 ; export
 : make-bblock ( name insns jump -- node ) Nbblock make-node3 ; export
 : make-fundef ( export name params rettype blocks -- node )
     Nfundef make-node5
@@ -147,11 +145,6 @@ TyF64 make-node0 constant f64-type export
     Nmove of
         dup node>arg0 @ recurse
         ."  = "
-        node>arg1 @ recurse
-    endof
-    Nparamdecl of
-        dup node>arg0 @ recurse
-        ." : "
         node>arg1 @ recurse
     endof
     Nbblock of

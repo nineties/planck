@@ -72,8 +72,7 @@ private{
     0 make-array swap
     dup fundef>params @ array-size 0 ?do
         i over fundef>params @ array@
-        dup node>tag @ Nparamdecl <> if not-reachable then
-        node>arg1 @ 2 pick array-push
+        2 pick array-push
     loop
     fundef>retty @ swap TyFunc make-node2
 ;
@@ -188,7 +187,7 @@ private{
 s" test.pk" W/O open-file throw constant testfile
 
 s"
-export function main(%0: i8): i32 {
+export function main(i8): i32 {
 root:
     %1 = %0
     nop
