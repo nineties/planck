@@ -12,10 +12,10 @@ include lib/string.fs
     enum Nderef     ( node )
 
     enum Nnop
-    enum Nassign    ( lhs rhs )
+    enum Nmove      ( lhs rhs )
+    enum Nphi       ( lhs args )
     enum Ngoto
     enum Nreturn
-    enum Nparamdecl ( reg type )
 
     enum Nbblock    ( name insns jump )
     enum Nfundef    ( export name params rettype blocks )
@@ -62,6 +62,14 @@ struct
     int%  field program>tag
     cell% field program>defs
 end-struct program%
+
+struct
+    cell% field tuple0
+    cell% field tuple1
+    cell% field tuple2
+    cell% field tuple3
+    cell% field tuple4
+end-struct tuple%
 
 private{
 
@@ -116,9 +124,9 @@ private{
 : make-nop ( -- node ) Nnop make-node0 ; export
 : make-goto ( label -- node ) Ngoto make-node1 ; export
 : make-return ( -- node ) Nreturn make-node0 ; export
-: make-assign ( lhs rhs -- node ) Nassign make-node2 ; export
-: make-paramdecl ( reg type -- node ) Nparamdecl make-node2 ; export
-: make-bblock ( name insns jump -- node ) Nbblock make-node3 ; export
+: make-move ( lhs rhs -- node ) Nmove make-node2 ; export
+: make-phi ( lhs args -- node ) Nphi make-node2 ; export
+: make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
 : make-fundef ( export name params rettype blocks -- node )
     Nfundef make-node5
 ; export
@@ -144,14 +152,9 @@ TyF64 make-node0 constant f64-type export
     Nregister of ." %" node>arg0 @ 10 swap print-int endof
     Nderef of ." *" node>arg0 @ recurse endof
     Nreturn of drop ." return" endof
-    Nassign of
+    Nmove of
         dup node>arg0 @ recurse
         ."  = "
-        node>arg1 @ recurse
-    endof
-    Nparamdecl of
-        dup node>arg0 @ recurse
-        ." : "
         node>arg1 @ recurse
     endof
     Nbblock of

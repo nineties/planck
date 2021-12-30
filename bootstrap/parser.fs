@@ -67,17 +67,48 @@ private{
     Tu64 of lex u64-type endof
     Tf32 of lex f32-type endof
     Tf64 of lex f64-type endof
-    2drop 0
+    2drop 0 exit
     endcase
 ;
 
 : parse-type ( lexer -- node )
     dup parse-never-type ?dup if nip exit then
     dup parse-prim-type ?dup if nip exit then
-    not-implemented
+    drop 0
+;
+
+: parse-phi-arg ( lexer -- node )
+    dup parse-label ?dup unless drop 0 exit then
+    over ':' expect-sym unless SYNTAX-ERROR throw then
+    over lex
+    over parse-place ?dup unless SYNTAX-ERROR throw then
+    ( label place )
+    2 cells allocate throw
+    tuck tuple1 !
+    tuck tuple0 !
+    nip
+;
+
+: parse-phi-expression ( lexer -- node )
+    ." parse-phi-function" .s
+    dup lex
+    dup '(' expect-sym unless SYNTAX-ERROR throw then
+    dup lex
+    0 make-array swap
+    dup parse-phi-arg ?dup unless SYNTAX-ERROR throw then
+    2 pick array-push
+    begin dup ',' expect-sym while
+        dup lex
+        dup parse-phi-arg ?dup unless SYNTAX-ERROR throw then
+        2 pick array-push
+    repeat
+    dup ')' expect-sym unless SYNTAX-ERROR throw then
+    lex
+    0 swap make-phi
 ;
 
 : parse-expression ( lexer -- node )
+    dup lexer>token_tag @ Tphi = if parse-phi-expression ." done" cr exit then
     parse-place
 ;
 
@@ -89,11 +120,16 @@ private{
     over '=' expect-sym unless SYNTAX-ERROR throw then
     over lex
     over parse-expression ?dup unless SYNTAX-ERROR throw then
-    make-assign
-    swap drop
+    ( lexer lhs rhs )
+
+    dup node>tag @ case
+    Nphi of tuck node>arg0 ! endof
+    drop make-move 0
+    endcase
+    nip
 ;
 
-: parse-jump-instruction ( lexer -- node )
+: parse-branch-instruction ( lexer -- node )
     dup lexer>token_tag @ Tgoto = if
         dup lex
         parse-label ?dup unless SYNTAX-ERROR throw then
@@ -111,24 +147,33 @@ private{
     over ':' expect-sym unless SYNTAX-ERROR throw then
     over lex
     
-    0 make-array
-    begin 2 pick parse-instruction ?dup while over array-push repeat
-    2 pick parse-jump-instruction ?dup unless SYNTAX-ERROR throw then
-    ( lexer label array jump )
+    0 make-array ( phi insns )
+    0 make-array ( non-branch insns )
+    begin 3 pick parse-instruction ?dup while
+        dup node>tag @ Nphi = if
+            \ phi instructions must be placed at the beginning of basic block
+            over array-size 0 <> if SYNTAX-ERROR throw then
+            2 pick array-push
+        else
+            over array-push
+        then
+    repeat
+    3 pick parse-branch-instruction ?dup unless SYNTAX-ERROR throw then
+    ( lexer label phi-insns insns jump )
     make-bblock
     nip
 ;
 
 : parse-function-params ( lexer -- node )
     0 make-array swap
+    dup parse-type ?dup unless drop exit then
+    2 pick array-push
     begin
-        dup parse-register ?dup unless drop exit then
-        over ':' expect-sym if over lex else SYNTAX-ERROR throw then
-        over parse-type ?dup unless SYNTAX-ERROR throw then
-        ( arr lexer reg type )
-        make-paramdecl 2 pick array-push
         dup ',' expect-sym unless drop exit then
         dup lex
+        dup parse-type ?dup unless SYNTAX-ERROR throw then
+        ( arr lexer type )
+        2 pick array-push
     again
 ;
 

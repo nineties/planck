@@ -23,14 +23,6 @@ struct
     ptr% field compiler>pos
 end-struct compiler%
 
-struct
-    cell% field tuple0
-    cell% field tuple1
-    cell% field tuple2
-    cell% field tuple3
-    cell% field tuple4
-end-struct tuple%
-
 private{
 
 : list-length ( list -- n )
@@ -72,34 +64,49 @@ private{
     0 make-array swap
     dup fundef>params @ array-size 0 ?do
         i over fundef>params @ array@
-        dup node>tag @ Nparamdecl <> if not-reachable then
-        node>arg1 @ 2 pick array-push
+        2 pick array-push
     loop
     fundef>retty @ swap TyFunc make-node2
 ;
 
+: replace-label ( table node -- table )
+    dup node>tag @ case
+    Nphi of
+        dup node>arg1 @ ( args )
+        array-size 0 ?do
+            i over node>arg1 @ array@ dup tuple0 @ node>arg0 @
+            3 pick table@ swap tuple0 !
+        loop
+        drop
+    endof
+    Ngoto of
+        dup node>arg0 @ node>arg0 @
+        ( table node idx )
+        2 pick table@
+        over node>arg0 !
+        drop
+    endof
+    Nreturn of drop endof
+    not-reachable
+    endcase
+;
+
 : compile-function-body ( node -- basicblocks )
-    \ replace labels with basicblock index
     make-string-table
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@
         node>arg0 @ node>arg0 @ ( label-name )
         i swap 2 pick table!
     loop
+    \ replace label of phi and branch instruction with block index
+    ( node tbl )
     over fundef>blocks @ array-size 0 ?do
-        i 2 pick fundef>blocks @ array@
-        node>arg2 @ ( jump-insn )
-        dup node>tag @ case
-        Ngoto of
-            dup
-            ( node table node idx )
-            node>arg0 @ node>arg0 @ 2 pick table@
-            over node>arg0 !
-            drop
-        endof
-        Nreturn of drop endof
-        not-reachable
-        endcase
+        i 2 pick fundef>blocks @ array@ dup >r
+        node>arg1 @ tuck array-size 0 ?do
+            i 2 pick array@ replace-label
+        loop
+        nip
+        r> node>arg3 @ replace-label   ( branch insn )
     loop
     drop
 
@@ -188,18 +195,22 @@ private{
 s" test.pk" W/O open-file throw constant testfile
 
 s"
-export function main(%0: i8): i32 {
+function hoge(): u8 {
 root:
-    nop
-    goto exit
-exit:
     return
 }
 
-export function hoge(): u8 {
+export function main(i8): i32 {
 root:
+    nop
+    %1 = %0
+    nop
+    goto exit
+exit:
+    %2 = phi(root:%1)
     return
 }
+
 "
 make-string parse compile-program testfile codegen
 

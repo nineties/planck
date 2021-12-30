@@ -14,7 +14,9 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
-    keyword : "nop" | "pass" | "return" | "export" | "function"
+    keyword : "nop" | "phi" | "goto" | "return" | "export" | "function"
+            | "bool" | "char" "i8" | "u8" | "i16" | "u16" | "i32" | "u32"
+            | "i64" | "u64" | "f32" | "f64" | "str"
 
 Types::
 
@@ -42,6 +44,7 @@ Instruction::
 
    label    : id
    register : "%" int
+   arguments : "$" int
    operand  : "(" type ")" int
             | register
    place    : label
@@ -51,17 +54,24 @@ Instruction::
    instruction : "nop"
                | place "=" place
 
-   jump_instruction : "goto" label
-                    | "return"
+   phi_instruction : place "=" "phi" "(" phi_args ")"
+   phi_args : phi_arg ( "," phi_arg )*
+   phi_arg : label ":" place
+
+   branch_instruction : "goto" label
+                      | "return"
 
 Basic Block::
 
-   basic_block : label ":" instruction* jump_instruction
+   basic_block : label ":"
+                 phi_instruction*
+                 instruction*
+                 branch_instruction
 
 Function::
 
    function_params :
-                   | register ":" type ( "," function_params )*
+                   | type ( "," function_params )*
 
    function_definition :
       "export"?

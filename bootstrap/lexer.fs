@@ -39,6 +39,7 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tf32
     enum Tf64
     enum Tnop
+    enum Tphi
     enum Tgoto
     enum Treturn
     enum Texport
@@ -75,6 +76,7 @@ Tu64 s" u64" make-string reserved-words table!
 Tf32 s" f32" make-string reserved-words table!
 Tf64 s" f64" make-string reserved-words table!
 Tnop s" nop" make-string reserved-words table!
+Tphi s" phi" make-string reserved-words table!
 Tgoto s" goto" make-string reserved-words table!
 Treturn s" return" make-string reserved-words table!
 Texport s" export" make-string reserved-words table!
