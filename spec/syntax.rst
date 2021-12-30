@@ -14,7 +14,7 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
-    keyword : "nop" | "pass" | "return" | "export" | "function"
+    keyword : "nop" | "goto" | "return" | "export" | "function"
 
 Types::
 
