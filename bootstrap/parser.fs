@@ -93,7 +93,7 @@ private{
     swap drop
 ;
 
-: parse-jump-instruction ( lexer -- node )
+: parse-branch-instruction ( lexer -- node )
     dup lexer>token_tag @ Tgoto = if
         dup lex
         parse-label ?dup unless SYNTAX-ERROR throw then
@@ -113,7 +113,7 @@ private{
     
     0 make-array
     begin 2 pick parse-instruction ?dup while over array-push repeat
-    2 pick parse-jump-instruction ?dup unless SYNTAX-ERROR throw then
+    2 pick parse-branch-instruction ?dup unless SYNTAX-ERROR throw then
     ( lexer label array jump )
     make-bblock
     nip

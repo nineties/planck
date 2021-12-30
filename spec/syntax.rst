@@ -51,12 +51,14 @@ Instruction::
    instruction : "nop"
                | place "=" place
 
-   jump_instruction : "goto" label
-                    | "return"
+   branch_instruction : "goto" label
+                      | "return"
 
 Basic Block::
 
-   basic_block : label ":" instruction* jump_instruction
+   basic_block : label ":"
+                 instruction*
+                 branch_instruction
 
 Function::
 
