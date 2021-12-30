@@ -12,7 +12,7 @@ include lib/string.fs
     enum Nderef     ( node )
 
     enum Nnop
-    enum Nassign    ( lhs rhs )
+    enum Nmove      ( lhs rhs )
     enum Ngoto
     enum Nreturn
     enum Nparamdecl ( reg type )
@@ -116,7 +116,7 @@ private{
 : make-nop ( -- node ) Nnop make-node0 ; export
 : make-goto ( label -- node ) Ngoto make-node1 ; export
 : make-return ( -- node ) Nreturn make-node0 ; export
-: make-assign ( lhs rhs -- node ) Nassign make-node2 ; export
+: make-move ( lhs rhs -- node ) Nmove make-node2 ; export
 : make-paramdecl ( reg type -- node ) Nparamdecl make-node2 ; export
 : make-bblock ( name insns jump -- node ) Nbblock make-node3 ; export
 : make-fundef ( export name params rettype blocks -- node )
@@ -144,7 +144,7 @@ TyF64 make-node0 constant f64-type export
     Nregister of ." %" node>arg0 @ 10 swap print-int endof
     Nderef of ." *" node>arg0 @ recurse endof
     Nreturn of drop ." return" endof
-    Nassign of
+    Nmove of
         dup node>arg0 @ recurse
         ."  = "
         node>arg1 @ recurse

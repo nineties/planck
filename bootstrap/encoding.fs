@@ -161,6 +161,23 @@ T{ test-buf 1+ u32@ -> 65536 }T
     then then then then
 ; export
 
+: encode-register ( reg buf -- n )
+    ." encode-register" cr
+    over node>arg0 @ dup 16 < if
+        %10000000 or over u8! 2drop 1
+    else
+        not-implemented
+    then
+;
+
+: encode-operand ( opd buf -- n )
+    ." encode-operand" cr
+    over node>tag @ case
+    Nregister of encode-register endof
+    not-reachable
+    endcase
+;
+
 : encode-type ( ty buf -- n )
     over node>tag @ case
     TyNever of %11000000 over u8! 2drop 1 endof
@@ -194,6 +211,12 @@ T{ test-buf 1+ u32@ -> 65536 }T
 : encode-insn ( insn buf -- n )
     over node>tag @ case
     Nnop of %00000000 over u8! 2drop 1 endof
+    Nmove of
+        %00000001 over u8! 1+
+        1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-operand r> + nip nip
+    endof
     Ngoto of
         %10000000 over u8! 1+
         over node>arg0 @ over encode-uint 1+

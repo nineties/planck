@@ -89,7 +89,7 @@ private{
     over '=' expect-sym unless SYNTAX-ERROR throw then
     over lex
     over parse-expression ?dup unless SYNTAX-ERROR throw then
-    make-assign
+    make-move
     swap drop
 ;
 

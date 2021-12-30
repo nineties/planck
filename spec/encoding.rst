@@ -67,8 +67,8 @@ Encoding of Types
    | 11111111 |                   | Obect file type                      |
    +----------+-------------------+--------------------------------------+
 
-Encoding of Values
-==================
+Encoding of Operands
+====================
 
 **The byte-order is always little endian.**
 
