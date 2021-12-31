@@ -1,9 +1,9 @@
-RUNTIME_IMPL?=c
+VM_IMPL?=c
 
 default:
-	make -C $(RUNTIME_IMPL)
+	make -C $(VM_IMPL)
 
 .PHONY: clean
 
 clean:
-	make -C $(RUNTIME_IMPL)
+	make -C $(VM_IMPL)
