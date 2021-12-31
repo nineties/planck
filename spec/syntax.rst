@@ -45,21 +45,25 @@ Instruction::
    label    : id
    register : "%" int
    arguments : "$" int
-   operand  : "(" type ")" int
-            | register
+
    place    : label
             | register
             | "*" place
 
+   operand  : int             // unsigned int
+            | ("+"|"-") int   // signed int
+            | register
+            | "*" place
+
    instruction : "nop"
-               | place "=" place
+               | place "=" operand
 
    phi_instruction : place "=" "phi" "(" phi_args ")"
    phi_args : phi_arg ( "," phi_arg )*
    phi_arg : label ":" place
 
    branch_instruction : "goto" label
-                      | "return"
+                      | "return" operand
 
 Basic Block::
 

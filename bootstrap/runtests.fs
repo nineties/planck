@@ -6,6 +6,9 @@
 
 include lib/tester.fs
 
-include compile.fs
+include graph.fs
+include encoding.fs
+include lexer.fs
+include parser.fs
 
 report-and-exit

@@ -3,6 +3,7 @@
 
 \ Control-Flow Graph representation of "subset of" PlanckIR
 
+include lib/array.fs
 include lib/string.fs
 
 ( node type )
@@ -10,6 +11,8 @@ include lib/string.fs
     enum Nid        ( name )
     enum Nregister  ( idx )
     enum Nderef     ( node )
+    enum Nuint      ( val )
+    enum Nint       ( val )
 
     enum Nnop
     enum Nmove      ( lhs rhs )
@@ -123,7 +126,7 @@ private{
 : make-deref ( node -- node ) Nderef make-node1 ; export
 : make-nop ( -- node ) Nnop make-node0 ; export
 : make-goto ( label -- node ) Ngoto make-node1 ; export
-: make-return ( -- node ) Nreturn make-node0 ; export
+: make-return ( arg -- node ) Nreturn make-node1 ; export
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
 : make-phi ( lhs args -- node ) Nphi make-node2 ; export
 : make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
