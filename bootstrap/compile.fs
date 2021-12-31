@@ -192,26 +192,32 @@ private{
 
 }private
 
-s" test.pk" W/O open-file throw constant testfile
+$2000000 constant SOURCE_BUFFER_SIZE
 
-s"
-function hoge(): u8 {
-root:
-    return
-}
+:noname
+    argc @ 3 <> if
+        ." Usage: ./planck < bootstrap.fs " argv @ @ type ."  <input> <output>" cr
+        1 quit
+    then
+    \ read input
+    argv @ 1 cells + @ ( input )
+    R/O open-file throw
+    SOURCE_BUFFER_SIZE allocate throw dup >r
+    SOURCE_BUFFER_SIZE
+    2 pick read-file throw
+    dup SOURCE_BUFFER_SIZE >= if
+        ." The size of source buffer is not enough" cr
+        1 quit
+    then
+    drop
+    close-file throw
 
-export function main(i8): i32 {
-root:
-    nop
-    %1 = %0
-    nop
-    goto exit
-exit:
-    %2 = phi(root:%1)
-    return
-}
+    \ compile program
+    r> parse compile-program
 
-"
-make-string parse compile-program testfile codegen
-
-testfile flush-file throw
+    \ wrtie to output
+    argv @ 2 cells + @ ( output )
+    W/O open-file throw dup >r
+    codegen
+    r> flush-file throw
+; execute
