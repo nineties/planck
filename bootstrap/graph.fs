@@ -3,6 +3,7 @@
 
 \ Control-Flow Graph representation of "subset of" PlanckIR
 
+include lib/array.fs
 include lib/string.fs
 
 ( node type )

@@ -5,6 +5,9 @@
 
 \ See spec/encoding.rst
 
+include lib/array.fs
+include graph.fs
+
 s" Encode Error" exception constant ENCODE-ERROR
 s" Decode Error" exception constant DECODE-ERROR
 
