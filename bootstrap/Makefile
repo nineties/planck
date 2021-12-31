@@ -1,12 +1,19 @@
 RUNFORTH=./planck < bootstrap.fs
+TESTOBJECTS=\
+		../tests/return123.pko
 
-default: planck
+default: planck $(TESTOBJECTS)
 
 planck: planckforth
 	make -C planckforth $(RUNTIME_IMPL)
 	cp planckforth/planck .
 	cp -r planckforth/lib .
 	cp planckforth/bootstrap.fs .
+
+.SUFFIXES: .pk .pko
+
+.pk.pko:
+	$(RUNFORTH) compile.fs $^ $@
 
 .PHONY: clean
 
