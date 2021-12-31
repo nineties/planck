@@ -49,6 +49,14 @@ private{
     recurse ?dup if make-deref else 0 then
 ;
 
+: parse-operand ( lexer -- node )
+    dup lexer>token_tag @ Tint = if
+        dup lexer>token_val @ Nuint make-node1
+        swap lex exit
+    then
+    dup parse-place ?dup if nip exit then
+;
+
 : parse-never-type ( lexer -- node )
     dup '!' expect-sym if lex never-type else drop 0 then
 ;
@@ -90,7 +98,6 @@ private{
 ;
 
 : parse-phi-expression ( lexer -- node )
-    ." parse-phi-function" .s
     dup lex
     dup '(' expect-sym unless SYNTAX-ERROR throw then
     dup lex
@@ -108,7 +115,7 @@ private{
 ;
 
 : parse-expression ( lexer -- node )
-    dup lexer>token_tag @ Tphi = if parse-phi-expression ." done" cr exit then
+    dup lexer>token_tag @ Tphi = if parse-phi-expression exit then
     parse-place
 ;
 
@@ -135,7 +142,8 @@ private{
         parse-label ?dup unless SYNTAX-ERROR throw then
         make-goto
     else dup lexer>token_tag @ Treturn = if
-        lex
+        dup lex
+        parse-operand ?dup unless SYNTAX-ERROR throw then
         make-return
     else
         drop 0

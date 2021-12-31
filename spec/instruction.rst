@@ -42,5 +42,5 @@ Branch Instructions
    | goto          | 10000000 | uint(i)         | do nothing, proceed to the   |
    |               |          |                 | basic block i.               |
    +---------------+----------+-----------------+------------------------------+
-   | return        | 10000001 |                 | return from function         |
+   | return        | 10000001 | operand         | return from function         |
    +---------------+----------+-----------------+------------------------------+

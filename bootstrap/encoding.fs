@@ -174,6 +174,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
 
 : encode-operand ( opd buf -- n )
     over node>tag @ case
+    Nuint of over node>arg0 @ over encode-uint nip nip endof
     Nregister of encode-register endof
     not-reachable
     endcase
@@ -235,7 +236,11 @@ T{ test-buf 1+ u32@ -> 65536 }T
         over node>arg0 @ over encode-uint 1+
         nip nip
     endof
-    Nreturn of %10000001 over u8! 2drop 1 endof
+    Nreturn of
+        %10000001 over u8! 1+
+        over node>arg0 @ over encode-operand 1+
+        nip nip
+    endof
     not-implemented
     endcase
 ;
