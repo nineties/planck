@@ -15,4 +15,5 @@ jobs:
     - name: run tests
       run: |
         make bootstrap RUNTIME_IMPL=c
-        make test VM_IMPL=c
+        make test
+        make test-vm VM_IMPL=c

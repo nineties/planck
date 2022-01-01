@@ -6,11 +6,14 @@ VM_IMPL?=planckforth
 bootstrap:
 	make -C bootstrap RUNTIME_IMPL=$(PLANCK_IMPL)
 
-test: bootstrap
-ifeq ($(VM_IMPL), planckforth)
+test:
 	make test -C bootstrap
+
+test-vm:
+ifeq ($(VM_IMPL), planckforth)
+	make test-vm -C bootstrap
 else
-	make test -C vm VM_IMPL=$(VM_IMPL)
+	make test-vm -C vm VM_IMPL=$(VM_IMPL)
 endif
 
 clean:
