@@ -94,17 +94,20 @@ create value-encoding-table
 \ Encode unsigned integer `u` to `buf`
 \ and returns number of bytes.
 : encode-uint ( u buf -- n )
-    over $7f u<= if
-        u8! 1
-    else over $ff u<= if
-        %11000011 over u8! 1+ u8! 2
-    else over $ffff u<= if
-        %11000101 over u8! 1+ u16! 3
-    else over $ffffff u<= if
-        %11000111 over u8! 1+ u32! 5
-    else
-        not-implemented
-    then then then then
+    over $7f u<= if u8! 1 exit then
+    over $ff u<= if %11000011 over u8! 1+ u8! 2 exit then
+    over $ffff u<= if %11000101 over u8! 1+ u16! 3 exit then
+    over $ffffff u<= if %11000111 over u8! 1+ u32! 5 exit then
+    not-implemented
+; export
+
+: decode-uint ( buf -- new-buf n )
+    dup >r
+    u8@ dup $7f <= if r> 1+ swap exit then
+    dup %11000011 = if drop r> 1+ dup u8@ >r 1+ r> exit then
+    dup %11000101 = if drop r> 1+ dup u16@ >r 2 + r> exit then
+    dup %11000111 = if drop r> 1+ dup u32@ >r 4 + r> exit then
+    not-implemented
 ; export
 
 T{ create test-buf 1024 allot -> }T
@@ -150,18 +153,33 @@ T{ test-buf 1+ u32@ -> 65536 }T
     else dup $ffff < if
         dup >r >r
         %11001111 over u8! 1+   \ tag
-        r> over u16! 2 +          \ bytes
+        r> over u16! 2 +        \ bytes
         strcpy
         r> 3 +
     else dup $ffffff < if
         dup >r >r
         %11010000 over u8! 1+   \ tag
-        r> over u32! 4 +          \ bytes
+        r> over u32! 4 +        \ bytes
         strcpy
         r> 5 +
     else
         ENCODE-ERROR throw
     then then then then
+; export
+
+: decode-str ( buf -- new-buf c-addr )
+    dup u8@ case
+    %11001110 of not-implemented endof
+    %11001111 of not-implemented endof
+    %11010000 of not-implemented endof
+        dup $f0 and $a0 = unless not-reachable then
+        $0f and                             ( buf len )
+        >r 1+ r>                            ( c-from len )
+        2dup + >r                           ( c-from len R:new-buf )
+        1+ dup allocate throw dup >r swap   ( c-from c-to len R:new-buf c-to )
+        strncpy
+        r> r> swap 0
+    endcase
 ; export
 
 : encode-register ( reg buf -- n )
@@ -205,6 +223,36 @@ T{ test-buf 1+ u32@ -> 65536 }T
             i 3 pick node>arg1 @ array@ 2 pick recurse tuck + >r + r>
         loop
         nip nip
+    endof
+    not-implemented
+    endcase
+; export
+
+: decode-type ( buf -- new-buf type )
+    dup u8@ case
+    %11000000 of 1+ never-type endof
+    %11000001 of 1+ bool-type endof
+    %11000010 of 1+ char-type endof
+    %11000011 of 1+ u8-type endof
+    %11000100 of 1+ i8-type endof
+    %11000101 of 1+ u16-type endof
+    %11000110 of 1+ i16-type endof
+    %11000111 of 1+ u32-type endof
+    %11001000 of 1+ i32-type endof
+    %11001001 of 1+ u64-type endof
+    %11001010 of 1+ i64-type endof
+    %11001011 of 1+ f32-type endof
+    %11001100 of 1+ f64-type endof
+    %11001101 of 1+ str-type endof
+    %11011010 of
+        ( function type )
+        1+ recurse >r ( R: ret )
+        0 make-array swap
+        ( array buf )
+        dup u8@ >r 1+ r> 0 ?do
+            recurse 2 pick array-push
+        loop
+        swap r> swap TyFunc make-node2
     endof
     not-implemented
     endcase

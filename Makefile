@@ -8,8 +8,12 @@ bootstrap:
 
 test:
 	make test -C bootstrap
-ifneq ($(VM_IMPL), planckforth)
-	make test -C vm VM_IMPL=$(VM_IMPL)
+
+test-vm:
+ifeq ($(VM_IMPL), planckforth)
+	make test-vm -C bootstrap
+else
+	make test-vm -C vm VM_IMPL=$(VM_IMPL)
 endif
 
 clean:

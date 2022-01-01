@@ -405,6 +405,7 @@ load_object_file(const char *path) {
 static void
 move(interpreter *interp, operand lhs, operand rhs) {
     /* move */
+    not_implemented();
 }
 
 

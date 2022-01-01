@@ -8,6 +8,8 @@ default:
 
 test:
 	make -C $(VM_IMPL)
+
+test-vm:
 	$(RUN_VM) ../tests/return123.pko; test $$? -eq 123
 
 clean:
