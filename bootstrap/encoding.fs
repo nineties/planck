@@ -228,6 +228,36 @@ T{ test-buf 1+ u32@ -> 65536 }T
     endcase
 ; export
 
+: decode-type ( buf -- new-buf type )
+    dup u8@ case
+    %11000000 of 1+ never-type endof
+    %11000001 of 1+ bool-type endof
+    %11000010 of 1+ char-type endof
+    %11000011 of 1+ u8-type endof
+    %11000100 of 1+ i8-type endof
+    %11000101 of 1+ u16-type endof
+    %11000110 of 1+ i16-type endof
+    %11000111 of 1+ u32-type endof
+    %11001000 of 1+ i32-type endof
+    %11001001 of 1+ u64-type endof
+    %11001010 of 1+ i64-type endof
+    %11001011 of 1+ f32-type endof
+    %11001100 of 1+ f64-type endof
+    %11001101 of 1+ str-type endof
+    %11011010 of
+        ( function type )
+        1+ recurse >r ( R: ret )
+        0 make-array swap
+        ( array buf )
+        dup u8@ >r 1+ r> 0 ?do
+            recurse 2 pick array-push
+        loop
+        swap r> swap TyFunc make-node2
+    endof
+    not-implemented
+    endcase
+; export
+
 : encode-insn ( insn buf -- n )
     over node>tag @ case
     Nnop of %00000000 over u8! 2drop 1 endof
