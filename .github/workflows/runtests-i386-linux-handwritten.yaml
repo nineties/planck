@@ -13,6 +13,6 @@ jobs:
         submodules: recursive
     - name: run tests
       run: |
-        make bootstrap RUNTIME_IMPL=i386-linux-handwritten
+        make bootstrap PLANCK_IMPL=i386-linux-handwritten
         make test
         make test-vm VM_IMPL=planckforth
