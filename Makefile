@@ -9,7 +9,7 @@ bootstrap:
 test:
 	make test -C bootstrap
 
-test-vm:
+test-vm: bootstrap
 ifeq ($(VM_IMPL), planckforth)
 	make test-vm -C bootstrap
 else

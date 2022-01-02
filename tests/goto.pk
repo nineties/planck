@@ -1,0 +1,9 @@
+export
+function main(): i32 {
+root:
+    goto block1
+block1:
+    goto block2
+block2:
+    return 123
+}

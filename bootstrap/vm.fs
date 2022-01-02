@@ -63,7 +63,9 @@ $2000000 constant FILE_BUFFER_SIZE
 
 : decode-insn ( fun buf -- fun new-buf insn )
     dup u8@ >r 1+ r> case
+    %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
+    not-implemented
     endcase
 ;
 
@@ -204,6 +206,11 @@ $2000000 constant FILE_BUFFER_SIZE
         dup block>insns @ array-size 0 ?do
             i over block>insns @ array@ ( insn )
             dup node>tag @ case
+            Ngoto of
+                node>arg0 @ ( index of next block )
+                3 pick fun>blocks @ array@ ( next block )
+                rot drop ( interp fun prev cur next -> interp fun cur next )
+            endof
             Nreturn of
                 node>arg0 @
                 nip nip nip
@@ -212,7 +219,6 @@ $2000000 constant FILE_BUFFER_SIZE
             not-implemented
             endcase
         loop
-        not-implemented
     again
     not-implemented
 ;

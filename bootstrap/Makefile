@@ -1,7 +1,8 @@
 RUNFORTH=./planck < bootstrap.fs
 RUNVM=./planck < bootstrap.fs vm.fs
 TESTOBJECTS=\
-		../tests/return123.pko
+		../tests/return123.pko \
+		../tests/goto.pko
 
 default: planck $(TESTOBJECTS)
 
@@ -23,6 +24,7 @@ test: planck
 
 test-vm: planck $(TESTOBJECTS)
 	$(RUNVM) ../tests/return123.pko; test $$? -eq 123
+	$(RUNVM) ../tests/goto.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs
