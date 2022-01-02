@@ -116,7 +116,7 @@ private{
 
 : parse-expression ( lexer -- node )
     dup lexer>token_tag @ Tphi = if parse-phi-expression exit then
-    parse-place
+    parse-operand
 ;
 
 : parse-instruction ( lexer -- node )

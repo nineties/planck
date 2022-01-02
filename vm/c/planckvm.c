@@ -70,17 +70,20 @@ typedef int64_t sint_t;
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 
-typedef union {
-    uint8_t u8;
-    uint16_t u16;
-    uint32_t u32;
-    uint64_t u64;
-    int8_t i8;
-    int16_t i16;
-    int32_t i32;
-    int64_t i64;
-    float f32;
-    double f64;
+typedef struct {
+    byte_t tag;
+    union {
+        uint8_t u8;
+        uint16_t u16;
+        uint32_t u32;
+        uint64_t u64;
+        int8_t i8;
+        int16_t i16;
+        int32_t i32;
+        int64_t i64;
+        float f32;
+        double f64;
+    };
 } value;
 
 typedef struct type {
@@ -172,11 +175,20 @@ typedef struct {
     value *sp;          /* stack pointer */
 } interpreter;
 
+// n-th local variable
+#define LOCAL(interp, n) (interp)->sp[n]
+
 static value
 operand_to_value(interpreter *interp, operand *opd) {
     value v = { 0 };
     switch (opd->tag) {
-    case D_U8: v.u8 = opd->uint; break;
+    case D_U8:
+        v.tag = D_U8;
+        v.u8 = opd->uint;
+        break;
+    case D_REG:
+        v = LOCAL(interp, opd->reg);
+        break;
     default:
         not_implemented();
     }
@@ -403,9 +415,15 @@ load_object_file(const char *path) {
 }
 
 static void
-move(interpreter *interp, operand lhs, operand rhs) {
-    /* move */
-    not_implemented();
+move(interpreter *interp, operand *lhs, operand *rhs) {
+    value v = operand_to_value(interp, rhs);
+    switch (lhs->tag) {
+    case D_REG:
+        LOCAL(interp, lhs->reg) = v;
+        break;
+    default:
+        not_implemented();
+    }
 }
 
 
@@ -424,7 +442,7 @@ call(interpreter *interp, object_file *obj, function *fun) {
             phi_instruction *phi = &block->phis[i];
             for (int j = 0; j < phi->n_rhs; j++) {
                 if (prev->index == phi->blocks[j]) {
-                    move(interp, phi->lhs, phi->rhs[j]);
+                    move(interp, &phi->lhs, &phi->rhs[j]);
                     break;
                 }
             }
@@ -437,7 +455,7 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 /* do nothing */
                 break;
             case I_MOVE:
-                move(interp, insn->lhs, insn->rhs);
+                move(interp, &insn->lhs, &insn->rhs);
                 break;
             case I_GOTO:
                 prev = block;
