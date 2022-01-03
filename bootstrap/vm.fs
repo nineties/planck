@@ -33,6 +33,7 @@ end-struct export-item%
 struct
     cell% field interp>stack
     cell% field interp>sp
+    cell% field interp>bp
     cell% field interp>obj
 end-struct interpreter%
 
@@ -88,6 +89,15 @@ $2000000 constant FILE_BUFFER_SIZE
     %00001010 of Nxor decode-binexpr endof
     %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
+    %00100000 of
+        decode-operand >r   ( lhs )
+        decode-uint >r      ( index of function )
+        0 make-array -rot   ( array for args )
+        decode-uint 0 ?do
+            decode-operand 3 pick array-push
+        loop
+        rot r> swap r> -rot Nlcall make-node3
+    endof
     not-implemented
     endcase
 ;
@@ -212,15 +222,17 @@ $2000000 constant FILE_BUFFER_SIZE
     nip nip nip nip
 ;
 
+\ address of local variable
+: localp ( interp index -- a-addr )
+    cells 1+ negate swap interp>bp @ +
+;
+
 \ evaluate operand to value
 : to-value ( interp operand -- value )
     dup node>tag @ case
     Nuint of nip endof
     Nregister of
-        ( interp index )
-        node>arg0 @ ( index )
-        cells over interp>sp @ + @
-        nip
+        node>arg0 @ localp @
     endof
     not-implemented
     endcase
@@ -232,10 +244,7 @@ $2000000 constant FILE_BUFFER_SIZE
     over node>tag @ case
     Nregister of
         ( intep lhs val )
-        >r node>arg0 @ ( index of the local )
-        ( interp lhs )
-        cells swap interp>sp @ + ( addr of the local )
-        r> swap !
+        >r node>arg0 @ localp r> swap !
     endof
     not-reachable
     endcase
@@ -342,6 +351,9 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : call ( interp fun -- interp retvalue )
+    over interp>bp @ >r     \ save base pointer
+    over interp>sp @ 2 pick interp>bp !
+
     \ allocate space for local variables
     dup fun>nlocals @ cells over interp>sp -!
 
@@ -382,8 +394,11 @@ $2000000 constant FILE_BUFFER_SIZE
                 node>arg0 @
                 4 pick swap to-value
                 nip nip nip
+                \ restore base pointer
+                r> 2 pick interp>bp !
                 unloop exit
             endof
+            ." here?" cr
             not-implemented
             endcase
         loop
