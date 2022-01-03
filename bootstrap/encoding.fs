@@ -284,6 +284,10 @@ T{ test-buf 1+ u32@ -> 65536 }T
     Nsub of %00000100 encode-binexpr endof
     Nmul of %00000101 encode-binexpr endof
     Ndiv of %00000110 encode-binexpr endof
+    Nmod of %00000111 encode-binexpr endof
+    Nand of %00001000 encode-binexpr endof
+    Nor  of %00001001 encode-binexpr endof
+    Nxor of %00001010 encode-binexpr endof
     Nmove of
         %00000010 over u8! 1+
         1 >r

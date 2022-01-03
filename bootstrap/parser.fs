@@ -121,6 +121,12 @@ private{
     dup '-' expect-sym if dup lex parse-operand 0 -rot Nsub make-node3 exit then
     dup '*' expect-sym if dup lex parse-operand 0 -rot Nmul make-node3 exit then
     dup '/' expect-sym if dup lex parse-operand 0 -rot Ndiv make-node3 exit then
+    dup lexer>token_tag @ Tmod = if
+        dup lex parse-operand 0 -rot Nmod make-node3 exit
+    then
+    dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
+    dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
+    dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
     drop
 ;
 
@@ -140,6 +146,10 @@ private{
     Nsub of tuck node>arg0 ! endof
     Nmul of tuck node>arg0 ! endof
     Ndiv of tuck node>arg0 ! endof
+    Nmod of tuck node>arg0 ! endof
+    Nand of tuck node>arg0 ! endof
+    Nor  of tuck node>arg0 ! endof
+    Nxor of tuck node>arg0 ! endof
     drop make-move 0
     endcase
     nip

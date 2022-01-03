@@ -21,6 +21,10 @@ include lib/string.fs
     enum Nsub
     enum Nmul
     enum Ndiv
+    enum Nmod
+    enum Nand
+    enum Nor
+    enum Nxor
     enum Ngoto
     enum Nreturn
 
@@ -158,6 +162,7 @@ TyStr make-node0 constant str-type export
     dup node>tag @ case
     Nid of node>arg0 @ type endof
     Nregister of ." %" node>arg0 @ 10 swap print-int endof
+    Nuint of node>arg0 @ 10 swap print-int endof
     Nderef of ." *" node>arg0 @ recurse endof
     Nreturn of drop ." return" endof
     Nmove of
@@ -217,6 +222,7 @@ TyStr make-node0 constant str-type export
     TyU64 of drop ." u64" endof
     TyF32 of drop ." f32" endof
     TyF64 of drop ." f64" endof
+    TyStr of drop ." str" endof
     not-implemented
     endcase
 ; export
