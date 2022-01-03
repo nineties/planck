@@ -85,7 +85,7 @@ Basic Block::
 Function::
 
    function_params :
-                   | type ( "," function_params )*
+                   | type ( "," type )*
 
    function_definition :
       "export"?
