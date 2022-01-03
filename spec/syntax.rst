@@ -53,6 +53,7 @@ Instruction::
    operand  : int             // unsigned int
             | ("+"|"-") int   // signed int
             | register
+            | arguments
             | "*" place
 
    expression : operand
