@@ -62,6 +62,15 @@ $2000000 constant FILE_BUFFER_SIZE
     not-implemented
 ;
 
+: decode-binexpr ( fun buf tag -- fun new-buf insn )
+    >r
+    decode-operand >r
+    decode-operand >r
+    decode-operand
+    r> swap r> -rot
+    r> make-node3
+;
+
 : decode-insn ( fun buf -- fun new-buf insn )
     dup u8@ >r 1+ r> case
     %00000010 of
@@ -69,34 +78,14 @@ $2000000 constant FILE_BUFFER_SIZE
         decode-operand
         r> swap make-move
     endof
-    %00000011 of
-        decode-operand >r
-        decode-operand >r
-        decode-operand
-        r> swap r> -rot
-        Nadd make-node3
-    endof
-    %00000100 of
-        decode-operand >r
-        decode-operand >r
-        decode-operand
-        r> swap r> -rot
-        Nsub make-node3
-    endof
-    %00000101 of
-        decode-operand >r
-        decode-operand >r
-        decode-operand
-        r> swap r> -rot
-        Nmul make-node3
-    endof
-    %00000110 of
-        decode-operand >r
-        decode-operand >r
-        decode-operand
-        r> swap r> -rot
-        Ndiv make-node3
-    endof
+    %00000011 of Nadd decode-binexpr endof
+    %00000100 of Nsub decode-binexpr endof
+    %00000101 of Nmul decode-binexpr endof
+    %00000110 of Ndiv decode-binexpr endof
+    %00000111 of Nmod decode-binexpr endof
+    %00001000 of Nand decode-binexpr endof
+    %00001001 of Nor  decode-binexpr endof
+    %00001010 of Nxor decode-binexpr endof
     %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
     not-implemented
@@ -301,6 +290,50 @@ $2000000 constant FILE_BUFFER_SIZE
         not-implemented
         endcase
     endof
+    Nmod of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ >r node>arg0 @ r> mod Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
+    Nand of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ >r node>arg0 @ r> and Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
+    Nor of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ >r node>arg0 @ r> or Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
+    Nxor of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ >r node>arg0 @ r> xor Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
     not-implemented
     endcase
     ( interp node value )
@@ -336,6 +369,10 @@ $2000000 constant FILE_BUFFER_SIZE
             Nsub of 4 pick swap binexpr endof
             Nmul of 4 pick swap binexpr endof
             Ndiv of 4 pick swap binexpr endof
+            Nmod of 4 pick swap binexpr endof
+            Nand of 4 pick swap binexpr endof
+            Nor  of 4 pick swap binexpr endof
+            Nxor of 4 pick swap binexpr endof
             Ngoto of
                 node>arg0 @ ( index of next block )
                 3 pick fun>blocks @ array@ ( next block )

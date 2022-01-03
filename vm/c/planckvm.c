@@ -71,6 +71,7 @@ typedef int64_t sint_t;
 #define I_SUB       0x04
 #define I_MUL       0x05
 #define I_DIV       0x06
+#define I_MOD       0x07
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 // Values
@@ -328,6 +329,7 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
     case I_SUB:
     case I_MUL:
     case I_DIV:
+    case I_MOD:
         insn->tag = *(*cur - 1);
         decode_operand(fun, &insn->lhs, cur);
         decode_operand(fun, &insn->arg0, cur);
@@ -473,6 +475,13 @@ binexpr(interpreter *interp, byte_t op, value arg0, value arg1) {
             return v;
         }
         not_implemented();
+    case I_MOD:
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
+            v.tag = V_UINT;
+            v.u = arg0.u % arg1.u;
+            return v;
+        }
+        not_implemented();
     default:
         not_implemented();
     }
@@ -512,7 +521,8 @@ call(interpreter *interp, object_file *obj, function *fun) {
             case I_ADD:
             case I_SUB:
             case I_MUL:
-            case I_DIV: {
+            case I_DIV:
+            case I_MOD: {
                 move(interp, &insn->lhs,
                     binexpr(interp,
                         insn->tag,
