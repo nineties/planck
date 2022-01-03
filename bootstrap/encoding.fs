@@ -169,17 +169,18 @@ T{ test-buf 1+ u32@ -> 65536 }T
 
 : decode-str ( buf -- new-buf c-addr )
     dup u8@ case
-    %11001110 of not-implemented endof
-    %11001111 of not-implemented endof
-    %11010000 of not-implemented endof
-        dup $f0 and $a0 = unless not-reachable then
-        $0f and                             ( buf len )
-        >r 1+ r>                            ( c-from len )
-        2dup + >r                           ( c-from len R:new-buf )
-        1+ dup allocate throw dup >r swap   ( c-from c-to len R:new-buf c-to )
-        strncpy
-        r> r> swap 0
+    %11001110 of 1+ dup u8@ >r 1+ r> endof
+    %11001111 of 1+ dup u16@ >r 2 + r> endof
+    %11010000 of 1+ dup u32@ >r 4 + r> endof
+        dup $e0 and $a0 = unless not-reachable then
+        $1f and
+        >r 1+ r> 0
     endcase
+    ( start len )
+    2dup + >r   ( start len R:new-buf )
+    1+ dup  allocate throw dup >r swap ( start c-to size R:new-buf c-to )
+    strncpy
+    r> r> swap
 ; export
 
 : encode-register ( reg buf -- n )

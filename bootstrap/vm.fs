@@ -28,6 +28,7 @@ struct
     cell% field expt>id
     cell% field expt>type
     cell% field expt>def
+    cell% field expt>doc
 end-struct export-item%
 
 struct
@@ -171,8 +172,10 @@ $2000000 constant FILE_BUFFER_SIZE
     1+ decode-uint 0 ?do
         decode-uint swap
         decode-uint swap
-        decode-uint swap >r
+        decode-uint swap
+        decode-str swap >r
         export-item% %allocate throw
+        tuck expt>doc !
         tuck expt>def !
         tuck expt>id !
         tuck expt>type !

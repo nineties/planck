@@ -1,3 +1,4 @@
+/// Test of if-true branch
 export
 function main(): i32 {
 root:

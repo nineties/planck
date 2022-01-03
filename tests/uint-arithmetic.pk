@@ -1,3 +1,4 @@
+/// Test of uint arithmetic
 export
 function main(): i32 {
 root:

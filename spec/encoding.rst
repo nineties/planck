@@ -194,7 +194,7 @@ Export table
 ------------
 
 Table of variables, constants, functions, types, etc. which are exported.
-Each uint triplet represents type of exported ID, the index of the ID and
+The first three uint represents type of exported ID, the index of the ID and
 the index of corresponding definition.
 
 The type of ID is one of following ascii code.
@@ -205,9 +205,17 @@ The type of ID is one of following ascii code.
 - 'G': generic function
 - 'T': type
 
+The last string argument is the documentation of the exported item. Comment lines
+start with ``///`` placed immediately before the definition of the item is used
+as the document text::
+
+   /// This is a document
+   /// for the function f.
+   export function f(...): ... { ... }
+
 ::
 
-   +------+~~~~~~~~~+~~~~~~~~~~~+
-   | 0x02 | uint(n) | 3*n uints |
-   +------+~~~~~~~~~+~~~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+   | 0x02 | uint(n) | n x (uint, uint, uint, str) |
+   +------+~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
 

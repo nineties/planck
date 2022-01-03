@@ -49,9 +49,10 @@ private{
     dup table-size dup >r -rot table! r>
 ;
 
-: add-export ( type id-idx def-idx compiler -- )
+: add-export ( type id-idx def-idx comment compiler -- )
     >r
-    3 cells allocate throw
+    4 cells allocate throw
+    tuck tuple3 !
     tuck tuple2 !
     tuck tuple1 !
     tuck tuple0 !
@@ -154,11 +155,12 @@ private{
     over fundef>tag @ Nfundef <> if not-reachable then
     ." compiling function: " over fundef>name @ pp-node cr
     over fundef>export @ if
+        over fundef>comment @ >r
         dup compiler>fundefs @ array-size dup >r
         ." > fundef idx: " . cr
         over fundef>name @ over get-id dup >r
         ." > name idx: " . cr
-        'F' r> r> 3 pick add-export
+        'F' r> r> r> 4 pick add-export
     then
     over compile-function-type >r
     over compile-function-body >r
@@ -217,10 +219,11 @@ private{
     $02 ['] encode-u8 emit  \ section type
     dup compiler>export @ array-size ['] encode-uint emit
     dup compiler>export @ array-size 0 ?do
-        i over compiler>export @ array@ dup dup >r >r
+        i over compiler>export @ array@ dup dup dup >r >r >r
         tuple0 @ ['] encode-uint emit    \ type of the ID
         r> tuple1 @ ['] encode-uint emit \ index of the ID
         r> tuple2 @ ['] encode-uint emit \ index of corresponding def
+        r> tuple3 @ dup type cr ['] encode-str emit  \ documentation
     loop
 
     \ write buf to file

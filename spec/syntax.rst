@@ -14,9 +14,14 @@ Lexical Tokens::
     string : "\"" ([^\n"\\]|\[0abtnvfr"'\\])+ "\""
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
+    comment  : "//" [^\n]* "\n"
+    document : "///" [^\n]* "\n"
+
     keyword : "nop" | "phi" | "goto" | "return" | "export" | "function"
             | "true" | "false" | "bool" | "char" "i8" | "u8" | "i16" | "u16"
             | "i32" | "u32" | "i64" | "u64" | "f32" | "f64" | "str" | "mod" | "if"
+
+   The lexer ignores comments.
 
 Types::
 
@@ -101,5 +106,5 @@ Function::
 
 Program::
 
-   toplevel_definition : function_definition
+   toplevel_definition : document* function_definition
    program : toplevel_definition*

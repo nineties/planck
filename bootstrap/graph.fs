@@ -65,6 +65,7 @@ struct
     cell% field node>arg2
     cell% field node>arg3
     cell% field node>arg4
+    cell% field node>arg5
 end-struct node%
 
 struct
@@ -74,6 +75,7 @@ struct
     cell% field fundef>params
     cell% field fundef>retty
     cell% field fundef>blocks  ( array of basic blocks )
+    cell% field fundef>comment
 end-struct fundef%
 
 struct
@@ -154,6 +156,17 @@ private{
     tuck node>arg0 !
 ; export
 
+: make-node6 ( arg0 arg1 arg2 arg3 arg4 arg5 tag -- node )
+    node% %allocate throw
+    tuck node>tag !
+    tuck node>arg5 !
+    tuck node>arg4 !
+    tuck node>arg3 !
+    tuck node>arg2 !
+    tuck node>arg1 !
+    tuck node>arg0 !
+; export
+
 : make-id ( c-addr -- node ) make-string Nid make-node1 ; export
 : make-register ( idx -- node ) Nregister make-node1 ; export
 : make-argument ( idx -- node ) Nargument make-node1 ; export
@@ -164,8 +177,8 @@ private{
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
 : make-phi ( lhs args -- node ) Nphi make-node2 ; export
 : make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
-: make-fundef ( export name params rettype blocks -- node )
-    Nfundef make-node5
+: make-fundef ( export name params rettype blocks comment -- node )
+    Nfundef make-node6
 ; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 

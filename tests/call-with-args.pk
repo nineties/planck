@@ -4,6 +4,7 @@ root:
     return %0
 }
 
+/// Test of local function call with arguments
 export
 function main(): i32 {
 root:

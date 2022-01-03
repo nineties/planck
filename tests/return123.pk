@@ -1,3 +1,4 @@
+/// Exit code == 123
 export
 function main(): i32 {
 root:

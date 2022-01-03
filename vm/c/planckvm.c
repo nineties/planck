@@ -45,6 +45,9 @@ typedef int64_t sint_t;
 #define D_I32   0xc8
 #define D_U64   0xc9
 #define D_I64   0xca
+#define D_STR1  0xce
+#define D_STR2  0xcf
+#define D_STR4  0xd0
 #define D_USER  0xdf
 // Types
 #define T_NEVER 0xc0
@@ -186,6 +189,7 @@ typedef struct {
     byte_t type;
     uint_t id;
     uint_t def;
+    char *comment;
 } export_item;
 
 typedef struct {
@@ -274,6 +278,23 @@ decode_str(byte_t **cur) {
         size_t len = (*p) & 0x1f;
         *cur = p + len + 1;
         return strndup((char*)(p + 1), len);
+    }
+    switch (*p++) {
+    case D_STR1: {
+        size_t len = *p;
+        *cur = p + len + 1;
+        return strndup((char*)(p + 1), len);
+    }
+    case D_STR2: {
+        size_t len = *(uint16_t*)p;
+        *cur = p + len + 2;
+        return strndup((char*)(p + 2), len);
+    }
+    case D_STR4: {
+        size_t len = *(uint32_t*)p;
+        *cur = p + len + 4;
+        return strndup((char*)(p + 4), len);
+    }
     }
     not_reachable();
     return 0;
@@ -467,6 +488,7 @@ decode_section(object_file *obj, byte_t **cur) {
             obj->exports[i].type = decode_uint(cur);
             obj->exports[i].id = decode_uint(cur);
             obj->exports[i].def = decode_uint(cur);
+            obj->exports[i].comment = decode_str(cur);
         }
         return;
     }
