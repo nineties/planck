@@ -16,7 +16,7 @@ Lexical Tokens::
 
     keyword : "nop" | "phi" | "goto" | "return" | "export" | "function"
             | "bool" | "char" "i8" | "u8" | "i16" | "u16" | "i32" | "u32"
-            | "i64" | "u64" | "f32" | "f64" | "str"
+            | "i64" | "u64" | "f32" | "f64" | "str" | "mod"
 
 Types::
 
@@ -60,6 +60,10 @@ Instruction::
               | operand - operand
               | operand * operand
               | operand / operand
+              | operand "mod" operand
+              | operand & operand
+              | operand | operand
+              | operand ^ operand
 
    instruction : "nop"
                | place "=" expression
