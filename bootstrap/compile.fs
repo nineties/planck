@@ -91,7 +91,16 @@ private{
     endcase
 ;
 
-: compile-function-body ( node -- basicblocks )
+: compile-insn ( compiler insn -- insn )
+    dup node>tag @ case
+    Ncall of
+        not-implemented
+    endof
+    endcase
+    nip
+;
+
+: compile-function-body ( compiler node -- compiler basicblocks )
     make-string-table
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@
@@ -108,7 +117,17 @@ private{
         nip
         r> node>arg3 @ replace-block-label   ( branch insn )
     loop
-    drop
+    drop \ drop the basicblock table
+
+    dup fundef>blocks @ array-size 0 ?do
+        i over fundef>blocks @ array@ ( compiler node block )
+        dup node>arg2 @ array-size 0 ?do
+            i over node>arg2 @ array@
+            3 pick swap compile-insn
+            i 2 pick node>arg2 @ array!
+        loop
+        drop
+    loop
 
     fundef>blocks @
 ;
