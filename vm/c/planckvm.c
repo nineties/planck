@@ -341,6 +341,11 @@ decode_operand(function *fun, operand *opd, byte_t **cur)
         opd->tag = D_U8;
         opd->uint = *(*cur)++;
         return;
+    case D_U16:
+        opd->tag = D_U16;
+        opd->uint = *(uint16_t*)*cur;
+        *cur += 2;
+        return;
     default:
         not_implemented();
     }
@@ -571,7 +576,8 @@ call(interpreter *interp, object_file *obj, function *fun) {
             }
         }
 
-        for (int i = 0; i < block->n_insn + 1; i++) {
+        size_t n_insn = block->n_insn;
+        for (int i = 0; i < n_insn + 1; i++) {
             instruction *insn = &block->insns[i];
             switch (insn->tag) {
             case I_NOP:
