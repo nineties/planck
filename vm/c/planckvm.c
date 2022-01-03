@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 
 #define not_reachable() do { \
@@ -32,17 +33,19 @@ typedef int64_t sint_t;
 #define STACK_SIZE  (1024*1024)
 
 // Operands
-#define D_REG  0x90
-#define D_ARG  0xa0
-#define D_U8   0xc3
-#define D_I8   0xc4
-#define D_U16  0xc5
-#define D_I16  0xc6
-#define D_U32  0xc7
-#define D_I32  0xc8
-#define D_U64  0xc9
-#define D_I64  0xca
-#define D_USER 0xdf
+#define D_REG   0x90
+#define D_ARG   0xa0
+#define D_TRUE  0xc1
+#define D_FALSE 0xc2
+#define D_U8    0xc3
+#define D_I8    0xc4
+#define D_U16   0xc5
+#define D_I16   0xc6
+#define D_U32   0xc7
+#define D_I32   0xc8
+#define D_U64   0xc9
+#define D_I64   0xca
+#define D_USER  0xdf
 // Types
 #define T_NEVER 0xc0
 #define T_BOOL  0xc1
@@ -76,13 +79,16 @@ typedef int64_t sint_t;
 #define I_LCALL     0x20    // local call
 #define I_GOTO      0x80
 #define I_RETURN    0x81
+#define I_IFTRUE    0x82
 // Values
-#define V_UINT  0x00
-#define V_INT   0x01
+#define V_BOOL  0x00
+#define V_UINT  0x01
+#define V_INT   0x02
 
 typedef struct {
     byte_t tag;
     union {
+        bool b;
         uint64_t u;
         int64_t i;
         float f32;
@@ -138,6 +144,11 @@ typedef struct {
     union {
         operand retval; // return
         uint_t next;    // goto
+        struct {
+            operand cond;
+            uint_t ifthen;
+            uint_t ifelse;
+        };
         struct {
             operand lhs;
             union {
@@ -199,6 +210,14 @@ static value
 operand_to_value(value *bp, operand *opd) {
     value v = { 0 };
     switch (opd->tag) {
+    case D_TRUE:
+        v.tag = V_BOOL;
+        v.b = true;
+        break;
+    case D_FALSE:
+        v.tag = V_BOOL;
+        v.b = false;
+        break;
     case D_U8:
         v.tag = V_UINT;
         v.u = opd->uint;
@@ -316,6 +335,8 @@ decode_operand(function *fun, operand *opd, byte_t **cur)
         return;
     }
     switch (*(*cur)++) {
+    case D_TRUE: opd->tag = D_TRUE; return;
+    case D_FALSE: opd->tag = D_FALSE; return;
     case D_U8:
         opd->tag = D_U8;
         opd->uint = *(*cur)++;
@@ -383,6 +404,12 @@ decode_branch_instruction(function *fun, instruction *branch, byte_t **cur) {
     case I_RETURN:
         branch->tag = I_RETURN;
         decode_operand(fun, &branch->retval, cur);
+        return;
+    case I_IFTRUE:
+        branch->tag = I_IFTRUE;
+        decode_operand(fun, &branch->cond, cur);
+        branch->ifthen = decode_uint(cur);
+        branch->ifelse = decode_uint(cur);
         return;
     }
     not_reachable();
@@ -580,6 +607,12 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 break;
             case I_RETURN:
                 return operand_to_value(bp, &insn->retval);
+            case I_IFTRUE:
+                prev = block;
+                value v = operand_to_value(bp, &insn->cond);
+                if (v.tag != V_BOOL) not_reachable();
+                block = &fun->blocks[v.b ? insn->ifthen : insn->ifelse];
+                break;
             default:
                 printf("not implemented: %02x\n", insn->tag);
                 not_implemented();
