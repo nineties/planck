@@ -452,10 +452,24 @@ binexpr(interpreter *interp, byte_t op, value arg0, value arg1) {
             return v;
         }
         not_implemented();
+    case I_SUB:
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
+            v.tag = V_UINT;
+            v.u = arg0.u - arg1.u;
+            return v;
+        }
+        not_implemented();
     case I_MUL:
         if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
             v.tag = V_UINT;
             v.u = arg0.u * arg1.u;
+            return v;
+        }
+        not_implemented();
+    case I_DIV:
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
+            v.tag = V_UINT;
+            v.u = arg0.u / arg1.u;
             return v;
         }
         not_implemented();
