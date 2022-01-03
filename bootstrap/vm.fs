@@ -65,6 +65,7 @@ $2000000 constant FILE_BUFFER_SIZE
     %11000001 of true-value exit then
     %11000010 of false-value exit then
     %11000011 of dup u8@ >r 1+ r> Nuint make-node1 exit endof
+    %11000101 of dup u16@ >r 2 + r> Nuint make-node1 exit endof
     endcase
     not-implemented
 ;
@@ -119,7 +120,17 @@ $2000000 constant FILE_BUFFER_SIZE
     0 make-array -rot
     decode-uint 0 ?do
         dup u8@ %00000001 <> if DECODE-ERROR throw then
-        not-implemented
+        1+
+        decode-operand >r
+        0 make-array -rot
+        decode-uint 0 ?do
+            decode-uint >r
+            decode-operand
+            r> swap make-tuple2
+            3 pick array-push
+        loop
+        rot r> swap make-phi
+        3 pick array-push
     loop
     \ decode normal and branch instructions
     0 make-array -rot
@@ -382,7 +393,16 @@ $2000000 constant FILE_BUFFER_SIZE
 
     begin
         dup block>phis @ array-size 0 ?do
-            not-implemented
+            i over block>phis @ array@
+            ( interp fun prev cur phi tup )
+            dup node>arg1 @ array-size 0 ?do
+                i over node>arg1 @ array@
+                3 pick block>index @ over tuple0 @ = if
+                    \ found the corresponding rhs
+                    tuple1 @ leave
+                then
+            loop
+            swap node>arg0 @ swap 5 pick -rot move
         loop
         dup block>insns @ array-size 0 ?do
             i over block>insns @ array@ ( insn )

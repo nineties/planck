@@ -91,6 +91,24 @@ end-struct tuple%
 
 private{
 
+: make-tuple1 ( arg0 -- node )
+    1 cells allocate throw
+    tuck tuple0 !
+; export
+
+: make-tuple2 ( arg0 arg1 -- node )
+    2 cells allocate throw
+    tuck tuple1 !
+    tuck tuple0 !
+; export
+
+: make-tuple3 ( arg0 arg1 arg2 -- node )
+    3 cells allocate throw
+    tuck tuple2 !
+    tuck tuple1 !
+    tuck tuple0 !
+; export
+
 : make-node0 ( tag -- node )
     node% %allocate throw
     tuck node>tag !
