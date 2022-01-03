@@ -65,6 +65,8 @@ private{
         dup lexer>token_val @ Nuint make-node1
         swap lex exit
     then
+    dup lexer>token_tag @ Ttrue = if lex true-value exit then
+    dup lexer>token_tag @ Tfalse = if lex false-value exit then
     dup parse-label ?dup if nip exit then
     dup parse-register ?dup if nip exit then
     dup parse-argument ?dup if nip exit then
@@ -203,9 +205,16 @@ private{
         dup lex
         parse-operand ?dup unless SYNTAX-ERROR throw then
         make-return
+    else dup lexer>token_tag @ Tif = if
+        dup lex
+        dup parse-operand ?dup unless SYNTAX-ERROR throw then
+        swap dup parse-label ?dup unless SYNTAX-ERROR throw then
+        swap parse-label ?dup unless SYNTAX-ERROR throw then
+        Niftrue
+        make-node3
     else
         drop 0
-    then then
+    then then then
 ;
 
 : parse-basic-block ( lexer -- node )
