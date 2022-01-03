@@ -96,7 +96,7 @@ $2000000 constant FILE_BUFFER_SIZE
         decode-uint 0 ?do
             decode-operand 3 pick array-push
         loop
-        rot r> swap r> -rot Nlcall make-node3
+        rot r> swap r> -rot Nlcall make-node3   ( lhs idx args )
     endof
     not-implemented
     endcase
@@ -385,6 +385,23 @@ $2000000 constant FILE_BUFFER_SIZE
             Nand of 4 pick swap binexpr endof
             Nor  of 4 pick swap binexpr endof
             Nxor of 4 pick swap binexpr endof
+            Nlcall of
+                \ allocate space for arguments
+                dup node>arg2 @ array-size cells 5 pick interp>sp -!
+                \ push arguments to the stack
+                dup node>arg2 @ array-size 0 ?do
+                    4 pick i 2 pick node>arg2 @ array@ to-value
+                    5 pick interp>sp @ i cells + !
+                loop
+                dup node>arg1 @ ( index of the function )
+                5 pick interp>obj @ obj>funcs @ array@
+                5 pick swap recurse \ call the function
+                ( interp fun prev cur node interp retval )
+                2 pick node>arg0 @ swap move \ assign retval to lhs
+
+                \ restore stack pointer
+                node>arg2 @ array-size cells 4 pick interp>sp +!
+            endof
             Ngoto of
                 node>arg0 @ ( index of next block )
                 3 pick fun>blocks @ array@ ( next block )
@@ -393,12 +410,12 @@ $2000000 constant FILE_BUFFER_SIZE
             Nreturn of
                 node>arg0 @
                 4 pick swap to-value
-                nip nip nip
+                nip nip nip unloop
                 \ restore base pointer
-                r> 2 pick interp>bp !
-                unloop exit
+                r>
+                2 pick interp>bp !
+                exit
             endof
-            ." here?" cr
             not-implemented
             endcase
         loop
