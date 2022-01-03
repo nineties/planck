@@ -151,6 +151,9 @@ private{
 ; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 
+1 Nbool make-node1 constant true-value export
+0 Nbool make-node1 constant false-value export
+
 TyNever make-node0 constant never-type export
 TyBool make-node0 constant bool-type export
 TyChar make-node0 constant char-type export

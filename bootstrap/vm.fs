@@ -62,6 +62,8 @@ $2000000 constant FILE_BUFFER_SIZE
     dup $8f <= if $0f and Nregister make-node1 exit then
     dup $9f <= if $0f and Nargument make-node1 exit then
     case
+    %11000001 of true-value exit then
+    %11000010 of false-value exit then
     %11000011 of dup u8@ >r 1+ r> Nuint make-node1 exit endof
     endcase
     not-implemented
@@ -102,6 +104,12 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
+    %10000010 of
+        decode-operand >r   ( arg )
+        decode-uint >r      ( ifthen block )
+        decode-uint         ( ifelse block )
+        r> r> -rot swap Niftrue make-node3
+    endof
     not-implemented
     endcase
 ;
@@ -239,6 +247,7 @@ $2000000 constant FILE_BUFFER_SIZE
 \ evaluate operand to value
 : to-value ( interp operand -- value )
     dup node>tag @ case
+    Nbool of nip endof
     Nuint of nip endof
     Nregister of node>arg0 @ localp @ endof
     Nargument of node>arg0 @ argp @ endof
@@ -423,6 +432,13 @@ $2000000 constant FILE_BUFFER_SIZE
                 r>
                 2 pick interp>bp !
                 exit
+            endof
+            Niftrue of
+                dup node>arg0 @ 5 pick swap to-value
+                dup node>tag @ Nbool = unless not-reachable then
+                node>arg0 @ if node>arg1 @ else node>arg2 @ then
+                3 pick fun>blocks @ array@ ( next block )
+                rot drop ( interp fun prev cur next -> interp fun cur next )
             endof
             not-implemented
             endcase

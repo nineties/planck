@@ -65,8 +65,8 @@ private{
         dup lexer>token_val @ Nuint make-node1
         swap lex exit
     then
-    dup lexer>token_tag @ Ttrue = if lex 1 Nbool make-node1 exit then
-    dup lexer>token_tag @ Tfalse = if lex 0 Nbool make-node1 exit then
+    dup lexer>token_tag @ Ttrue = if lex true-value exit then
+    dup lexer>token_tag @ Tfalse = if lex false-value exit then
     dup parse-label ?dup if nip exit then
     dup parse-register ?dup if nip exit then
     dup parse-argument ?dup if nip exit then
