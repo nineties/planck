@@ -1,0 +1,9 @@
+export
+function main(): i32 {
+root:
+    if false iftrue iffalse
+iftrue:
+    return 0
+iffalse:
+    return 123
+}
