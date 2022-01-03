@@ -401,6 +401,7 @@ $2000000 constant FILE_BUFFER_SIZE
                     \ found the corresponding rhs
                     tuple1 @ leave
                 then
+                drop
             loop
             swap node>arg0 @ swap 5 pick -rot move
         loop
