@@ -17,6 +17,10 @@ include lib/string.fs
     enum Nnop
     enum Nmove      ( lhs rhs )
     enum Nphi       ( lhs args )
+    enum Nadd
+    enum Nsub
+    enum Nmul
+    enum Ndiv
     enum Ngoto
     enum Nreturn
 

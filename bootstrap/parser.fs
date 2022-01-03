@@ -116,7 +116,12 @@ private{
 
 : parse-expression ( lexer -- node )
     dup lexer>token_tag @ Tphi = if parse-phi-expression exit then
-    parse-operand
+    dup parse-operand swap
+    dup '+' expect-sym if dup lex parse-operand 0 -rot Nadd make-node3 exit then
+    dup '-' expect-sym if dup lex parse-operand 0 -rot Nsub make-node3 exit then
+    dup '*' expect-sym if dup lex parse-operand 0 -rot Nmul make-node3 exit then
+    dup '/' expect-sym if dup lex parse-operand 0 -rot Ndiv make-node3 exit then
+    drop
 ;
 
 : parse-instruction ( lexer -- node )
@@ -131,6 +136,10 @@ private{
 
     dup node>tag @ case
     Nphi of tuck node>arg0 ! endof
+    Nadd of tuck node>arg0 ! endof
+    Nsub of tuck node>arg0 ! endof
+    Nmul of tuck node>arg0 ! endof
+    Ndiv of tuck node>arg0 ! endof
     drop make-move 0
     endcase
     nip

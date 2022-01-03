@@ -258,6 +258,13 @@ T{ test-buf 1+ u32@ -> 65536 }T
     endcase
 ; export
 
+: encode-binexpr ( insn buf code -- n )
+    over u8! 1+ 1 >r
+    over node>arg0 @ over encode-operand dup r> + >r +
+    over node>arg1 @ over encode-operand dup r> + >r +
+    over node>arg2 @ over encode-operand r> + nip nip
+;
+
 : encode-insn ( insn buf -- n )
     over node>tag @ case
     Nnop of %00000000 over u8! 2drop 1 endof
@@ -273,6 +280,10 @@ T{ test-buf 1+ u32@ -> 65536 }T
         loop
         nip nip
     endof
+    Nadd of %00000011 encode-binexpr endof
+    Nsub of %00000100 encode-binexpr endof
+    Nmul of %00000101 encode-binexpr endof
+    Ndiv of %00000110 encode-binexpr endof
     Nmove of
         %00000010 over u8! 1+
         1 >r
