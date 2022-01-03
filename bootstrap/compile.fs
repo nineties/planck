@@ -87,6 +87,11 @@ private{
         drop
     endof
     Nreturn of drop endof
+    Niftrue of
+        dup node>arg1 @ node>arg0 @ 2 pick table@ over node>arg1 !
+        dup node>arg2 @ node>arg0 @ 2 pick table@ over node>arg2 !
+        drop
+    endof
     not-reachable
     endcase
 ;

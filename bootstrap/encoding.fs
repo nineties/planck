@@ -200,6 +200,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
 
 : encode-operand ( opd buf -- n )
     over node>tag @ case
+    Nbool of swap node>arg0 @ %11000001 + swap u8! 1 endof
     Nuint of over node>arg0 @ over encode-uint nip nip endof
     Nregister of encode-register endof
     Nargument of encode-argument endof
@@ -325,6 +326,12 @@ T{ test-buf 1+ u32@ -> 65536 }T
         %10000001 over u8! 1+
         over node>arg0 @ over encode-operand 1+
         nip nip
+    endof
+    Niftrue of
+        %10000010 over u8! 1+ 1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-uint dup r> + >r +
+        over node>arg2 @ over encode-uint r> + nip nip
     endof
     not-implemented
     endcase
