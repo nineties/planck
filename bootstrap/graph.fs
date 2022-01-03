@@ -25,6 +25,8 @@ include lib/string.fs
     enum Nand
     enum Nor
     enum Nxor
+    enum Ncall
+    enum Nlcall
     enum Ngoto
     enum Nreturn
 

@@ -69,7 +69,7 @@ private{
     fundef>retty @ swap TyFunc make-node2
 ;
 
-: replace-label ( table node -- table )
+: replace-block-label ( table node -- table )
     dup node>tag @ case
     Nphi of
         dup node>arg1 @ ( args )
@@ -91,7 +91,29 @@ private{
     endcase
 ;
 
-: compile-function-body ( node -- basicblocks )
+: lookup-fundef ( compiler name -- idx )
+    over compiler>fundefs @ array-size 0 ?do
+        i 2 pick compiler>fundefs @ array@
+        tuple0 @ over streq if
+            2drop i unloop exit
+        then
+    loop
+;
+
+: compile-insn ( compiler insn -- insn )
+    dup node>tag @ case
+    Ncall of
+        over over node>arg1 @ node>arg0 @ lookup-fundef
+        over node>arg0 @ swap
+        2 pick node>arg2 @
+        Nlcall make-node3
+        nip nip
+    endof
+        drop nip 0
+    endcase
+;
+
+: compile-function-body ( compiler node -- compiler basicblocks )
     make-string-table
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@
@@ -103,12 +125,22 @@ private{
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@ dup >r
         node>arg1 @ tuck array-size 0 ?do
-            i 2 pick array@ replace-label
+            i 2 pick array@ replace-block-label
         loop
         nip
-        r> node>arg3 @ replace-label   ( branch insn )
+        r> node>arg3 @ replace-block-label   ( branch insn )
     loop
-    drop
+    drop \ drop the basicblock table
+
+    dup fundef>blocks @ array-size 0 ?do
+        i over fundef>blocks @ array@ ( compiler node block )
+        dup node>arg2 @ array-size 0 ?do
+            i over node>arg2 @ array@
+            3 pick swap compile-insn
+            i 2 pick node>arg2 @ array!
+        loop
+        drop
+    loop
 
     fundef>blocks @
 ;
@@ -126,9 +158,10 @@ private{
     over compile-function-type >r
     over compile-function-body >r
     r> r>
-    2 cells allocate throw
-    tuck tuple0 !
+    3 cells allocate throw
+    4 pick fundef>name @ node>arg0 @ over tuple0 !
     tuck tuple1 !
+    tuck tuple2 !
     over compiler>fundefs @ array-push
     2drop
 ;
@@ -171,8 +204,8 @@ private{
     dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
     dup compiler>fundefs @ array-size 0 ?do
         i over compiler>fundefs @ array@ dup >r
-        tuple0 @ ['] encode-type emit           \ emit function type
-        r> tuple1 @ ['] encode-basicblocks emit
+        tuple1 @ ['] encode-type emit           \ emit function type
+        r> tuple2 @ ['] encode-basicblocks emit
     loop
 
     \ write export section

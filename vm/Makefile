@@ -15,6 +15,7 @@ test-vm:
 	$(RUN_VM) ../tests/goto.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/assign.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/uint-arithmetic.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/call.pko; test $$? -eq 123
 
 clean:
 	make -C $(VM_IMPL)

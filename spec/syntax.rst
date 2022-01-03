@@ -64,6 +64,10 @@ Instruction::
               | operand & operand
               | operand | operand
               | operand ^ operand
+              | "label" "(" call_args ")"
+
+   call_args  :
+              | operand ( "," operand )*
 
    instruction : "nop"
                | place "=" expression
@@ -85,7 +89,7 @@ Basic Block::
 Function::
 
    function_params :
-                   | type ( "," function_params )*
+                   | type ( "," type )*
 
    function_definition :
       "export"?

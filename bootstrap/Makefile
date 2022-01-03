@@ -1,12 +1,19 @@
 RUN_FORTH=./planck < bootstrap.fs
 RUN_VM=./planck < bootstrap.fs vm.fs
-TESTOBJECTS=\
-		../tests/return123.pko \
-		../tests/goto.pko \
-		../tests/assign.pko \
-		../tests/uint-arithmetic.pko
+COMPILER_SOURCES=\
+	graph.fs \
+	encoding.fs \
+	lexer.fs \
+	parser.fs \
+	compile.fs
+TEST_OBJECTS=\
+	../tests/return123.pko \
+	../tests/goto.pko \
+	../tests/assign.pko \
+	../tests/uint-arithmetic.pko \
+	../tests/call.pko
 
-default: planck $(TESTOBJECTS)
+default: planck $(TEST_OBJECTS)
 
 planck: planckforth
 	make -C planckforth $(RUNTIME_IMPL)
@@ -16,19 +23,20 @@ planck: planckforth
 
 .SUFFIXES: .pk .pko
 
-.pk.pko:
-	$(RUN_FORTH) compile.fs $^ $@
+%.pko: %.pk $(COMPILER_SOURCES)
+	$(RUN_FORTH) compile.fs $< $@
 
 .PHONY: clean
 
 test: planck
 	$(RUN_FORTH) runtests.fs
 
-test-vm: planck $(TESTOBJECTS)
+test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/return123.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/goto.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/assign.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/uint-arithmetic.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/call.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs

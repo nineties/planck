@@ -33,6 +33,7 @@ end-struct export-item%
 struct
     cell% field interp>stack
     cell% field interp>sp
+    cell% field interp>bp
     cell% field interp>obj
 end-struct interpreter%
 
@@ -88,6 +89,15 @@ $2000000 constant FILE_BUFFER_SIZE
     %00001010 of Nxor decode-binexpr endof
     %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
+    %00100000 of
+        decode-operand >r   ( lhs )
+        decode-uint >r      ( index of function )
+        0 make-array -rot   ( array for args )
+        decode-uint 0 ?do
+            decode-operand 3 pick array-push
+        loop
+        rot r> swap r> -rot Nlcall make-node3   ( lhs idx args )
+    endof
     not-implemented
     endcase
 ;
@@ -212,15 +222,17 @@ $2000000 constant FILE_BUFFER_SIZE
     nip nip nip nip
 ;
 
+\ address of local variable
+: localp ( interp index -- a-addr )
+    cells 1+ negate swap interp>bp @ +
+;
+
 \ evaluate operand to value
 : to-value ( interp operand -- value )
     dup node>tag @ case
     Nuint of nip endof
     Nregister of
-        ( interp index )
-        node>arg0 @ ( index )
-        cells over interp>sp @ + @
-        nip
+        node>arg0 @ localp @
     endof
     not-implemented
     endcase
@@ -232,10 +244,7 @@ $2000000 constant FILE_BUFFER_SIZE
     over node>tag @ case
     Nregister of
         ( intep lhs val )
-        >r node>arg0 @ ( index of the local )
-        ( interp lhs )
-        cells swap interp>sp @ + ( addr of the local )
-        r> swap !
+        >r node>arg0 @ localp r> swap !
     endof
     not-reachable
     endcase
@@ -342,6 +351,9 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : call ( interp fun -- interp retvalue )
+    over interp>bp @ >r     \ save base pointer
+    over interp>sp @ 2 pick interp>bp !
+
     \ allocate space for local variables
     dup fun>nlocals @ cells over interp>sp -!
 
@@ -373,6 +385,23 @@ $2000000 constant FILE_BUFFER_SIZE
             Nand of 4 pick swap binexpr endof
             Nor  of 4 pick swap binexpr endof
             Nxor of 4 pick swap binexpr endof
+            Nlcall of
+                \ allocate space for arguments
+                dup node>arg2 @ array-size cells 5 pick interp>sp -!
+                \ push arguments to the stack
+                dup node>arg2 @ array-size 0 ?do
+                    4 pick i 2 pick node>arg2 @ array@ to-value
+                    5 pick interp>sp @ i cells + !
+                loop
+                dup node>arg1 @ ( index of the function )
+                5 pick interp>obj @ obj>funcs @ array@
+                5 pick swap recurse \ call the function
+                ( interp fun prev cur node interp retval )
+                2 pick node>arg0 @ swap move \ assign retval to lhs
+
+                \ restore stack pointer
+                node>arg2 @ array-size cells 4 pick interp>sp +!
+            endof
             Ngoto of
                 node>arg0 @ ( index of next block )
                 3 pick fun>blocks @ array@ ( next block )
@@ -381,8 +410,11 @@ $2000000 constant FILE_BUFFER_SIZE
             Nreturn of
                 node>arg0 @
                 4 pick swap to-value
-                nip nip nip
-                unloop exit
+                nip nip nip unloop
+                \ restore base pointer
+                r>
+                2 pick interp>bp !
+                exit
             endof
             not-implemented
             endcase

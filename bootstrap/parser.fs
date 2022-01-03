@@ -12,7 +12,7 @@ include lib/array.fs
 include lexer.fs
 include graph.fs
 
-s" Sytax Error" exception constant SYNTAX-ERROR
+s" Syntax Error" exception constant SYNTAX-ERROR
 
 private{
 
@@ -127,6 +127,17 @@ private{
     dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
     dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
     dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
+    dup '(' expect-sym if
+        dup lex
+
+        \ function call
+        over node>tag @ Nid = unless SYNTAX-ERROR throw then
+        dup ')' expect-sym if
+            lex
+            \ function call with no argument
+            0 make-array 0 -rot Ncall make-node3 exit
+        then
+    then
     drop
 ;
 
@@ -150,6 +161,7 @@ private{
     Nand of tuck node>arg0 ! endof
     Nor  of tuck node>arg0 ! endof
     Nxor of tuck node>arg0 ! endof
+    Ncall of tuck node>arg0 ! endof
     drop make-move 0
     endcase
     nip
