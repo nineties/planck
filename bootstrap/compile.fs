@@ -106,7 +106,7 @@ private{
         over over node>arg1 @ node>arg0 @ lookup-fundef
         over node>arg0 @ swap
         2 pick node>arg2 @
-        Nlocalcall make-node3
+        Nlcall make-node3
         nip nip
     endof
         drop nip 0

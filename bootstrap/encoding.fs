@@ -294,7 +294,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
         over node>arg0 @ over encode-operand dup r> + >r +
         over node>arg1 @ over encode-operand r> + nip nip
     endof
-    Nlocalcall of
+    Nlcall of
         %00100000 over u8! 1+ 1 >r
         over node>arg0 @ over encode-operand dup r> + >r +
         over node>arg1 @ over encode-uint dup r> + >r +
