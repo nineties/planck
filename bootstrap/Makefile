@@ -12,7 +12,8 @@ TEST_OBJECTS=\
 	../tests/assign.pko \
 	../tests/uint-arithmetic.pko \
 	../tests/call.pko \
-	../tests/call-with-args.pko
+	../tests/call-with-args.pko \
+	../tests/iftrue.pko
 
 default: planck $(TEST_OBJECTS)
 
@@ -39,6 +40,7 @@ test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/uint-arithmetic.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/call.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/call-with-args.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/iftrue.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs
