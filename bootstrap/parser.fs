@@ -161,6 +161,7 @@ private{
     Nand of tuck node>arg0 ! endof
     Nor  of tuck node>arg0 ! endof
     Nxor of tuck node>arg0 ! endof
+    Ncall of tuck node>arg0 ! endof
     drop make-move 0
     endcase
     nip

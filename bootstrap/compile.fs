@@ -91,13 +91,26 @@ private{
     endcase
 ;
 
+: lookup-fundef ( compiler name -- idx )
+    over compiler>fundefs @ array-size 0 ?do
+        i 2 pick compiler>fundefs @ array@
+        tuple0 @ over streq if
+            2drop i unloop exit
+        then
+    loop
+;
+
 : compile-insn ( compiler insn -- insn )
     dup node>tag @ case
     Ncall of
-        not-implemented
+        over over node>arg1 @ node>arg0 @ lookup-fundef
+        over node>arg0 @ swap
+        2 pick node>arg2 @
+        Nlocalcall make-node3
+        nip nip
     endof
+        drop nip 0
     endcase
-    nip
 ;
 
 : compile-function-body ( compiler node -- compiler basicblocks )
@@ -145,9 +158,10 @@ private{
     over compile-function-type >r
     over compile-function-body >r
     r> r>
-    2 cells allocate throw
-    tuck tuple0 !
+    3 cells allocate throw
+    4 pick fundef>name @ node>arg0 @ over tuple0 !
     tuck tuple1 !
+    tuck tuple2 !
     over compiler>fundefs @ array-push
     2drop
 ;
@@ -190,8 +204,8 @@ private{
     dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
     dup compiler>fundefs @ array-size 0 ?do
         i over compiler>fundefs @ array@ dup >r
-        tuple0 @ ['] encode-type emit           \ emit function type
-        r> tuple1 @ ['] encode-basicblocks emit
+        tuple1 @ ['] encode-type emit           \ emit function type
+        r> tuple2 @ ['] encode-basicblocks emit
     loop
 
     \ write export section

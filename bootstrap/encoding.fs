@@ -294,6 +294,19 @@ T{ test-buf 1+ u32@ -> 65536 }T
         over node>arg0 @ over encode-operand dup r> + >r +
         over node>arg1 @ over encode-operand r> + nip nip
     endof
+    Nlocalcall of
+        %00100000 over u8! 1+ 1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-uint dup r> + >r +
+        over node>arg2 @ array-size over encode-uint dup r> + >r +
+        r>
+        ( insn buf n )
+        2 pick node>arg2 @ array-size 0 ?do
+            i 3 pick node>arg2 @ array@ 2 pick encode-operand tuck + >r + r>
+        loop
+        ( insn buf n )
+        nip nip
+    endof
     Ngoto of
         %10000000 over u8! 1+
         over node>arg0 @ over encode-uint 1+
