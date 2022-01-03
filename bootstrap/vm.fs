@@ -60,6 +60,10 @@ $2000000 constant FILE_BUFFER_SIZE
     dup u8@ >r 1+ r>
     dup $7f <= if Nuint make-node1 exit then
     dup $8f <= if $0f and Nregister make-node1 exit then
+    dup $9f <= if $0f and Nargument make-node1 exit then
+    case
+    %11000011 of dup u8@ >r 1+ r> Nuint make-node1 exit endof
+    endcase
     not-implemented
 ;
 
@@ -227,13 +231,17 @@ $2000000 constant FILE_BUFFER_SIZE
     cells 1+ negate swap interp>bp @ +
 ;
 
+\ address of call argument
+: argp ( interp index -- a-addr )
+    cells swap interp>bp @ +
+;
+
 \ evaluate operand to value
 : to-value ( interp operand -- value )
     dup node>tag @ case
     Nuint of nip endof
-    Nregister of
-        node>arg0 @ localp @
-    endof
+    Nregister of node>arg0 @ localp @ endof
+    Nargument of node>arg0 @ argp @ endof
     not-implemented
     endcase
 ;
