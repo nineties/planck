@@ -58,11 +58,17 @@ $2000000 constant FILE_BUFFER_SIZE
 : decode-operand ( fun buf -- fun new-buf opd )
     dup u8@ >r 1+ r>
     dup $7f <= if Nuint make-node1 exit then
+    dup $8f <= if $0f and Nregister make-node1 exit then
     not-implemented
 ;
 
 : decode-insn ( fun buf -- fun new-buf insn )
     dup u8@ >r 1+ r> case
+    %00000010 of
+        decode-operand >r
+        decode-operand
+        r> swap make-move
+    endof
     %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
     not-implemented
@@ -189,6 +195,35 @@ $2000000 constant FILE_BUFFER_SIZE
     nip nip nip nip
 ;
 
+\ evaluate operand to value
+: to-value ( interp operand -- value )
+    dup node>tag @ case
+    Nuint of nip endof
+    Nregister of
+        ( interp index )
+        node>arg0 @ ( index )
+        cells over interp>sp @ + @
+        nip
+    endof
+    not-implemented
+    endcase
+;
+
+: move ( interp lhs rhs -- )
+    2 pick swap to-value
+    ( interp lhs val )
+    over node>tag @ case
+    Nregister of
+        ( intep lhs val )
+        >r node>arg0 @ ( index of the local )
+        ( interp lhs )
+        cells swap interp>sp @ + ( addr of the local )
+        r> swap !
+    endof
+    not-reachable
+    endcase
+;
+
 : call ( interp fun -- interp retvalue )
     \ allocate space for local variables
     dup fun>nlocals @ cells over interp>sp -!
@@ -206,6 +241,13 @@ $2000000 constant FILE_BUFFER_SIZE
         dup block>insns @ array-size 0 ?do
             i over block>insns @ array@ ( insn )
             dup node>tag @ case
+            Nmove of
+                ( interp fun prev cur node )
+                dup node>arg0 @
+                swap node>arg1 @
+                5 pick -rot
+                move
+            endof
             Ngoto of
                 node>arg0 @ ( index of next block )
                 3 pick fun>blocks @ array@ ( next block )
@@ -213,6 +255,7 @@ $2000000 constant FILE_BUFFER_SIZE
             endof
             Nreturn of
                 node>arg0 @
+                4 pick swap to-value
                 nip nip nip
                 unloop exit
             endof

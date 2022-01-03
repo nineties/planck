@@ -1,8 +1,9 @@
-RUNFORTH=./planck < bootstrap.fs
-RUNVM=./planck < bootstrap.fs vm.fs
+RUN_FORTH=./planck < bootstrap.fs
+RUN_VM=./planck < bootstrap.fs vm.fs
 TESTOBJECTS=\
 		../tests/return123.pko \
-		../tests/goto.pko
+		../tests/goto.pko \
+		../tests/simple-assign.pko
 
 default: planck $(TESTOBJECTS)
 
@@ -15,16 +16,17 @@ planck: planckforth
 .SUFFIXES: .pk .pko
 
 .pk.pko:
-	$(RUNFORTH) compile.fs $^ $@
+	$(RUN_FORTH) compile.fs $^ $@
 
 .PHONY: clean
 
 test: planck
-	$(RUNFORTH) runtests.fs
+	$(RUN_FORTH) runtests.fs
 
 test-vm: planck $(TESTOBJECTS)
-	$(RUNVM) ../tests/return123.pko; test $$? -eq 123
-	$(RUNVM) ../tests/goto.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/return123.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/goto.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/simple-assign.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs
