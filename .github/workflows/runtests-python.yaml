@@ -14,5 +14,5 @@ jobs:
         submodules: recursive
     - name: run tests
       run: |
-        make bootstrap RUNTIME_IMPL=python
+        make bootstrap PLANCK_IMPL=python
         make test

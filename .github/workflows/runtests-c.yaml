@@ -14,6 +14,6 @@ jobs:
         submodules: recursive
     - name: run tests
       run: |
-        make bootstrap RUNTIME_IMPL=c
+        make bootstrap PLANCK_IMPL=c
         make test
         make test-vm VM_IMPL=c
