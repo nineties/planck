@@ -72,6 +72,7 @@ typedef int64_t sint_t;
 #define I_MUL       0x05
 #define I_DIV       0x06
 #define I_MOD       0x07
+#define I_LCALL     0x20    // local call
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 // Values
@@ -133,15 +134,20 @@ typedef struct {
 typedef struct {
     byte_t tag;
     union {
-        operand retval;
-        uint_t next;
+        operand retval; // return
+        uint_t next;    // goto
         struct {
             operand lhs;
             union {
-                operand rhs;
-                struct {
+                operand rhs;    // lhs = rhs
+                struct {        // binary expression
                     operand arg0;
                     operand arg1;
+                };
+                struct {    // local function call
+                    uint_t fun;
+                    size_t n_args;
+                    operand *args;
                 };
             };
         };
@@ -184,10 +190,11 @@ typedef struct {
 } interpreter;
 
 // n-th local variable
-#define LOCAL(interp, n) (interp)->sp[n]
+#define LOCAL(bp, n)    (bp)[-(n)-1]
+#define ARG(bp, n)      (bp)[n]
 
 static value
-operand_to_value(interpreter *interp, operand *opd) {
+operand_to_value(value *bp, operand *opd) {
     value v = { 0 };
     switch (opd->tag) {
     case D_U8:
@@ -195,7 +202,7 @@ operand_to_value(interpreter *interp, operand *opd) {
         v.u = opd->uint;
         break;
     case D_REG:
-        v = LOCAL(interp, opd->reg);
+        v = LOCAL(bp, opd->reg);
         break;
     default:
         not_implemented();
@@ -335,6 +342,15 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         decode_operand(fun, &insn->arg0, cur);
         decode_operand(fun, &insn->arg1, cur);
         return;
+    case I_LCALL:
+        insn->tag = I_LCALL;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->fun = decode_uint(cur);
+        insn->n_args = decode_uint(cur);
+        insn->args = calloc(insn->n_args, sizeof(insn->args[0]));
+        for (int i = 0; i < insn->n_args; i++)
+            decode_operand(fun, &insn->args[i], cur);
+        return;
     }
     not_implemented();
 }
@@ -433,10 +449,10 @@ load_object_file(const char *path) {
 }
 
 static void
-move(interpreter *interp, operand *lhs, value v) {
+move(value *bp, operand *lhs, value v) {
     switch (lhs->tag) {
     case D_REG:
-        LOCAL(interp, lhs->reg) = v;
+        LOCAL(bp, lhs->reg) = v;
         break;
     default:
         not_implemented();
@@ -444,7 +460,7 @@ move(interpreter *interp, operand *lhs, value v) {
 }
 
 static value
-binexpr(interpreter *interp, byte_t op, value arg0, value arg1) {
+binexpr(byte_t op, value arg0, value arg1) {
     value v;
     switch (op) {
     case I_ADD:
@@ -490,6 +506,7 @@ binexpr(interpreter *interp, byte_t op, value arg0, value arg1) {
 
 static value
 call(interpreter *interp, object_file *obj, function *fun) {
+    value *bp = interp->sp;
     interp->sp -= fun->n_locals; /* allocate space for local variables */
     basicblock *prev = NULL;
     basicblock *block = &fun->blocks[0];
@@ -503,7 +520,7 @@ call(interpreter *interp, object_file *obj, function *fun) {
             phi_instruction *phi = &block->phis[i];
             for (int j = 0; j < phi->n_rhs; j++) {
                 if (prev->index == phi->blocks[j]) {
-                    move(interp, &phi->lhs, operand_to_value(interp, &phi->rhs[j]));
+                    move(bp, &phi->lhs, operand_to_value(bp, &phi->rhs[j]));
                     break;
                 }
             }
@@ -516,29 +533,37 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 /* do nothing */
                 break;
             case I_MOVE:
-                move(interp, &insn->lhs, operand_to_value(interp, &insn->rhs));
+                move(bp, &insn->lhs, operand_to_value(bp, &insn->rhs));
                 break;
             case I_ADD:
             case I_SUB:
             case I_MUL:
             case I_DIV:
             case I_MOD: {
-                move(interp, &insn->lhs,
-                    binexpr(interp,
+                move(bp, &insn->lhs,
+                    binexpr(
                         insn->tag,
-                        operand_to_value(interp, &insn->arg0),
-                        operand_to_value(interp, &insn->arg1)
+                        operand_to_value(bp, &insn->arg0),
+                        operand_to_value(bp, &insn->arg1)
                     ));
                 break;
             }
+            case I_LCALL:
+                interp->sp -= insn->n_args; /* allocate space for arguments */
+                for (int i = 0; i < insn->n_args; i++)
+                    interp->sp[i] = operand_to_value(bp, &insn->args[i]);
+                value ret = call(interp, obj, &obj->funcs[insn->fun]);
+                move(bp, &insn->lhs, ret);
+                interp->sp += insn->n_args;
+                break;
             case I_GOTO:
                 prev = block;
                 block = &fun->blocks[insn->next];
                 break;
             case I_RETURN:
-                return operand_to_value(interp, &insn->retval);
+                return operand_to_value(bp, &insn->retval);
             default:
-                printf("not implemented: %d\n", insn->tag);
+                printf("not implemented: %02x\n", insn->tag);
                 not_implemented();
             }
         }
