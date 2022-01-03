@@ -91,8 +91,6 @@ $2000000 constant FILE_BUFFER_SIZE
     %00001000 of Nand decode-binexpr endof
     %00001001 of Nor  decode-binexpr endof
     %00001010 of Nxor decode-binexpr endof
-    %10000000 of decode-uint make-goto endof
-    %10000001 of decode-operand make-return endof
     %00100000 of
         decode-operand >r   ( lhs )
         decode-uint >r      ( index of function )
@@ -102,6 +100,8 @@ $2000000 constant FILE_BUFFER_SIZE
         loop
         rot r> swap r> -rot Nlcall make-node3   ( lhs idx args )
     endof
+    %10000000 of decode-uint make-goto endof
+    %10000001 of decode-operand make-return endof
     not-implemented
     endcase
 ;
