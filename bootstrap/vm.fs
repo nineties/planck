@@ -261,7 +261,18 @@ $2000000 constant FILE_BUFFER_SIZE
         over node>tag @ case
         Nuint of
             dup node>tag @  case
-            Nuint of node>arg0 @ swap node>arg0 @ + Nuint make-node1 endof
+            Nuint of node>arg0 @ >r node>arg0 @ r> + Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
+    Nsub of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ >r node>arg0 @ r> - Nuint make-node1 endof
             not-implemented
             endcase
         endof
@@ -272,7 +283,18 @@ $2000000 constant FILE_BUFFER_SIZE
         over node>tag @ case
         Nuint of
             dup node>tag @  case
-            Nuint of node>arg0 @ swap node>arg0 @ * Nuint make-node1 endof
+            Nuint of node>arg0 @ >r node>arg0 @ r> * Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
+    Ndiv of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ >r node>arg0 @ r> / Nuint make-node1 endof
             not-implemented
             endcase
         endof
