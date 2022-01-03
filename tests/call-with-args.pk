@@ -1,0 +1,12 @@
+function f(i32, i32): i32 {
+root:
+    %0 = $0 - $1
+    return %0
+}
+
+export
+function main(): i32 {
+root:
+    %0 = f(200, 77)
+    return %0
+}

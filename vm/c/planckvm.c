@@ -33,6 +33,7 @@ typedef int64_t sint_t;
 
 // Operands
 #define D_REG  0x90
+#define D_ARG  0xa0
 #define D_U8   0xc3
 #define D_I8   0xc4
 #define D_U16  0xc5
@@ -120,6 +121,7 @@ typedef struct {
     byte_t tag;
     union {
         uint16_t reg;
+        uint16_t arg;
         uint_t uint;
     };
 } operand;
@@ -203,6 +205,9 @@ operand_to_value(value *bp, operand *opd) {
         break;
     case D_REG:
         v = LOCAL(bp, opd->reg);
+        break;
+    case D_ARG:
+        v = ARG(bp, opd->arg);
         break;
     default:
         not_implemented();
@@ -304,7 +309,20 @@ decode_operand(function *fun, operand *opd, byte_t **cur)
         *cur = p + 1;
         return;
     }
-    not_implemented();
+    if (*p < 0xa0) {
+        opd->tag = D_ARG;
+        opd->arg = *p & 0x0f;
+        *cur = p + 1;
+        return;
+    }
+    switch (*(*cur)++) {
+    case D_U8:
+        opd->tag = D_U8;
+        opd->uint = *(*cur)++;
+        return;
+    default:
+        not_implemented();
+    }
 }
 
 static void
