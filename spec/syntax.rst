@@ -15,8 +15,8 @@ Lexical Tokens::
     symbol : [!#$%&()*+,-./:;<=>?@\[\\\]^_`{|}~]
 
     keyword : "nop" | "phi" | "goto" | "return" | "export" | "function"
-            | "bool" | "char" "i8" | "u8" | "i16" | "u16" | "i32" | "u32"
-            | "i64" | "u64" | "f32" | "f64" | "str" | "mod" | "if"
+            | "true" | "false" | "bool" | "char" "i8" | "u8" | "i16" | "u16"
+            | "i32" | "u32" | "i64" | "u64" | "f32" | "f64" | "str" | "mod" | "if"
 
 Types::
 
@@ -52,6 +52,7 @@ Instruction::
 
    operand  : int             // unsigned int
             | ("+"|"-") int   // signed int
+            | "true" | "false"
             | register
             | arguments
             | "*" place

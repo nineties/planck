@@ -12,6 +12,8 @@ include lib/string.fs
     enum Nregister  ( idx )
     enum Nargument  ( idx )
     enum Nderef     ( node )
+
+    enum Nbool      ( 0 or 1 )
     enum Nuint      ( val )
     enum Nint       ( val )
 
@@ -28,8 +30,10 @@ include lib/string.fs
     enum Nxor
     enum Ncall
     enum Nlcall
+
     enum Ngoto
     enum Nreturn
+    enum Niftrue    ( opd block0 block1 )
 
     enum Nbblock    ( name insns jump )
     enum Nfundef    ( export name params rettype blocks )
