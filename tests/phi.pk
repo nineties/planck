@@ -1,0 +1,14 @@
+export
+function main(): i32 {
+root:
+    if true iftrue iffalse
+iftrue:
+    %0 = 123
+    goto exit
+iffalse:
+    %1 = 456
+    goto exit
+exit:
+    %2 = phi(iftrue: %0, iffalse: %1)
+    return %2
+}
