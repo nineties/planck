@@ -127,6 +127,17 @@ private{
     dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
     dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
     dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
+    dup '(' expect-sym if
+        dup lex
+
+        \ function call
+        over node>tag @ Nid = unless SYNTAX-ERROR throw then
+        dup ')' expect-sym if
+            lex
+            \ function call with no argument
+            0 make-array 0 -rot Ncall make-node3 exit
+        then
+    then
     drop
 ;
 
