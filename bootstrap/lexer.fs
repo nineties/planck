@@ -23,6 +23,7 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tfloat
     enum Tstring
     enum Tsymbol
+    enum Tdocument
     \ reserved words
     enum Ttrue
     enum Tfalse
@@ -428,7 +429,37 @@ create state-transition-table
         16 of
             Tsymbol over set-token-tag
             dup current-char 0 2 pick add-to-value
-            dup consume dup lookahead 16 next-state
+
+            \ TODO:
+            \ It is not better to parse comments here
+            dup current-char '/' = if
+                dup consume
+                dup current-char '/' = if
+                    dup consume
+                    dup current-char '/' = if
+                        dup consume
+                       \ documentation
+                        dup reset-token
+                        Tdocument over set-token-tag
+                        begin dup current-char '\n' <> while
+                                dup consume
+                        repeat
+                        dup consume
+                        19 \ goto state 19
+                    else
+                        \ comment
+                        begin dup current-char '\n' <> while
+                                dup consume
+                        repeat
+                        dup consume
+                        0 \ goto state 0
+                    then
+                else
+                    dup lookahead 16 next-state
+                then
+            else
+                dup consume dup lookahead 16 next-state
+            then
         endof
         17 of
             over if \ skip spaces

@@ -273,11 +273,25 @@ private{
 
     drop
     ( export label params rettype body )
+    0 \ place for comment
     make-fundef
 ;
 
 : parse-toplevel-definition ( lexer -- node )
-    parse-function-definition
+    \ parse document
+    s" " make-string swap
+    begin dup lexer>token_tag @ Tdocument = while
+        swap over lexer>token_buf concat-string swap
+        dup lex
+    repeat
+
+    parse-function-definition ?dup unless drop 0 exit then
+
+    \ set document
+    dup node>tag @ case
+    Nfundef of tuck fundef>comment ! endof
+    not-reachable
+    endcase
 ;
 
 ( Parse `input` string and returns abstract syntax tree )
