@@ -69,7 +69,7 @@ private{
     fundef>retty @ swap TyFunc make-node2
 ;
 
-: replace-label ( table node -- table )
+: replace-block-label ( table node -- table )
     dup node>tag @ case
     Nphi of
         dup node>arg1 @ ( args )
@@ -103,10 +103,10 @@ private{
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@ dup >r
         node>arg1 @ tuck array-size 0 ?do
-            i 2 pick array@ replace-label
+            i 2 pick array@ replace-block-label
         loop
         nip
-        r> node>arg3 @ replace-label   ( branch insn )
+        r> node>arg3 @ replace-block-label   ( branch insn )
     loop
     drop
 
