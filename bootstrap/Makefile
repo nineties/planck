@@ -14,7 +14,8 @@ TEST_OBJECTS=\
 	../tests/call.pko \
 	../tests/call-with-args.pko \
 	../tests/iftrue.pko \
-	../tests/iffalse.pko
+	../tests/iffalse.pko \
+	../tests/phi.pko
 
 default: planck $(TEST_OBJECTS)
 
@@ -43,6 +44,7 @@ test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/call-with-args.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/iftrue.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/iffalse.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/phi.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs
