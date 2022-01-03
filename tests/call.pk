@@ -3,6 +3,7 @@ root:
     return 123
 }
 
+/// Test of local function call with no arguments
 export
 function main(): i32 {
 root:

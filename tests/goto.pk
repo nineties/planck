@@ -1,3 +1,4 @@
+/// Test of goto statement
 export
 function main(): i32 {
 root:
