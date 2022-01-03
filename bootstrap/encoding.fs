@@ -190,10 +190,19 @@ T{ test-buf 1+ u32@ -> 65536 }T
     then
 ;
 
+: encode-argument ( arg buf -- n )
+    over node>arg0 @ dup 16 < if
+        %10010000 or over u8! 2drop 1
+    else
+        not-implemented
+    then
+;
+
 : encode-operand ( opd buf -- n )
     over node>tag @ case
     Nuint of over node>arg0 @ over encode-uint nip nip endof
     Nregister of encode-register endof
+    Nargument of encode-argument endof
     not-reachable
     endcase
 ;

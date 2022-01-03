@@ -10,6 +10,7 @@ include lib/string.fs
 0
     enum Nid        ( name )
     enum Nregister  ( idx )
+    enum Nargument  ( idx )
     enum Nderef     ( node )
     enum Nuint      ( val )
     enum Nint       ( val )
@@ -133,6 +134,7 @@ private{
 
 : make-id ( c-addr -- node ) make-string Nid make-node1 ; export
 : make-register ( idx -- node ) Nregister make-node1 ; export
+: make-argument ( idx -- node ) Nargument make-node1 ; export
 : make-deref ( node -- node ) Nderef make-node1 ; export
 : make-nop ( -- node ) Nnop make-node0 ; export
 : make-goto ( label -- node ) Ngoto make-node1 ; export

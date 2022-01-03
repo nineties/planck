@@ -41,6 +41,17 @@ private{
     then
 ;
 
+: parse-argument ( lexer -- node )
+    dup '$' expect-sym unless drop 0 exit then
+    dup lex_nospace
+    dup lexer>token_tag @ Tint = if
+        dup lexer>token_val @ make-argument
+        swap lex
+    else
+        drop 0
+    then
+;
+
 : parse-place ( lexer -- node )
     dup parse-label ?dup if nip exit then
     dup parse-register ?dup if nip exit then
@@ -54,7 +65,12 @@ private{
         dup lexer>token_val @ Nuint make-node1
         swap lex exit
     then
-    dup parse-place ?dup if nip exit then
+    dup parse-label ?dup if nip exit then
+    dup parse-register ?dup if nip exit then
+    dup parse-argument ?dup if nip exit then
+    dup '*' expect-sym unless drop 0 exit then
+    dup lex
+    recurse ?dup if make-deref else 0 then
 ;
 
 : parse-never-type ( lexer -- node )
@@ -137,6 +153,17 @@ private{
             \ function call with no argument
             0 make-array 0 -rot Ncall make-node3 exit
         then
+        0 make-array swap
+        dup parse-operand ?dup unless SYNTAX-ERROR throw then
+        2 pick array-push
+        begin dup ',' expect-sym while
+            dup lex
+            dup parse-operand ?dup unless SYNTAX-ERROR throw then
+            2 pick array-push
+        repeat
+        dup ')' expect-sym unless SYNTAX-ERROR throw then
+        lex
+        0 -rot Ncall make-node3 exit
     then
     drop
 ;
