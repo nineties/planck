@@ -12,7 +12,7 @@ include lib/array.fs
 include lexer.fs
 include graph.fs
 
-s" Sytax Error" exception constant SYNTAX-ERROR
+s" Syntax Error" exception constant SYNTAX-ERROR
 
 private{
 
