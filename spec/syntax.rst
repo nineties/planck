@@ -16,7 +16,7 @@ Lexical Tokens::
 
     keyword : "nop" | "phi" | "goto" | "return" | "export" | "function"
             | "bool" | "char" "i8" | "u8" | "i16" | "u16" | "i32" | "u32"
-            | "i64" | "u64" | "f32" | "f64" | "str" | "mod"
+            | "i64" | "u64" | "f32" | "f64" | "str" | "mod" | "if"
 
 Types::
 
@@ -79,6 +79,7 @@ Instruction::
 
    branch_instruction : "goto" label
                       | "return" operand
+                      | "if" operand label label
 
 Basic Block::
 
