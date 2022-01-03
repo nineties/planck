@@ -69,6 +69,34 @@ $2000000 constant FILE_BUFFER_SIZE
         decode-operand
         r> swap make-move
     endof
+    %00000011 of
+        decode-operand >r
+        decode-operand >r
+        decode-operand
+        r> swap r> -rot
+        Nadd make-node3
+    endof
+    %00000100 of
+        decode-operand >r
+        decode-operand >r
+        decode-operand
+        r> swap r> -rot
+        Nsub make-node3
+    endof
+    %00000101 of
+        decode-operand >r
+        decode-operand >r
+        decode-operand
+        r> swap r> -rot
+        Nmul make-node3
+    endof
+    %00000110 of
+        decode-operand >r
+        decode-operand >r
+        decode-operand
+        r> swap r> -rot
+        Ndiv make-node3
+    endof
     %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
     not-implemented
@@ -224,6 +252,40 @@ $2000000 constant FILE_BUFFER_SIZE
     endcase
 ;
 
+: binexpr ( interp node -- )
+    over over node>arg2 @ to-value >r
+    over over node>arg1 @ to-value r>
+    ( interp node arg0 arg1 )
+    2 pick node>tag @ case
+    Nadd of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ swap node>arg0 @ + Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
+    Nmul of
+        over node>tag @ case
+        Nuint of
+            dup node>tag @  case
+            Nuint of node>arg0 @ swap node>arg0 @ * Nuint make-node1 endof
+            not-implemented
+            endcase
+        endof
+        not-implemented
+        endcase
+    endof
+    not-implemented
+    endcase
+    ( interp node value )
+    >r node>arg0 @ r>
+    move
+;
+
 : call ( interp fun -- interp retvalue )
     \ allocate space for local variables
     dup fun>nlocals @ cells over interp>sp -!
@@ -248,6 +310,10 @@ $2000000 constant FILE_BUFFER_SIZE
                 5 pick -rot
                 move
             endof
+            Nadd of 4 pick swap binexpr endof
+            Nsub of 4 pick swap binexpr endof
+            Nmul of 4 pick swap binexpr endof
+            Ndiv of 4 pick swap binexpr endof
             Ngoto of
                 node>arg0 @ ( index of next block )
                 3 pick fun>blocks @ array@ ( next block )

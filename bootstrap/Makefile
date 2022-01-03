@@ -3,7 +3,8 @@ RUN_VM=./planck < bootstrap.fs vm.fs
 TESTOBJECTS=\
 		../tests/return123.pko \
 		../tests/goto.pko \
-		../tests/simple-assign.pko
+		../tests/simple-assign.pko \
+		../tests/simple-arithmetic.pko
 
 default: planck $(TESTOBJECTS)
 
@@ -27,6 +28,7 @@ test-vm: planck $(TESTOBJECTS)
 	$(RUN_VM) ../tests/return123.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/goto.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/simple-assign.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/simple-arithmetic.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs

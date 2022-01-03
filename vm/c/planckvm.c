@@ -67,20 +67,21 @@ typedef int64_t sint_t;
 #define I_NOP       0x00
 #define I_PHI       0x01
 #define I_MOVE      0x02
+#define I_ADD       0x03
+#define I_SUB       0x04
+#define I_MUL       0x05
+#define I_DIV       0x06
 #define I_GOTO      0x80
 #define I_RETURN    0x81
+// Values
+#define V_UINT  0x00
+#define V_INT   0x01
 
 typedef struct {
     byte_t tag;
     union {
-        uint8_t u8;
-        uint16_t u16;
-        uint32_t u32;
-        uint64_t u64;
-        int8_t i8;
-        int16_t i16;
-        int32_t i32;
-        int64_t i64;
+        uint64_t u;
+        int64_t i;
         float f32;
         double f64;
     };
@@ -135,7 +136,13 @@ typedef struct {
         uint_t next;
         struct {
             operand lhs;
-            operand rhs;
+            union {
+                operand rhs;
+                struct {
+                    operand arg0;
+                    operand arg1;
+                };
+            };
         };
     };
 } instruction;
@@ -183,8 +190,8 @@ operand_to_value(interpreter *interp, operand *opd) {
     value v = { 0 };
     switch (opd->tag) {
     case D_U8:
-        v.tag = D_U8;
-        v.u8 = opd->uint;
+        v.tag = V_UINT;
+        v.u = opd->uint;
         break;
     case D_REG:
         v = LOCAL(interp, opd->reg);
@@ -317,6 +324,15 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         decode_operand(fun, &insn->lhs, cur);
         decode_operand(fun, &insn->rhs, cur);
         return;
+    case I_ADD:
+    case I_SUB:
+    case I_MUL:
+    case I_DIV:
+        insn->tag = *(*cur - 1);
+        decode_operand(fun, &insn->lhs, cur);
+        decode_operand(fun, &insn->arg0, cur);
+        decode_operand(fun, &insn->arg1, cur);
+        return;
     }
     not_implemented();
 }
@@ -415,12 +431,34 @@ load_object_file(const char *path) {
 }
 
 static void
-move(interpreter *interp, operand *lhs, operand *rhs) {
-    value v = operand_to_value(interp, rhs);
+move(interpreter *interp, operand *lhs, value v) {
     switch (lhs->tag) {
     case D_REG:
         LOCAL(interp, lhs->reg) = v;
         break;
+    default:
+        not_implemented();
+    }
+}
+
+static value
+binexpr(interpreter *interp, byte_t op, value arg0, value arg1) {
+    value v;
+    switch (op) {
+    case I_ADD:
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
+            v.tag = V_UINT;
+            v.u = arg0.u + arg1.u;
+            return v;
+        }
+        not_implemented();
+    case I_MUL:
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
+            v.tag = V_UINT;
+            v.u = arg0.u * arg1.u;
+            return v;
+        }
+        not_implemented();
     default:
         not_implemented();
     }
@@ -442,7 +480,7 @@ call(interpreter *interp, object_file *obj, function *fun) {
             phi_instruction *phi = &block->phis[i];
             for (int j = 0; j < phi->n_rhs; j++) {
                 if (prev->index == phi->blocks[j]) {
-                    move(interp, &phi->lhs, &phi->rhs[j]);
+                    move(interp, &phi->lhs, operand_to_value(interp, &phi->rhs[j]));
                     break;
                 }
             }
@@ -455,8 +493,20 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 /* do nothing */
                 break;
             case I_MOVE:
-                move(interp, &insn->lhs, &insn->rhs);
+                move(interp, &insn->lhs, operand_to_value(interp, &insn->rhs));
                 break;
+            case I_ADD:
+            case I_SUB:
+            case I_MUL:
+            case I_DIV: {
+                move(interp, &insn->lhs,
+                    binexpr(interp,
+                        insn->tag,
+                        operand_to_value(interp, &insn->arg0),
+                        operand_to_value(interp, &insn->arg1)
+                    ));
+                break;
+            }
             case I_GOTO:
                 prev = block;
                 block = &fun->blocks[insn->next];
@@ -491,7 +541,7 @@ interpret(object_file *obj) {
         exit(1);
     }
     value ret = call(&interp, obj, main_fun);
-    return ret.i32;
+    return (int) ret.i;
 }
 
 int

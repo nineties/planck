@@ -55,8 +55,14 @@ Instruction::
             | register
             | "*" place
 
+   expression : operand
+              | operand + operand
+              | operand - operand
+              | operand * operand
+              | operand / operand
+
    instruction : "nop"
-               | place "=" operand
+               | place "=" expression
 
    phi_instruction : place "=" "phi" "(" phi_args ")"
    phi_args : phi_arg ( "," phi_arg )*
