@@ -16,7 +16,8 @@ TEST_OBJECTS=\
 	../tests/iftrue.pko \
 	../tests/iffalse.pko \
 	../tests/phi.pko \
-	../tests/phi2.pko
+	../tests/phi2.pko \
+	../tests/backjump.pko
 
 default: planck $(TEST_OBJECTS)
 
@@ -47,6 +48,7 @@ test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/iffalse.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/phi.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/phi2.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/backjump.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs
