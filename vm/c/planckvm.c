@@ -90,6 +90,10 @@ typedef int64_t sint_t;
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 #define I_IFTRUE    0x82
+#define I_IFEQ      0x83
+#define I_IFNE      0x84
+#define I_IFLT      0x85
+#define I_IFLE      0x86
 // Values
 #define V_BOOL  0x00
 #define V_UINT  0x01
@@ -156,7 +160,8 @@ typedef struct {
         operand retval; // return
         uint_t next;    // goto
         struct {
-            operand cond;
+            operand cond0;
+            operand cond1;
             uint_t ifthen;
             uint_t ifelse;
         };
@@ -475,7 +480,17 @@ decode_branch_instruction(function *fun, instruction *branch, byte_t **cur) {
         return;
     case I_IFTRUE:
         branch->tag = I_IFTRUE;
-        decode_operand(fun, &branch->cond, cur);
+        decode_operand(fun, &branch->cond0, cur);
+        branch->ifthen = decode_uint(cur);
+        branch->ifelse = decode_uint(cur);
+        return;
+    case I_IFEQ:
+    case I_IFNE:
+    case I_IFLT:
+    case I_IFLE:
+        branch->tag = *(*cur - 1);
+        decode_operand(fun, &branch->cond0, cur);
+        decode_operand(fun, &branch->cond1, cur);
         branch->ifthen = decode_uint(cur);
         branch->ifelse = decode_uint(cur);
         return;
@@ -632,7 +647,10 @@ binexpr(byte_t op, value arg0, value arg1) {
     case I_NE: COMPOP(!=)
     case I_LT: COMPOP(<)
     case I_LE: COMPOP(<=)
-
+    case I_IFEQ: COMPOP(==)
+    case I_IFNE: COMPOP(!=)
+    case I_IFLT: COMPOP(<)
+    case I_IFLE: COMPOP(<=)
 #undef COMPOP
 
     default:
@@ -708,12 +726,27 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 break;
             case I_RETURN:
                 return operand_to_value(bp, &insn->retval);
-            case I_IFTRUE:
+            case I_IFTRUE: {
                 prev = block;
-                value v = operand_to_value(bp, &insn->cond);
+                value v = operand_to_value(bp, &insn->cond0);
                 if (v.tag != V_BOOL) not_reachable();
                 block = &fun->blocks[v.b ? insn->ifthen : insn->ifelse];
                 break;
+            }
+            case I_IFEQ:
+            case I_IFNE:
+            case I_IFLT:
+            case I_IFLE: {
+                prev = block;
+                value v = binexpr(
+                        insn->tag,
+                        operand_to_value(bp, &insn->cond0),
+                        operand_to_value(bp, &insn->cond1)
+                    );
+                if (v.tag != V_BOOL) not_reachable();
+                block = &fun->blocks[v.b ? insn->ifthen : insn->ifelse];
+                break;
+            }
             default:
                 printf("not implemented: %02x\n", insn->tag);
                 not_implemented();
