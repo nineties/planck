@@ -64,14 +64,18 @@ Instruction::
             | "*" place
 
    expression : operand
-              | operand + operand
-              | operand - operand
-              | operand * operand
-              | operand / operand
+              | operand "+" operand
+              | operand "-" operand
+              | operand "*" operand
+              | operand "/" operand
               | operand "mod" operand
-              | operand & operand
-              | operand | operand
-              | operand ^ operand
+              | operand "&" operand
+              | operand "|" operand
+              | operand "^" operand
+              | operand "==" operand
+              | operand "!=" operand
+              | operand "<" operand
+              | operand "<=" operand
               | "label" "(" call_args ")"
 
    call_args  :
@@ -87,6 +91,10 @@ Instruction::
    branch_instruction : "goto" label
                       | "return" operand
                       | "if" operand label label
+                      | "if" operand "==" operand label label
+                      | "if" operand "!=" operand label label
+                      | "if" operand "<" operand label label
+                      | "if" operand "<=" operand label label
 
 Basic Block::
 

@@ -38,6 +38,10 @@ include lib/string.fs
     enum Ngoto
     enum Nreturn
     enum Niftrue    ( opd block0 block1 )
+    enum Nifeq      ( opd0 opd1 block0 block1 )
+    enum Nifne      ( opd0 opd1 block0 block1 )
+    enum Niflt      ( opd0 opd1 block0 block1 )
+    enum Nifle      ( opd0 opd1 block0 block1 )
 
     enum Nbblock    ( name insns jump )
     enum Nfundef    ( export name params rettype blocks )

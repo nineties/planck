@@ -162,7 +162,6 @@ private{
         dup lex parse-operand 0 -rot Nne make-node3 exit
     then
     dup '<' expect-sym if
-        ." here?" cr
         dup lex_nospace
         dup '=' expect-sym if
             dup lex parse-operand 0 -rot Nle make-node3 exit
@@ -236,11 +235,17 @@ private{
         make-return
     else dup lexer>token_tag @ Tif = if
         dup lex
-        dup parse-operand ?dup unless SYNTAX-ERROR throw then
+        dup parse-expression ?dup unless SYNTAX-ERROR throw then
         swap dup parse-label ?dup unless SYNTAX-ERROR throw then
         swap parse-label ?dup unless SYNTAX-ERROR throw then
-        Niftrue
-        make-node3
+        >r >r
+        dup node>tag @ case
+        Neq of dup node>arg1 @ swap node>arg2 @ r> r> Nifeq make-node4 endof
+        Nne of dup node>arg1 @ swap node>arg2 @ r> r> Nifne make-node4 endof
+        Nlt of dup node>arg1 @ swap node>arg2 @ r> r> Niflt make-node4 endof
+        Nle of dup node>arg1 @ swap node>arg2 @ r> r> Nifle make-node4 endof
+        drop r> r> Niftrue make-node3 0
+        endcase
     else
         drop 0
     then then then
