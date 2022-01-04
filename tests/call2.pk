@@ -1,13 +1,12 @@
 /// Test of local function call with no arguments
 /// The order of function declaration does not matter.
-export
-function main(): i32 {
+export fun main(): i32 {
 root:
     %0 = f()
     return %0
 }
 
-function f(): i32 {
+fun f(): i32 {
 root:
     return (i32) 123
 }

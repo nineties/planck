@@ -1,6 +1,5 @@
 /// Exit code == 123
-export
-function main(): i32 {
+export fun main(): i32 {
 root:
     return (i32) 123
 }

@@ -288,7 +288,7 @@ private{
 
 : parse-function-definition ( lexer -- node )
     dup lexer>token_tag @ Texport = if dup lex true else false then swap
-    dup lexer>token_tag @ Tfunction = if dup lex else 2drop 0 exit then
+    dup lexer>token_tag @ Tfun = if dup lex else 2drop 0 exit then
     dup parse-label ?dup if swap else SYNTAX-ERROR throw then
     dup '(' expect-sym if dup lex else SYNTAX-ERROR throw then
     dup parse-function-params ?dup if swap else SYNTAX-ERROR throw then

@@ -47,7 +47,7 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tgoto
     enum Treturn
     enum Texport
-    enum Tfunction
+    enum Tfun
 drop
 
 1024 constant TOKENBUF-SIZE
@@ -87,7 +87,7 @@ Tphi s" phi" make-string reserved-words table!
 Tgoto s" goto" make-string reserved-words table!
 Treturn s" return" make-string reserved-words table!
 Texport s" export" make-string reserved-words table!
-Tfunction s" function" make-string reserved-words table!
+Tfun s" fun" make-string reserved-words table!
 
 : make-lexer ( input -- lexer )
     lexer% %allocate throw
