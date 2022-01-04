@@ -79,6 +79,13 @@ typedef int64_t sint_t;
 #define I_MUL       0x05
 #define I_DIV       0x06
 #define I_MOD       0x07
+#define I_AND       0x08
+#define I_OR        0x09
+#define I_XOR       0x0a
+#define I_EQ        0x0b
+#define I_NE        0x0c
+#define I_LT        0x0d
+#define I_LE        0x0e
 #define I_LCALL     0x20    // local call
 #define I_GOTO      0x80
 #define I_RETURN    0x81
@@ -430,6 +437,13 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
     case I_MUL:
     case I_DIV:
     case I_MOD:
+    case I_AND:
+    case I_OR:
+    case I_XOR:
+    case I_EQ:
+    case I_NE:
+    case I_LT:
+    case I_LE:
         insn->tag = *(*cur - 1);
         decode_operand(fun, &insn->lhs, cur);
         decode_operand(fun, &insn->arg0, cur);
@@ -583,6 +597,44 @@ binexpr(byte_t op, value arg0, value arg1) {
     case I_MOD: BINOP(%)
 
 #undef BINOP
+#define LOGICOP(op) \
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) { \
+            v.tag = V_UINT; \
+            v.u = arg0.u op arg1.u; \
+            return v; \
+        } \
+        if (arg0.tag == V_BOOL && arg1.tag == V_BOOL) { \
+            v.tag = V_BOOL; \
+            v.b = arg0.u op arg1.u; \
+            return v; \
+        } \
+        not_implemented();
+
+    case I_AND: LOGICOP(&)
+    case I_OR:  LOGICOP(|)
+    case I_XOR: LOGICOP(^)
+
+#undef LOGICOP
+#define COMPOP(op) \
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) { \
+            v.tag = V_BOOL; \
+            v.b = arg0.u op arg1.u; \
+            return v; \
+        } \
+        if (arg0.tag == V_INT && arg1.tag == V_INT) { \
+            v.tag = V_BOOL; \
+            v.b = arg0.i op arg1.i; \
+            return v; \
+        } \
+        not_implemented();
+
+    case I_EQ: COMPOP(==)
+    case I_NE: COMPOP(!=)
+    case I_LT: COMPOP(<)
+    case I_LE: COMPOP(<=)
+
+#undef COMPOP
+
     default:
         not_implemented();
     }
@@ -625,7 +677,15 @@ call(interpreter *interp, object_file *obj, function *fun) {
             case I_SUB:
             case I_MUL:
             case I_DIV:
-            case I_MOD: {
+            case I_MOD:
+            case I_AND:
+            case I_OR:
+            case I_XOR:
+            case I_EQ:
+            case I_NE:
+            case I_LT:
+            case I_LE:
+            {
                 move(bp, &insn->lhs,
                     binexpr(
                         insn->tag,
