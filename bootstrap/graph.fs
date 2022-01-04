@@ -27,6 +27,11 @@ include lib/string.fs
     enum Nand
     enum Nor
     enum Nxor
+    enum Neq
+    enum Nne
+    enum Nlt
+    enum Nle
+
     enum Ncall
     enum Nlcall
 

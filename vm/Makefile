@@ -23,6 +23,7 @@ test-vm:
 	$(RUN_VM) ../tests/phi.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/phi2.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/backjump.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/comparison.pko; test $$? -eq 123
 
 clean:
 	make -C $(VM_IMPL)

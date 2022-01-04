@@ -6,6 +6,8 @@
 include lib/array.fs
 include encoding.fs
 
+s" Type Error" exception constant TYPE-ERROR
+
 struct
     cell% field obj>ids     ( vector of identifiers )
     cell% field obj>funcs   ( vector of functions )
@@ -97,6 +99,10 @@ $2000000 constant FILE_BUFFER_SIZE
     %00001000 of Nand decode-binexpr endof
     %00001001 of Nor  decode-binexpr endof
     %00001010 of Nxor decode-binexpr endof
+    %00001011 of Neq  decode-binexpr endof
+    %00001100 of Nne  decode-binexpr endof
+    %00001101 of Nlt  decode-binexpr endof
+    %00001110 of Nle  decode-binexpr endof
     %00100000 of
         decode-operand >r   ( lhs )
         decode-uint >r      ( index of function )
@@ -283,99 +289,67 @@ $2000000 constant FILE_BUFFER_SIZE
     endcase
 ;
 
+: binexpr-int ( arg0 arg1 op -- value )
+    >r
+    over node>tag @ case
+    Nint of
+        over node>arg1 @ over node>arg1 @ <> if TYPE-ERROR throw then
+        over node>arg0 @ over node>arg0 @ r> execute
+        nip swap node>arg1 @ Nint make-node2
+    endof
+    not-reachable
+    endcase
+;
+
+: binexpr-logical ( arg0 arg1 op -- value )
+    >r
+    over node>tag @ case
+    Nbool of
+        over node>arg1 @ over node>arg1 @ <> if TYPE-ERROR throw then
+        over node>arg0 @ over node>arg0 @ r> execute
+        nip nip bool-type Nbool make-node2
+    endof
+    Nint of
+        over node>arg1 @ over node>arg1 @ <> if TYPE-ERROR throw then
+        over node>arg0 @ over node>arg0 @ r> execute
+        nip swap node>arg1 @ Nint make-node2
+    endof
+    not-reachable
+    endcase
+;
+
+: binexpr-comp ( arg0 arg1 op -- value )
+    >r
+    over node>tag @ case
+    Nint of
+        over node>arg1 @ over node>arg1 @ <> if TYPE-ERROR throw then
+        over node>arg0 @ over node>arg0 @ r> execute
+        nip nip bool-type Nbool make-node2
+    endof
+    not-reachable
+    endcase
+;
+
 : binexpr ( interp node -- )
     over over node>arg2 @ to-value >r
     over over node>arg1 @ to-value r>
     ( interp node arg0 arg1 )
+    over node>tag @ over node>tag @ <> if DECODE-ERROR throw then
     2 pick node>tag @ case
-    Nadd of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> + Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
-    Nsub of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> - Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
-    Nmul of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> * Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
-    Ndiv of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> / Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
-    Nmod of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> mod Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
-    Nand of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> and Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
-    Nor of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> or Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
-    Nxor of
-        over node>tag @ case
-        Nint of
-            dup node>tag @  case
-            Nint of node>arg0 @ >r node>arg0 @ r> xor Nint make-node1 endof
-            not-implemented
-            endcase
-        endof
-        not-implemented
-        endcase
-    endof
+    Nadd of ['] + binexpr-int endof
+    Nsub of ['] - binexpr-int endof
+    Nmul of ['] * binexpr-int endof
+    Ndiv of ['] / binexpr-int endof
+    Nmod of ['] mod binexpr-int endof
+    Nand of ['] and binexpr-logical endof
+    Nor  of ['] or  binexpr-logical endof
+    Nxor of ['] xor binexpr-logical endof
+    Neq  of ['] = binexpr-comp endof
+    Nne  of ['] <>  binexpr-comp endof
+    Nlt  of ['] < binexpr-comp endof
+    Nle  of ['] <= binexpr-comp endof
+    
+    ." here?" cr
     not-implemented
     endcase
     ( interp node value )
@@ -428,6 +402,10 @@ $2000000 constant FILE_BUFFER_SIZE
             Nand of 4 pick swap binexpr endof
             Nor  of 4 pick swap binexpr endof
             Nxor of 4 pick swap binexpr endof
+            Neq  of 4 pick swap binexpr endof
+            Nne  of 4 pick swap binexpr endof
+            Nlt  of 4 pick swap binexpr endof
+            Nle  of 4 pick swap binexpr endof
             Nlcall of
                 \ allocate space for arguments
                 dup node>arg2 @ array-size cells 5 pick interp>sp -!
