@@ -1,0 +1,17 @@
+/// Test of comparison operator
+export
+function main(): i32 {
+root:
+    %0 = (i32) 0 == (i32) 0
+    %1 = (i32) 0 != (i32) 1
+    %2 = (i32) 0 < (i32) 1
+    %3 = (i32) 0 <= (i32) 0
+    %4 = %0 & %1
+    %5 = %2 & %3
+    %6 = %4 & %5
+    if %6 iftrue iffalse
+iftrue:
+    return (i32) 123
+iffalse:
+    return (i32) 0
+}
