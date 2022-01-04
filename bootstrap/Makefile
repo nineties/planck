@@ -21,7 +21,8 @@ TEST_OBJECTS=\
 	../tests/backjump.pko \
 	../tests/comparison.pko \
 	../tests/ifcomp.pko \
-	../tests/loop.pko
+	../tests/loop.pko \
+	../tests/recursive.pko
 
 default: planck $(TEST_OBJECTS)
 
@@ -57,6 +58,7 @@ test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/comparison.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/ifcomp.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/loop.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/recursive.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs

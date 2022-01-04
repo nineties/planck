@@ -1,0 +1,22 @@
+/// Test of recursive call
+/// This program computes following sum. The result is 123.
+///
+/// int s = 3 + 0 + 1 + ... + 15;
+function f(i32): i32 {
+root:
+    if $0 == (i32) 0 block0 block1
+block0:
+    return (i32) 3
+block1:
+    %0 = $0 - (i32) 1
+    %1 = f(%0)
+    %2 = %0 + %1
+    return %2
+}
+
+export
+function main(): i32 {
+root:
+    %0 = f((i32) 16)
+    return %0
+}
