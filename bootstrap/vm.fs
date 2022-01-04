@@ -380,13 +380,13 @@ $2000000 constant FILE_BUFFER_SIZE
     4 pick over node>arg0 @ to-value >r
     4 pick over node>arg1 @ to-value r> swap
     2 pick node>tag @ case
-    Nifeq of = endof
-    Nifne of <> endof
-    Niflt of < endof
-    Nifle of <= endof
+    Nifeq of ['] = binexpr-comp endof
+    Nifne of ['] <> binexpr-comp endof
+    Niflt of ['] < binexpr-comp endof
+    Nifle of ['] <= binexpr-comp endof
     not-reachable
     endcase
-    if node>arg2 @ else node>arg3 then
+    node>arg0 @ if node>arg2 @ else node>arg3 @ then
     3 pick fun>blocks @ array@
     rot drop
 ;
