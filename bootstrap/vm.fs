@@ -71,7 +71,13 @@ $2000000 constant FILE_BUFFER_SIZE
 : decode-operand ( fun buf -- fun new-buf opd )
     dup u8@ >r 1+ r>
     dup $7f <= if u8-type Nint make-node2 exit then
-    dup $8f <= if $0f and Nregister make-node1 exit then
+    dup $8f <= if
+        $0f and dup >r
+        ( update number of local variables )
+        1+ 2 pick fun>nlocals @ max 2 pick fun>nlocals !
+        r> Nregister make-node1
+        exit
+    then
     dup $9f <= if $0f and Nargument make-node1 exit then
     case
     %11000001 of true-value exit then
@@ -396,7 +402,7 @@ $2000000 constant FILE_BUFFER_SIZE
     over interp>sp @ 2 pick interp>bp !
 
     \ allocate space for local variables
-    dup fun>nlocals @ cells over interp>sp -!
+    dup fun>nlocals @ cells 2 pick interp>sp -!
 
     ( interp fun prev cur )
     0 0 2 pick fun>blocks @ array@
