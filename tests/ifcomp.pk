@@ -5,13 +5,13 @@ root:
     %0 = (i32) 1
     %1 = (i32) 2
     if %0 == %0 block0 fail
-block0
+block0:
     if %0 != %1 block1 fail
-block1
+block1:
     if %0 < %1 block2 fail
-block2
+block2:
     if %0 <= %0 block3 fail
-block3
+block3:
     return (i32) 123
 fail:
     return (i32) 0

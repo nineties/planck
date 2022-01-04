@@ -71,7 +71,11 @@ private{
     fundef>retty @ swap TyFunc make-node2
 ;
 
-: replace-block-label ( table node -- table )
+: replace-label-impl ( table node idx -- table node )
+    cells over node>arg0 + dup >r @ node>arg0 @ 2 pick table@ r> !
+;
+
+: replace-label ( table node -- table )
     dup node>tag @ case
     Nphi of
         dup node>arg1 @ ( args )
@@ -81,19 +85,13 @@ private{
         loop
         drop
     endof
-    Ngoto of
-        dup node>arg0 @ node>arg0 @
-        ( table node idx )
-        2 pick table@
-        over node>arg0 !
-        drop
-    endof
+    Ngoto of 0 replace-label-impl drop endof
     Nreturn of drop endof
-    Niftrue of
-        dup node>arg1 @ node>arg0 @ 2 pick table@ over node>arg1 !
-        dup node>arg2 @ node>arg0 @ 2 pick table@ over node>arg2 !
-        drop
-    endof
+    Niftrue of 1 replace-label-impl 2 replace-label-impl drop endof
+    Nifeq of 2 replace-label-impl 3 replace-label-impl drop endof
+    Nifne of 2 replace-label-impl 3 replace-label-impl drop endof
+    Niflt of 2 replace-label-impl 3 replace-label-impl drop endof
+    Nifle of 2 replace-label-impl 3 replace-label-impl drop endof
     not-reachable
     endcase
 ;
@@ -139,10 +137,10 @@ private{
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@ dup >r
         node>arg1 @ tuck array-size 0 ?do
-            i 2 pick array@ replace-block-label
+            i 2 pick array@ replace-label
         loop
         nip
-        r> node>arg3 @ replace-block-label   ( branch insn )
+        r> node>arg3 @ replace-label   ( branch insn )
     loop
     drop \ drop the basicblock table
 

@@ -375,6 +375,34 @@ T{ test-buf 1+ u32@ -> 65536 }T
         over node>arg1 @ over encode-uint dup r> + >r +
         over node>arg2 @ over encode-uint r> + nip nip
     endof
+    Nifeq of
+        %10000011 over u8! 1+ 1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-operand dup r> + >r +
+        over node>arg2 @ over encode-uint dup r> + >r +
+        over node>arg3 @ over encode-uint r> + nip nip
+    endof
+    Nifne of
+        %10000100 over u8! 1+ 1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-operand dup r> + >r +
+        over node>arg2 @ over encode-uint dup r> + >r +
+        over node>arg3 @ over encode-uint r> + nip nip
+    endof
+    Niflt of
+        %10000101 over u8! 1+ 1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-operand dup r> + >r +
+        over node>arg2 @ over encode-uint dup r> + >r +
+        over node>arg3 @ over encode-uint r> + nip nip
+    endof
+    Nifle of
+        %10000110 over u8! 1+ 1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-operand dup r> + >r +
+        over node>arg2 @ over encode-uint dup r> + >r +
+        over node>arg3 @ over encode-uint r> + nip nip
+    endof
     not-implemented
     endcase
 ;
