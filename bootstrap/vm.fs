@@ -369,13 +369,26 @@ $2000000 constant FILE_BUFFER_SIZE
     Nne  of ['] <>  binexpr-comp endof
     Nlt  of ['] < binexpr-comp endof
     Nle  of ['] <= binexpr-comp endof
-    
-    ." here?" cr
     not-implemented
     endcase
     ( interp node value )
     >r node>arg0 @ r>
     move
+;
+
+: comp-branch ( interp fun prev cur node -- interp fun prev cur )
+    4 pick over node>arg0 @ to-value >r
+    4 pick over node>arg1 @ to-value r> swap
+    2 pick node>tag @ case
+    Nifeq of = endof
+    Nifne of <> endof
+    Niflt of < endof
+    Nifle of <= endof
+    not-reachable
+    endcase
+    if node>arg2 @ else node>arg3 then
+    3 pick fun>blocks @ array@
+    rot drop
 ;
 
 : call ( interp fun -- interp retvalue )
@@ -465,6 +478,10 @@ $2000000 constant FILE_BUFFER_SIZE
                 3 pick fun>blocks @ array@ ( next block )
                 rot drop ( interp fun prev cur next -> interp fun cur next )
             endof
+            Nifeq of comp-branch endof
+            Nifne of comp-branch endof
+            Niflt of comp-branch endof
+            Nifle of comp-branch endof
             not-implemented
             endcase
         loop
