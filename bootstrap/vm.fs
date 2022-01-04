@@ -59,14 +59,16 @@ $2000000 constant FILE_BUFFER_SIZE
 
 : decode-operand ( fun buf -- fun new-buf opd )
     dup u8@ >r 1+ r>
-    dup $7f <= if Nuint make-node1 exit then
+    dup $7f <= if u8-type Nint make-node2 exit then
     dup $8f <= if $0f and Nregister make-node1 exit then
     dup $9f <= if $0f and Nargument make-node1 exit then
     case
     %11000001 of true-value exit then
     %11000010 of false-value exit then
-    %11000011 of dup u8@ >r 1+ r> Nuint make-node1 exit endof
-    %11000101 of dup u16@ >r 2 + r> Nuint make-node1 exit endof
+    %11000011 of dup u8@ >r 1+ r> u8-type Nint make-node2 exit endof
+    %11000101 of dup u16@ >r 2 + r> u16-type Nint make-node2 exit endof
+    %11000111 of dup u32@ >r 4 + r> u32-type Nint make-node2 exit endof
+    %11001000 of dup i32@ >r 4 + r> i32-type Nint make-node2 exit endof
     endcase
     not-implemented
 ;
@@ -262,7 +264,7 @@ $2000000 constant FILE_BUFFER_SIZE
 : to-value ( interp operand -- value )
     dup node>tag @ case
     Nbool of nip endof
-    Nuint of nip endof
+    Nint of nip endof
     Nregister of node>arg0 @ localp @ endof
     Nargument of node>arg0 @ argp @ endof
     not-implemented
@@ -288,9 +290,9 @@ $2000000 constant FILE_BUFFER_SIZE
     2 pick node>tag @ case
     Nadd of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> + Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> + Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -299,9 +301,9 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     Nsub of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> - Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> - Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -310,9 +312,9 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     Nmul of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> * Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> * Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -321,9 +323,9 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     Ndiv of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> / Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> / Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -332,9 +334,9 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     Nmod of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> mod Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> mod Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -343,9 +345,9 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     Nand of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> and Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> and Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -354,9 +356,9 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     Nor of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> or Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> or Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -365,9 +367,9 @@ $2000000 constant FILE_BUFFER_SIZE
     endof
     Nxor of
         over node>tag @ case
-        Nuint of
+        Nint of
             dup node>tag @  case
-            Nuint of node>arg0 @ >r node>arg0 @ r> xor Nuint make-node1 endof
+            Nint of node>arg0 @ >r node>arg0 @ r> xor Nint make-node1 endof
             not-implemented
             endcase
         endof
@@ -480,7 +482,7 @@ $2000000 constant FILE_BUFFER_SIZE
     ( interp main )
     call
     nip
-    dup node>tag @ Nuint <> if not-reachable then
+    dup node>tag @ Nint <> if not-reachable then
     node>arg0 @
 ;
 

@@ -2,6 +2,6 @@
 export
 function main(): i32 {
 root:
-    %0 = 123
+    %0 = (i32) 123
     return %0
 }

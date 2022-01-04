@@ -1,6 +1,6 @@
 function f(): i32 {
 root:
-    return 123
+    return (i32) 123
 }
 
 /// Test of local function call with no arguments

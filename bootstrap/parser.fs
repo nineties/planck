@@ -52,29 +52,6 @@ private{
     then
 ;
 
-: parse-place ( lexer -- node )
-    dup parse-label ?dup if nip exit then
-    dup parse-register ?dup if nip exit then
-    dup '*' expect-sym unless drop 0 exit then
-    dup lex
-    recurse ?dup if make-deref else 0 then
-;
-
-: parse-operand ( lexer -- node )
-    dup lexer>token_tag @ Tint = if
-        dup lexer>token_val @ Nuint make-node1
-        swap lex exit
-    then
-    dup lexer>token_tag @ Ttrue = if lex true-value exit then
-    dup lexer>token_tag @ Tfalse = if lex false-value exit then
-    dup parse-label ?dup if nip exit then
-    dup parse-register ?dup if nip exit then
-    dup parse-argument ?dup if nip exit then
-    dup '*' expect-sym unless drop 0 exit then
-    dup lex
-    recurse ?dup if make-deref else 0 then
-;
-
 : parse-never-type ( lexer -- node )
     dup '!' expect-sym if lex never-type else drop 0 then
 ;
@@ -101,6 +78,35 @@ private{
     dup parse-never-type ?dup if nip exit then
     dup parse-prim-type ?dup if nip exit then
     drop 0
+;
+
+: parse-place ( lexer -- node )
+    dup parse-label ?dup if nip exit then
+    dup parse-register ?dup if nip exit then
+    dup '*' expect-sym unless drop 0 exit then
+    dup lex
+    recurse ?dup if make-deref else 0 then
+;
+
+: parse-operand ( lexer -- node )
+    dup '(' expect-sym if
+        dup lex
+        dup parse-type ?dup if swap else SYNTAX-ERROR throw then
+        dup ')' expect-sym unless SYNTAX-ERROR throw then
+        dup lex
+        dup lexer>token_tag @ Tint = if
+            dup lexer>token_val @ rot Nint make-node2
+            swap lex exit
+        then
+    then
+    dup lexer>token_tag @ Ttrue = if lex true-value exit then
+    dup lexer>token_tag @ Tfalse = if lex false-value exit then
+    dup parse-label ?dup if nip exit then
+    dup parse-register ?dup if nip exit then
+    dup parse-argument ?dup if nip exit then
+    dup '*' expect-sym unless drop 0 exit then
+    dup lex
+    recurse ?dup if make-deref else 0 then
 ;
 
 : parse-phi-arg ( lexer -- node )

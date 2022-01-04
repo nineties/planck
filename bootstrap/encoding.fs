@@ -47,6 +47,8 @@ private{
 : u16@ ( p -- u ) @ 0xffff and ; export
 : u32! ( u p -- ) ! ; export
 : u32@ ( p -- u ) @ ; export
+: i32! ( u p -- ) ! ; export
+: i32@ ( p -- u ) @ ; export
 
 : encode-u8 ( u p -- n ) u8! 1 ; export
 : encode-u16 ( u p -- n ) u16! 2 ; export
@@ -97,7 +99,7 @@ create value-encoding-table
     over $7f u<= if u8! 1 exit then
     over $ff u<= if %11000011 over u8! 1+ u8! 2 exit then
     over $ffff u<= if %11000101 over u8! 1+ u16! 3 exit then
-    over $ffffff u<= if %11000111 over u8! 1+ u32! 5 exit then
+    over $ffffffff u<= if %11000111 over u8! 1+ u32! 5 exit then
     not-implemented
 ; export
 
@@ -109,6 +111,38 @@ create value-encoding-table
     dup %11000111 = if drop r> 1+ dup u32@ >r 4 + r> exit then
     not-implemented
 ; export
+
+: encode-int-literal ( node buf -- n )
+    over node>arg1 @ node>tag @ case
+    TyU8 of
+        swap node>arg0 @
+        dup $ff u> if ENCODE-ERROR throw then
+        swap encode-uint
+    endof
+    TyI8 of not-implemented endof
+    TyU16 of
+        swap node>arg0 @
+        dup $ffff u> if ENCODE-ERROR throw then
+        swap 
+        %11000101 over u8! 1+ u16! 3
+    endof
+    TyI16 of not-implemented endof
+    TyU32 of
+        swap node>arg0 @
+        dup $fffffff u> if ENCODE-ERROR throw then
+        swap 
+        %11000111 over u8! 1+ u32! 5
+    endof
+    TyI32 of
+        swap node>arg0 @
+        dup  2147483647 > if ENCODE-ERROR throw then
+        dup -2147483648 < if ENCODE-ERROR throw then
+        swap 
+        %11001000 over u8! 1+ i32! 5
+    endof
+    not-implemented
+    endcase
+;
 
 T{ create test-buf 1024 allot -> }T
 
@@ -205,7 +239,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
         swap node>arg0 @ if %11000001 else %11000010 then
         swap u8! 1
     endof
-    Nuint of over node>arg0 @ over encode-uint nip nip endof
+    Nint of encode-int-literal endof
     Nregister of encode-register endof
     Nargument of encode-argument endof
     not-reachable

@@ -2,5 +2,5 @@
 export
 function main(): i32 {
 root:
-    return 123
+    return (i32) 123
 }

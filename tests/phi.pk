@@ -10,10 +10,10 @@ function main(): i32 {
 root:
     if true iftrue iffalse
 iftrue:
-    %0 = 123
+    %0 = (i32) 123
     goto exit
 iffalse:
-    %1 = 456
+    %1 = (i32) 456
     goto exit
 exit:
     %2 = phi(iftrue: %0, iffalse: %1)

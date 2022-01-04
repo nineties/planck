@@ -14,8 +14,7 @@ include lib/string.fs
     enum Nderef     ( node )
 
     enum Nbool      ( 0 or 1 )
-    enum Nuint      ( val )
-    enum Nint       ( val )
+    enum Nint       ( val type )
 
     enum Nnop
     enum Nmove      ( lhs rhs )
@@ -204,7 +203,7 @@ TyStr make-node0 constant str-type export
     dup node>tag @ case
     Nid of node>arg0 @ type endof
     Nregister of ." %" node>arg0 @ 10 swap print-int endof
-    Nuint of node>arg0 @ 10 swap print-int endof
+    Nint of node>arg0 @ 10 swap print-int endof
     Nderef of ." *" node>arg0 @ recurse endof
     Nreturn of drop ." return" endof
     Nmove of
