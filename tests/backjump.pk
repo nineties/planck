@@ -1,6 +1,5 @@
 /// Test of backward jump
-export
-function main(): i32 {
+export fun main(): i32 {
 root:
     %0 = false
     %1 = (i32) 0

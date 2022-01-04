@@ -1,6 +1,5 @@
 /// Tests of simple assignment
-export
-function main(): i32 {
+export fun main(): i32 {
 root:
     %0 = (i32) 123
     return %0

@@ -18,7 +18,7 @@ Lexical Tokens::
     comment  : "//" [^\n]* "\n"
     document : "///" [^\n]* "\n"
 
-    keyword : "nop" | "phi" | "goto" | "return" | "export" | "function"
+    keyword : "nop" | "phi" | "goto" | "return" | "export" | "fun"
             | "true" | "false" | "bool" | "char" "i8" | "u8" | "i16" | "u16"
             | "i32" | "u32" | "i64" | "u64" | "f32" | "f64" | "str" | "mod" | "if"
 
@@ -110,7 +110,7 @@ Function::
 
    function_definition :
       "export"?
-      "function" label "(" function_params ")" ":" type
+      "fun" label "(" function_params ")" ":" type
       "{" basic_block+ "}"
 
 Program::

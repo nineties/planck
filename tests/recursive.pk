@@ -2,7 +2,7 @@
 /// This program computes following sum. The result is 123.
 ///
 /// int s = 3 + 0 + 1 + ... + 15;
-function f(i32): i32 {
+fun f(i32): i32 {
 root:
     if $0 == (i32) 0 block0 block1
 block0:
@@ -14,8 +14,7 @@ block1:
     return %2
 }
 
-export
-function main(): i32 {
+export fun main(): i32 {
 root:
     %0 = f((i32) 16)
     return %0

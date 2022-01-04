@@ -1,6 +1,5 @@
 /// Test of goto statement
-export
-function main(): i32 {
+export fun main(): i32 {
 root:
     goto block1
 block1:
