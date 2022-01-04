@@ -151,6 +151,25 @@ private{
     dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
     dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
     dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
+    dup '=' expect-sym if
+        dup lex_nospace
+        dup '=' expect-sym unless SYNTAX-ERROR throw then
+        dup lex parse-operand 0 -rot Neq make-node3 exit
+    then
+    dup '!' expect-sym if
+        dup lex_nospace
+        dup '=' expect-sym unless SYNTAX-ERROR throw then
+        dup lex parse-operand 0 -rot Nne make-node3 exit
+    then
+    dup '<' expect-sym if
+        ." here?" cr
+        dup lex_nospace
+        dup '=' expect-sym if
+            dup lex parse-operand 0 -rot Nle make-node3 exit
+        else
+            dup lex parse-operand 0 -rot Nlt make-node3 exit
+        then
+    then
     dup '(' expect-sym if
         dup lex
 
@@ -196,6 +215,10 @@ private{
     Nand of tuck node>arg0 ! endof
     Nor  of tuck node>arg0 ! endof
     Nxor of tuck node>arg0 ! endof
+    Neq  of tuck node>arg0 ! endof
+    Nne  of tuck node>arg0 ! endof
+    Nlt  of tuck node>arg0 ! endof
+    Nle  of tuck node>arg0 ! endof
     Ncall of tuck node>arg0 ! endof
     drop make-move 0
     endcase

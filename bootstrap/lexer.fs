@@ -465,7 +465,8 @@ create state-transition-table
             over if \ skip spaces
                 dup skip dup lookahead 17 next-state
             else
-                INVALID-TOKEN throw
+                Tnull over set-token-tag
+                dup skip  19
             then
         endof
         18 of INVALID-TOKEN throw endof

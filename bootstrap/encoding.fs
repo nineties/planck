@@ -336,6 +336,10 @@ T{ test-buf 1+ u32@ -> 65536 }T
     Nand of %00001000 encode-binexpr endof
     Nor  of %00001001 encode-binexpr endof
     Nxor of %00001010 encode-binexpr endof
+    Neq  of %00001011 encode-binexpr endof
+    Nne  of %00001100 encode-binexpr endof
+    Nlt  of %00001101 encode-binexpr endof
+    Nle  of %00001110 encode-binexpr endof
     Nmove of
         %00000010 over u8! 1+
         1 >r
