@@ -132,6 +132,7 @@ typedef struct {
         uint16_t reg;
         uint16_t arg;
         uint_t uint;
+        sint_t sint;
     };
 } operand;
 
@@ -223,8 +224,16 @@ operand_to_value(value *bp, operand *opd) {
         v.b = false;
         break;
     case D_U8:
+    case D_U16:
+    case D_U32:
         v.tag = V_UINT;
         v.u = opd->uint;
+        break;
+    case D_I8:
+    case D_I16:
+    case D_I32:
+        v.tag = V_INT;
+        v.i = opd->sint;
         break;
     case D_REG:
         v = LOCAL(bp, opd->reg);
@@ -362,10 +371,29 @@ decode_operand(function *fun, operand *opd, byte_t **cur)
         opd->tag = D_U8;
         opd->uint = *(*cur)++;
         return;
+    case D_I8:
+        opd->tag = D_I8;
+        opd->sint = *(*cur)++;
+        return;
     case D_U16:
         opd->tag = D_U16;
         opd->uint = *(uint16_t*)*cur;
         *cur += 2;
+        return;
+    case D_I16:
+        opd->tag = D_I16;
+        opd->sint = *(int16_t*)*cur;
+        *cur += 2;
+        return;
+    case D_U32:
+        opd->tag = D_U32;
+        opd->uint = *(uint32_t*)*cur;
+        *cur += 4;
+        return;
+    case D_I32:
+        opd->tag = D_I32;
+        opd->sint = *(int32_t*)*cur;
+        *cur += 4;
         return;
     default:
         not_implemented();
@@ -535,41 +563,26 @@ static value
 binexpr(byte_t op, value arg0, value arg1) {
     value v;
     switch (op) {
-    case I_ADD:
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
-            v.tag = V_UINT;
-            v.u = arg0.u + arg1.u;
-            return v;
-        }
+#define BINOP(op) \
+        if (arg0.tag == V_UINT && arg1.tag == V_UINT) { \
+            v.tag = V_UINT; \
+            v.u = arg0.u op arg1.u; \
+            return v; \
+        } \
+        if (arg0.tag == V_INT && arg1.tag == V_INT) { \
+            v.tag = V_INT; \
+            v.i = arg0.i op arg1.i; \
+            return v; \
+        } \
         not_implemented();
-    case I_SUB:
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
-            v.tag = V_UINT;
-            v.u = arg0.u - arg1.u;
-            return v;
-        }
-        not_implemented();
-    case I_MUL:
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
-            v.tag = V_UINT;
-            v.u = arg0.u * arg1.u;
-            return v;
-        }
-        not_implemented();
-    case I_DIV:
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
-            v.tag = V_UINT;
-            v.u = arg0.u / arg1.u;
-            return v;
-        }
-        not_implemented();
-    case I_MOD:
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) {
-            v.tag = V_UINT;
-            v.u = arg0.u % arg1.u;
-            return v;
-        }
-        not_implemented();
+
+    case I_ADD: BINOP(+)
+    case I_SUB: BINOP(-)
+    case I_MUL: BINOP(*)
+    case I_DIV: BINOP(/)
+    case I_MOD: BINOP(%)
+
+#undef BINOP
     default:
         not_implemented();
     }

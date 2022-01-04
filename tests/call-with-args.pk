@@ -8,6 +8,6 @@ root:
 export
 function main(): i32 {
 root:
-    %0 = f(200, 77)
+    %0 = f((i32) 200, (i32) 77)
     return %0
 }

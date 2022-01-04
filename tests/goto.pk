@@ -6,5 +6,5 @@ root:
 block1:
     goto block2
 block2:
-    return 123
+    return (i32) 123
 }

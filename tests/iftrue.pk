@@ -4,7 +4,7 @@ function main(): i32 {
 root:
     if true iftrue iffalse
 iftrue:
-    return 123
+    return (i32) 123
 iffalse:
-    return 0
+    return (i32) 0
 }
