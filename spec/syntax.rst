@@ -72,6 +72,10 @@ Instruction::
               | operand & operand
               | operand | operand
               | operand ^ operand
+              | operand == operand
+              | operand != operand
+              | operand < operand
+              | operand <= operand
               | "label" "(" call_args ")"
 
    call_args  :
