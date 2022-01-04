@@ -1,0 +1,23 @@
+/// Test of loop
+/// This program computes following sum. The result will be 123.
+///
+/// int s = 3;
+/// for (int i = 0; i < 16; i++)
+///    s += i;
+/// return s
+export
+function main(): i32 {
+root:
+    %0 = (i32) 3    // accumulation
+    %1 = (i32) 0    // counter
+    %2 = (i32) 16   // loop count
+    goto loop
+loop:
+    %3 = phi(root:%0, loop:%5)
+    %4 = phi(root:%1, loop:%6)
+    %5 = %3 + %4
+    %6 = %4 + (i32) 1
+    if %6 < %2 loop exit
+exit:
+    return %5
+}
