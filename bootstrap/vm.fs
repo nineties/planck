@@ -42,6 +42,15 @@ end-struct interpreter%
 
 1024 1024 * constant STACK-SIZE
 
+: reverse ( xu ... x1 u -- x1 ... xu )
+    case
+    1 of endof
+    2 of swap endof
+    3 of -rot swap endof
+        1- dup >r roll r> swap >r recurse r> 0
+    endcase
+;
+
 : make-object-file ( -- obj )
     object-file% %allocate throw
     0 make-array over obj>ids !
@@ -80,8 +89,16 @@ $2000000 constant FILE_BUFFER_SIZE
     decode-operand >r
     decode-operand >r
     decode-operand
-    r> swap r> -rot
-    r> make-node3
+    r> r> 3 reverse r> make-node3
+;
+
+: decode-comp-branch ( fun buf tag -- fun new-buf insn )
+    >r
+    decode-operand >r
+    decode-operand >r
+    decode-uint >r
+    decode-uint
+    r> r> r> 4 reverse r> make-node4
 ;
 
 : decode-insn ( fun buf -- fun new-buf insn )
@@ -109,8 +126,8 @@ $2000000 constant FILE_BUFFER_SIZE
         0 make-array -rot   ( array for args )
         decode-uint 0 ?do
             decode-operand 3 pick array-push
-        loop
-        rot r> swap r> -rot Nlcall make-node3   ( lhs idx args )
+        loop rot
+        r> r> 3 reverse Nlcall make-node3
     endof
     %10000000 of decode-uint make-goto endof
     %10000001 of decode-operand make-return endof
@@ -118,8 +135,12 @@ $2000000 constant FILE_BUFFER_SIZE
         decode-operand >r   ( arg )
         decode-uint >r      ( ifthen block )
         decode-uint         ( ifelse block )
-        r> r> -rot swap Niftrue make-node3
+        r> r> 3 reverse Niftrue make-node3
     endof
+    %10000011 of Nifeq decode-comp-branch endof
+    %10000100 of Nifne decode-comp-branch endof
+    %10000101 of Niflt decode-comp-branch endof
+    %10000110 of Nifle decode-comp-branch endof
     not-implemented
     endcase
 ;
