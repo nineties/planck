@@ -12,6 +12,7 @@ include encoding.fs
 include lib/table.fs
 
 struct
+    cell% field compiler>program
     cell% field compiler>idtable ( name table: string -> ID )
     cell% field compiler>export  ( array of (type, ID idx, def idx) )
     cell% field compiler>fundefs ( array of function definitions )
@@ -98,10 +99,17 @@ private{
 ;
 
 : lookup-fundef ( compiler name -- idx )
-    over compiler>fundefs @ array-size 0 ?do
-        i 2 pick compiler>fundefs @ array@
-        tuple0 @ over streq if
-            2drop i unloop exit
+    0 2 pick compiler>program @ program>defs @ array-size 0 ?do
+        i 3 pick compiler>program @ program>defs @ array@
+        dup node>tag @ Nfundef = if
+            fundef>name @ node>arg0 @ 2 pick streq if
+                unloop
+                nip nip exit
+            else
+                1+
+            then
+        else
+            drop
         then
     loop
 ;
@@ -182,6 +190,7 @@ private{
 
 : compile-program ( program -- compiler )
     make-compiler swap
+    dup 2 pick compiler>program !
     program>defs @ dup array-size 0 ?do
         i over array@ 2 pick compile-definition
     loop
@@ -223,7 +232,7 @@ private{
         tuple0 @ ['] encode-uint emit    \ type of the ID
         r> tuple1 @ ['] encode-uint emit \ index of the ID
         r> tuple2 @ ['] encode-uint emit \ index of corresponding def
-        r> tuple3 @ dup type cr ['] encode-str emit  \ documentation
+        r> tuple3 @ ['] encode-str emit  \ documentation
     loop
 
     \ write buf to file
