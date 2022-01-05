@@ -27,6 +27,7 @@ test-vm:
 	$(RUN_VM) ../tests/ifcomp.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/loop.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/recursive.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/fib.pko; test $$? -eq 55
 
 clean:
 	make -C $(VM_IMPL)
