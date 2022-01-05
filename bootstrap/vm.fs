@@ -285,7 +285,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
 \ address of local variable
 : localp ( interp index -- a-addr )
-    cells 1+ negate swap interp>bp @ +
+    1+ cells negate swap interp>bp @ +
 ;
 
 \ address of call argument
@@ -361,7 +361,7 @@ $2000000 constant FILE_BUFFER_SIZE
     over over node>arg2 @ to-value >r
     over over node>arg1 @ to-value r>
     ( interp node arg0 arg1 )
-    over node>tag @ over node>tag @ <> if DECODE-ERROR throw then
+    over node>tag @ over node>tag @ <> if TYPE-ERROR throw then
     2 pick node>tag @ case
     Nadd of ['] + binexpr-int endof
     Nsub of ['] - binexpr-int endof

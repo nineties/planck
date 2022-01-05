@@ -212,6 +212,7 @@ TyStr make-node0 constant str-type export
     dup node>tag @ case
     Nid of node>arg0 @ type endof
     Nregister of ." %" node>arg0 @ 10 swap print-int endof
+    Nargument of ." $" node>arg0 @ 10 swap print-int endof
     Nint of node>arg0 @ 10 swap print-int endof
     Nderef of ." *" node>arg0 @ recurse endof
     Nreturn of drop ." return" endof

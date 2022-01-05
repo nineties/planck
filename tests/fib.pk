@@ -1,0 +1,19 @@
+fun fib(i32): i32 {
+root:
+    if $0 < (i32) 2 block0 block1
+block0:
+    return $0
+block1:
+    %0 = $0 - (i32) 1
+    %1 = $0 - (i32) 2
+    %2 = fib(%0)
+    %3 = fib(%1)
+    %4 = %2 + %3
+    return %4
+}
+
+export fun main(): i32 {
+root:
+    %0 = fib((i32) 10)
+    return %0
+}
