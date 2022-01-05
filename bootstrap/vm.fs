@@ -285,7 +285,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
 \ address of local variable
 : localp ( interp index -- a-addr )
-    cells 1+ negate swap interp>bp @ +
+    1+ cells negate swap interp>bp @ +
 ;
 
 \ address of call argument
