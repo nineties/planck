@@ -1,0 +1,7 @@
+/// Test of comparison branch instructions
+export fun main(): i32 {
+root:
+    %0 = (123, 456, 789)
+    %1 = %0.0
+    return %1
+}
