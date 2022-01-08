@@ -89,15 +89,14 @@ private{
 ;
 
 : parse-operand ( lexer -- node )
-    dup '(' expect-sym if
+    dup lexer>token_tag @ Tint = if
+        dup lexer>token_val @ swap
         dup lex
-        dup parse-type ?dup if swap else SYNTAX-ERROR throw then
-        dup ')' expect-sym unless SYNTAX-ERROR throw then
+        dup ':' expect-sym unless SYNTAX-ERROR throw then
         dup lex
-        dup lexer>token_tag @ Tint = if
-            dup lexer>token_val @ rot Nint make-node2
-            swap lex exit
-        then
+        parse-type ?dup unless SYNTAX-ERROR throw then
+        Nint make-node2
+        exit
     then
     dup lexer>token_tag @ Ttrue = if lex true-value exit then
     dup lexer>token_tag @ Tfalse = if lex false-value exit then

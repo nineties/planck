@@ -8,6 +8,6 @@ root:
 
 fun f(): i32 {
 root:
-    return (i32) 123
+    return 123:i32
 }
 

@@ -2,13 +2,13 @@
 export fun main(): i32 {
 root:
     %0 = false
-    %1 = (i32) 0
+    %1 = 0:i32
     goto block
 block:
     %2 = phi(root:%0, block:%4)
     %3 = phi(root:%1, block:%5)
     %4 = true
-    %5 = (i32) 123
+    %5 = 123:i32
     if %2 exit block
 exit:
     return %3

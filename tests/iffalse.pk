@@ -3,7 +3,7 @@ export fun main(): i32 {
 root:
     if false iftrue iffalse
 iftrue:
-    return (i32) 0
+    return 0:i32
 iffalse:
-    return (i32) 123
+    return 123:i32
 }

@@ -56,8 +56,8 @@ Instruction::
             | register
             | "*" place
 
-   operand  : (type) int
-            | (type) ("+"|"-") int
+   operand  : int ":" type
+            | ("+"|"-") int ":" type
             | "true" | "false"
             | register
             | arguments
