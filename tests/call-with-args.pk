@@ -7,6 +7,6 @@ root:
 /// Test of local function call with arguments
 export fun main(): i32 {
 root:
-    %0 = f((i32) 200, (i32) 77)
+    %0 = f(200:i32, 77:i32)
     return %0
 }

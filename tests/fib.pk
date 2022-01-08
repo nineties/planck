@@ -1,11 +1,11 @@
 fun fib(i32): i32 {
 root:
-    if $0 < (i32) 2 block0 block1
+    if $0 < 2:i32 block0 block1
 block0:
     return $0
 block1:
-    %0 = $0 - (i32) 1
-    %1 = $0 - (i32) 2
+    %0 = $0 - 1:i32
+    %1 = $0 - 2:i32
     %2 = fib(%0)
     %3 = fib(%1)
     %4 = %2 + %3
@@ -14,6 +14,6 @@ block1:
 
 export fun main(): i32 {
 root:
-    %0 = fib((i32) 10)
+    %0 = fib(10:i32)
     return %0
 }
