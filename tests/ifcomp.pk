@@ -1,8 +1,8 @@
 /// Test of comparison branch instructions
 export fun main(): i32 {
 root:
-    %0 = (i32) 1
-    %1 = (i32) 2
+    %0 = 1:i32
+    %1 = 2:i32
     if %0 == %0 block0 fail
 block0:
     if %0 != %1 block1 fail
@@ -11,8 +11,8 @@ block1:
 block2:
     if %0 <= %0 block3 fail
 block3:
-    return (i32) 123
+    return 123:i32
 fail:
-    return (i32) 0
+    return 0:i32
 }
 

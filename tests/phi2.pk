@@ -9,10 +9,10 @@ export fun main(): i32 {
 root:
     if false iftrue iffalse
 iftrue:
-    %0 = (i32) 456
+    %0 = 456:i32
     goto exit
 iffalse:
-    %1 = (i32) 123
+    %1 = 123:i32
     goto exit
 exit:
     %2 = phi(iftrue: %0, iffalse: %1)

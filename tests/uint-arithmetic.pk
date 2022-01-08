@@ -1,10 +1,10 @@
 /// Test of uint arithmetic
 export fun main(): i32 {
 root:
-    %0 = (i32) 10 * (i32) 20
-    %1 = %0 / (i32) 2
-    %2 = %1 + (i32) 30
-    %3 = (i32) 47 mod (i32) 8
+    %0 = 10:i32 * 20:i32
+    %1 = %0 / 2:i32
+    %2 = %1 + 30:i32
+    %3 = 47:i32 mod 8:i32
     %4 = %2 - %3
     return %4
 }
