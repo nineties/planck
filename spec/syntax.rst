@@ -76,10 +76,12 @@ Instruction::
               | operand "!=" operand
               | operand "<" operand
               | operand "<=" operand
-              | "label" "(" call_args ")"
+              | "label" "(" operands ")"
+              | "(" operands ")"
+              | operand "." int
 
-   call_args  :
-              | operand ( "," operand )*
+   operands  :
+             | operand ( "," operand )*
 
    instruction : "nop"
                | place "=" expression
