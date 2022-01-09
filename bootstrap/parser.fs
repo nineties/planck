@@ -77,6 +77,32 @@ private{
 : parse-type ( lexer -- node )
     dup parse-never-type ?dup if nip exit then
     dup parse-prim-type ?dup if nip exit then
+    dup '(' expect-sym if
+        dup lex
+        dup ')' expect-sym if lex unit-type exit then
+        dup recurse ?dup if swap else SYNTAX-ERROR throw then
+        dup ')' expect-sym if lex exit then \ "(" type ")" == type
+        dup ',' expect-sym if dup lex else SYNTAX-ERROR throw then
+        dup ')' expect-sym if \ "(" type "," ")"
+            lex
+            0 make-array tuck array-push
+            TyTuple make-node1
+            exit
+        then
+        ( ty lexer )
+        swap 0 make-array tuck array-push swap
+        dup recurse ?dup unless SYNTAX-ERROR throw then
+        2 pick array-push
+        begin dup ',' expect-sym while
+            dup lex
+            dup recurse ?dup unless SYNTAX-ERROR throw then
+            2 pick array-push
+        repeat
+        dup ')' expect-sym unless SYNTAX-ERROR throw then
+        lex
+        TyTuple make-node1
+        exit
+    then
     drop 0
 ;
 

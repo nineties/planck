@@ -262,6 +262,27 @@ T{ test-buf 1+ u32@ -> 65536 }T
     TyF32   of %11001011 over u8! 2drop 1 endof
     TyF64   of %11001100 over u8! 2drop 1 endof
     TyStr   of %11001101 over u8! 2drop 1 endof
+    TyTuple of
+        over node>arg0 @ array-size dup 16 < if
+            dup >r
+            %10000000 or over u8! 1+ 1
+            r> 0 ?do
+                i 3 pick node>arg0 @ array@ 2 pick recurse tuck + >r + r>
+            loop
+            nip nip
+        else dup 256 < if
+            dup >r
+            %11001110 over u8! 1+
+            r> dup >r over u8! 1+
+            2
+            r> 0 ?do
+                i 3 pick node>arg0 @ array@ 2 pick recurse tuck + >r + r>
+            loop
+            nip nip
+        else
+            not-reachable
+        then then
+    endof
     TyFunc of
         %11011010 over u8! 1+
         over node>arg0 @ over recurse dup 1+ >r + r> \ return type
@@ -277,24 +298,31 @@ T{ test-buf 1+ u32@ -> 65536 }T
 ; export
 
 : decode-type ( buf -- new-buf type )
-    dup u8@ case
-    %11000000 of 1+ never-type endof
-    %11000001 of 1+ bool-type endof
-    %11000010 of 1+ char-type endof
-    %11000011 of 1+ u8-type endof
-    %11000100 of 1+ i8-type endof
-    %11000101 of 1+ u16-type endof
-    %11000110 of 1+ i16-type endof
-    %11000111 of 1+ u32-type endof
-    %11001000 of 1+ i32-type endof
-    %11001001 of 1+ u64-type endof
-    %11001010 of 1+ i64-type endof
-    %11001011 of 1+ f32-type endof
-    %11001100 of 1+ f64-type endof
-    %11001101 of 1+ str-type endof
+    dup u8@ >r 1+ r> dup case
+    %10000000 %10001111 rangeof
+        %00001111 and
+        0 make-array -rot
+        0 ?do recurse 2 pick array-push loop
+        swap TyTuple make-node1
+    endof
+    %11000000 of drop never-type endof
+    %11000001 of drop bool-type endof
+    %11000010 of drop char-type endof
+    %11000011 of drop u8-type endof
+    %11000100 of drop i8-type endof
+    %11000101 of drop u16-type endof
+    %11000110 of drop i16-type endof
+    %11000111 of drop u32-type endof
+    %11001000 of drop i32-type endof
+    %11001001 of drop u64-type endof
+    %11001010 of drop i64-type endof
+    %11001011 of drop f32-type endof
+    %11001100 of drop f64-type endof
+    %11001101 of drop str-type endof
     %11011010 of
+        drop
         ( function type )
-        1+ recurse >r ( R: ret )
+        recurse >r ( R: ret )
         0 make-array swap
         ( array buf )
         dup u8@ >r 1+ r> 0 ?do

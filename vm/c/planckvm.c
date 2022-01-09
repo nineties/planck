@@ -64,6 +64,7 @@ typedef int64_t sint_t;
 #define T_F32   0xcb
 #define T_F64   0xcc
 #define T_STR   0xcd
+#define T_TUPLE 0xce
 #define T_FUN   0xda
 #define T_OBJ   0xff
 // Sections
@@ -125,6 +126,10 @@ typedef struct type {
             struct type *ret;
             size_t n_params;
             struct type **params;
+        };
+        struct {
+            size_t len;
+            struct type **types;
         };
     };
 } type;
@@ -335,7 +340,17 @@ decode_str(byte_t **cur) {
 
 static type *
 decode_type(byte_t **cur) {
-    switch (*(*cur)++) {
+    byte_t code = *(*cur)++;
+    if (0x80 <= code && code <= 0x8f) {
+        type *t = calloc(1, sizeof(type));
+        t->tag = T_TUPLE;
+        t->len = code & 0x0f;
+        t->types = calloc(t->len, sizeof(type*));
+        for (int i = 0; i < t->len; i++)
+            t->types[i] = decode_type(cur);
+        return t;
+    }
+    switch (code) {
         case T_NEVER: return &never_type;
         case T_BOOL: return &bool_type;
         case T_CHAR: return &char_type;
