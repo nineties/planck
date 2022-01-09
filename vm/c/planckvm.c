@@ -609,11 +609,28 @@ load_object_file(const char *path) {
 }
 
 static void
+drop(value v) {
+    switch(v.tag) {
+    case V_TUPLE:
+        for (int i = 0; i < v.len; i++)
+            drop(v.values[i]);
+        free(v.values);
+        v.tag = V_NULL;
+        break;
+    default:
+        break; /* do nothing */
+    }
+}
+
+static void
 move(value *bp, operand *lhs, value v) {
     switch (lhs->tag) {
-    case D_REG:
-        LOCAL(bp, lhs->reg) = v;
+    case D_REG: {
+        value *p = &LOCAL(bp, lhs->reg);
+        if (p->tag != V_NULL) drop(*p);
+        *p = v;
         break;
+    }
     default:
         not_implemented();
     }
