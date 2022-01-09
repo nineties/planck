@@ -359,6 +359,30 @@ T{ test-buf 1+ u32@ -> 65536 }T
         ( insn buf n )
         nip nip
     endof
+    Ntuple of
+        over node>arg1 @ array-size dup < 16 if
+            %00110000 or over u8! 1+ 1
+            2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
+            2 pick node>arg1 @ array-size 0 ?do
+                i 3 pick node>arg1 @ array@ 2 pick encode-operand tuck + >r + r>
+            loop
+            nip nip
+        else
+            \ longer tuple
+            not-implemented
+        then
+    endof
+    Ntupleat of
+        over node>arg1 @ array-size dup < 16 if
+            %01000000 or over u8! 1+ 1
+            2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
+            2 pick node>arg1 @ 2 pick encode-operand +
+            nip nip
+        else
+            \ longer tuple
+            not-implemented
+        then
+    endof
     Ngoto of
         %10000000 over u8! 1+
         over node>arg0 @ over encode-uint 1+

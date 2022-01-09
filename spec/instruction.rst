@@ -50,9 +50,9 @@ Non-Branch Instructions
    |          |    -     |                 | reserved            |
    |          | 00101111 |                 |                     |
    +----------+----------+-----------------+---------------------+
-   | tuple    | 0011xxxx | arg0,arg1,..    | tuple (length < 16) |
+   | tuple    | 0011xxxx | lhs,arg0,...    | tuple (length < 16) |
    +----------+----------+-----------------+---------------------+
-   | tuple at | 0100xxxx | arg             | tuple (length < 16) |
+   | tuple at | 0100xxxx | lhs,arg         | tuple (length < 16) |
    +----------+----------+-----------------+---------------------+
 
 Phi instruction::
