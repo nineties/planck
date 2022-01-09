@@ -296,11 +296,9 @@ $2000000 constant FILE_BUFFER_SIZE
 \ evaluate operand to value
 : to-value ( interp operand -- value )
     dup node>tag @ case
-    Nbool of nip endof
-    Nint of nip endof
     Nregister of node>arg0 @ localp @ endof
     Nargument of node>arg0 @ argp @ endof
-    not-implemented
+    drop nip 0
     endcase
 ;
 
