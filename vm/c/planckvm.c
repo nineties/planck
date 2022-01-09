@@ -97,10 +97,11 @@ typedef int64_t sint_t;
 #define I_IFLT      0x85
 #define I_IFLE      0x86
 // Values
-#define V_BOOL  0x00
-#define V_UINT  0x01
-#define V_INT   0x02
-#define V_TUPLE 0x03
+#define V_NULL  0x00
+#define V_BOOL  0x01
+#define V_UINT  0x02
+#define V_INT   0x03
+#define V_TUPLE 0x04
 
 typedef struct value {
     byte_t tag;
@@ -692,7 +693,11 @@ binexpr(byte_t op, value arg0, value arg1) {
 static value
 call(interpreter *interp, object_file *obj, function *fun) {
     value *bp = interp->sp;
-    interp->sp -= fun->n_locals; /* allocate space for local variables */
+
+    /* allocate local variables and initialize them as V_NULL */
+    interp->sp -= fun->n_locals;
+    memset(interp->sp, 0, fun->n_locals*sizeof(value));
+
     basicblock *prev = NULL;
     basicblock *block = &fun->blocks[0];
 
