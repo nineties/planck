@@ -794,6 +794,12 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 block = &fun->blocks[insn->next];
                 break;
             case I_RETURN:
+                for (int i = 0; i < fun->n_locals; i++) {
+                    if (insn->retval.tag == D_REG &&
+                        insn->retval.reg == i)
+                        continue;
+                    drop(LOCAL(bp, i));
+                }
                 return operand_to_value(bp, &insn->retval);
             case I_IFTRUE: {
                 prev = block;
