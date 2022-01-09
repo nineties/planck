@@ -11,20 +11,6 @@ include parser.fs
 include encoding.fs
 include lib/table.fs
 
-struct
-    cell% field compiler>program
-    cell% field compiler>idtable ( name table: string -> ID )
-    cell% field compiler>export  ( array of (type, ID idx, def idx) )
-    cell% field compiler>fundefs ( array of function definitions )
-    cell% field compiler>vardefs ( array of variable definitions )
-
-    \ NB: Since this script is only for bootstrapping, we allocate a buffer
-    \ with enough size and don't care about reallocation of it if the size
-    \ is not enough.
-    byte% $100000 * field compiler>buf ( bytecode buffer )
-    ptr% field compiler>pos
-end-struct compiler%
-
 private{
 
 : list-length ( list -- n )
@@ -36,32 +22,43 @@ private{
     r>
 ;
 
+struct
+    cell% field compiler>program
+    cell% field compiler>fundefs ( array of function definitions )
+    cell% field compiler>vardefs ( array of variable definitions )
+
+    \ NB: Since this script is only for bootstrapping, we allocate a buffer
+    \ with enough size and don't care about reallocation of it if the size
+    \ is not enough.
+    byte% $100000 * field compiler>buf ( bytecode buffer )
+    ptr% field compiler>pos
+end-struct compiler%
+
 : make-compiler ( -- compiler )
     compiler% %allocate throw
-    make-string-table over compiler>idtable !
-    0 make-array over compiler>export !
     0 make-array over compiler>fundefs !
     0 make-array over compiler>vardefs !
     dup compiler>buf over compiler>pos !
 ;
 
+make-string-table constant IDTABLE  \ string -> ID
+0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
+make-compiler constant COMPILER export
+
 \ Add an id to idtable section if not exist. Returns index of the id.
-: get-id ( id compiler -- n )
-    swap node>arg0 @ swap compiler>idtable @
+: get-id ( id -- n )
+    node>arg0 @ IDTABLE
     2dup ?table-in if table@ exit then
     dup table-size dup >r -rot table! r>
 ;
 
-: add-export ( type id-idx def-idx comment compiler -- )
-    >r
+: add-export ( type id-idx def-idx comment -- )
     4 cells allocate throw
     tuck tuple3 !
     tuck tuple2 !
     tuck tuple1 !
     tuck tuple0 !
-    r>
-    tuck compiler>export @ array-push
-    drop
+    EXPORTS array-push
 ;
 
 : replace-label-impl ( table node idx -- table node )
@@ -155,8 +152,8 @@ private{
     over fundef>export @ if
         over fundef>comment @ >r
         dup compiler>fundefs @ array-size >r
-        over fundef>name @ over get-id >r
-        'F' r> r> r> 4 pick add-export
+        over fundef>name @ get-id >r
+        'F' r> r> r> add-export
     then
     over compile-function-body
     3 cells allocate throw
@@ -172,7 +169,7 @@ private{
     over vardef>export @ if
         over vardef>comment @ >r
         dup compiler>vardefs @ array-size >r
-        over vardef>name @ over get-id >r
+        over vardef>name @ get-id >r
         'D' r> r> r> 4 pick add-export
     then
     ." done" cr
@@ -187,20 +184,20 @@ private{
     endcase
 ;
 
-: compile-program ( program -- compiler )
-    make-compiler swap
+: compile-program ( program -- )
+    COMPILER swap
     dup 2 pick compiler>program !
     program>defs @ dup array-size 0 ?do
         i over array@ 2 pick compile-definition
     loop
-    drop
+    2drop
 ; export
 
-: emit ( compiler w 'encoder -- compiler )
-    >r over compiler>pos @ r> execute over compiler>pos +!
+: emit ( w 'encoder -- )
+    >r COMPILER compiler>pos @ r> execute COMPILER compiler>pos +!
 ;
 
-: codegen ( compiler file -- )
+: codegen ( file -- )
     >r
     %11011111 ['] encode-u8 emit
     %11111111 ['] encode-u8 emit
@@ -208,7 +205,7 @@ private{
 
     \ write ID section
     $00 ['] encode-u8 emit  \ section type
-    dup compiler>idtable @ table-keys dup >r
+    IDTABLE table-keys dup >r
     list-length ['] encode-uint emit
     r> begin ?dup while
         dup >r car ['] encode-str emit r> cdr
@@ -216,18 +213,18 @@ private{
 
     \ write function section
     $01 ['] encode-u8 emit \ section type
-    dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
-    dup compiler>fundefs @ array-size 0 ?do
-        i over compiler>fundefs @ array@ dup >r
+    COMPILER compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
+    COMPILER compiler>fundefs @ array-size 0 ?do
+        i COMPILER compiler>fundefs @ array@ dup >r
         tuple1 @ ['] encode-type emit           \ emit function type
         r> tuple2 @ ['] encode-basicblocks emit
     loop
 
     \ write export section
     $02 ['] encode-u8 emit  \ section type
-    dup compiler>export @ array-size ['] encode-uint emit
-    dup compiler>export @ array-size 0 ?do
-        i over compiler>export @ array@ dup dup dup >r >r >r
+    EXPORTS array-size ['] encode-uint emit
+    EXPORTS array-size 0 ?do
+        i EXPORTS array@ dup dup dup >r >r >r
         tuple0 @ ['] encode-uint emit    \ type of the ID
         r> tuple1 @ ['] encode-uint emit \ index of the ID
         r> tuple2 @ ['] encode-uint emit \ index of corresponding def
@@ -235,7 +232,7 @@ private{
     loop
 
     \ write buf to file
-    dup compiler>buf over compiler>pos @ over - r> write-file throw drop
+    COMPILER compiler>buf COMPILER compiler>pos @ over - r> write-file throw drop
     drop exit
 ; export
 
