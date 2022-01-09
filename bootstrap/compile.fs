@@ -22,19 +22,6 @@ private{
     r>
 ;
 
-struct
-    \ NB: Since this script is only for bootstrapping, we allocate a buffer
-    \ with enough size and don't care about reallocation of it if the size
-    \ is not enough.
-    byte% $100000 * field compiler>buf ( bytecode buffer )
-    ptr% field compiler>pos
-end-struct compiler%
-
-: make-compiler ( -- compiler )
-    compiler% %allocate throw
-    dup compiler>buf over compiler>pos !
-;
-
 variable PROGRAM
 make-string-table constant IDTABLE  \ string -> ID
 0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
@@ -42,8 +29,6 @@ make-string-table constant IDTABLE  \ string -> ID
 0 make-array constant VARDEFS       \ array of variable definitions
 $100000 allocate throw constant CODEBUF
 create CODEPOS CODEBUF ,
-
-make-compiler constant COMPILER export
 
 \ Add an id to idtable section if not exist. Returns index of the id.
 : get-id ( id -- n )
@@ -115,7 +100,7 @@ make-compiler constant COMPILER export
     endcase
 ;
 
-: compile-function-body ( compiler node -- compiler basicblocks )
+: compile-function-body ( node -- basicblocks )
     make-string-table
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@
@@ -135,7 +120,7 @@ make-compiler constant COMPILER export
     drop \ drop the basicblock table
 
     dup fundef>blocks @ array-size 0 ?do
-        i over fundef>blocks @ array@ ( compiler node block )
+        i over fundef>blocks @ array@ ( node block )
         dup node>arg2 @ array-size 0 ?do
             i over node>arg2 @ array@ compile-insn
             i 2 pick node>arg2 @ array!
@@ -146,37 +131,37 @@ make-compiler constant COMPILER export
     fundef>blocks @
 ;
 
-: compile-fundef ( node compiler -- )
-    ." compiling function: " over fundef>name @ pp-node cr
-    over fundef>export @ if
-        over fundef>comment @ >r
+: compile-fundef ( node -- )
+    ." compiling function: " dup fundef>name @ pp-node cr
+    dup fundef>export @ if
+        dup fundef>comment @ >r
         FUNDEFS array-size >r
-        over fundef>name @ get-id >r
+        dup fundef>name @ get-id >r
         'F' r> r> r> add-export
     then
-    over compile-function-body
+    dup compile-function-body
     3 cells allocate throw
-    3 pick fundef>name @ node>arg0 @ over tuple0 !
-    3 pick fundef>type @ over tuple1 !
+    2 pick fundef>name @ node>arg0 @ over tuple0 !
+    2 pick fundef>type @ over tuple1 !
     tuck tuple2 !
     FUNDEFS array-push
-    2drop
+    drop
 ;
 
-: compile-vardef ( node compiler -- )
-    ." compiling variable definition: " over vardef>name @ pp-node cr
-    over vardef>export @ if
-        over vardef>comment @ >r
+: compile-vardef ( node -- )
+    ." compiling variable definition: " dup vardef>name @ pp-node cr
+    dup vardef>export @ if
+        dup vardef>comment @ >r
         VARDEFS array-size >r
-        over vardef>name @ get-id >r
-        'D' r> r> r> 4 pick add-export
+        dup vardef>name @ get-id >r
+        'D' r> r> r> add-export
     then
     ." done" cr
-    2drop
+    drop
 ;
 
-: compile-definition ( def compiler -- )
-    over node>tag @ case
+: compile-definition ( def -- )
+    dup node>tag @ case
     Nfundef of compile-fundef endof
     Nvardef of compile-vardef endof
         not-reachable
@@ -184,12 +169,11 @@ make-compiler constant COMPILER export
 ;
 
 : compile-program ( program -- )
-    COMPILER swap
     dup PROGRAM !
     program>defs @ dup array-size 0 ?do
-        i over array@ 2 pick compile-definition
+        i over array@ compile-definition
     loop
-    2drop
+    drop
 ; export
 
 : emit ( w 'encoder -- )
