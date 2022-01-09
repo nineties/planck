@@ -341,7 +341,18 @@ $2000000 constant FILE_BUFFER_SIZE
 
 : check-type ( ty val -- bool )
     dup node>tag @ case
+    Nbool of drop bool-type = endof
     Nint of node>arg1 @ = endof
+    Ntuple of
+        over node>arg0 @ array-size
+        over node>arg0 @ array-size = unless TYPE-ERROR throw then
+        over node>arg0 @ array-size 0 ?do
+            i 2 pick node>arg0 @ array@
+            i 2 pick node>arg0 @ array@
+            recurse unless TYPE-ERROR throw then
+        loop
+        2drop true
+    endof
     not-implemented
     endcase
 ;
@@ -533,6 +544,12 @@ $2000000 constant FILE_BUFFER_SIZE
             Nreturn of
                 node>arg0 @
                 4 pick swap to-value
+
+                \ check type of return value
+                3 pick fun>ty @ node>arg0 @ over check-type unless
+                    TYPE-ERROR throw
+                then
+
                 nip nip nip unloop
                 \ restore base pointer
                 r>
