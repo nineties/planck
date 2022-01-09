@@ -153,10 +153,8 @@ private{
     ." compiling function: " over fundef>name @ pp-node cr
     over fundef>export @ if
         over fundef>comment @ >r
-        dup compiler>fundefs @ array-size dup >r
-        ." > fundef idx: " . cr
-        over fundef>name @ over get-id dup >r
-        ." > name idx: " . cr
+        dup compiler>fundefs @ array-size >r
+        over fundef>name @ over get-id >r
         'F' r> r> r> 4 pick add-export
     then
     over compile-function-body
