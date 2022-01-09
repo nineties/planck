@@ -270,9 +270,18 @@ T{ test-buf 1+ u32@ -> 65536 }T
                 i 3 pick node>arg0 @ array@ 2 pick recurse tuck + >r + r>
             loop
             nip nip
+        else dup 256 < if
+            dup >r
+            %11001110 over u8! 1+
+            r> dup >r over u8! 1+
+            2
+            r> 0 ?do
+                i 3 pick node>arg0 @ array@ 2 pick recurse tuck + >r + r>
+            loop
+            nip nip
         else
-            not-implemented
-        then
+            not-reachable
+        then then
     endof
     TyFunc of
         %11011010 over u8! 1+
