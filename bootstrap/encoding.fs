@@ -534,7 +534,6 @@ T{ test-buf 1+ u32@ -> 65536 }T
     over array-size over encode-uint dup >r + r>
     2 pick array-size 0 ?do
         ( blocks buf n )
-        ." compiling basic block: " i . cr
         i 3 pick array@ 2 pick encode-basicblock tuck + >r + r>
     loop
     nip nip
