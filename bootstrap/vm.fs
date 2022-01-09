@@ -305,7 +305,6 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : move ( interp lhs rhs -- )
-    2 pick swap to-value
     ( interp lhs val )
     over node>tag @ case
     Nregister of
@@ -422,6 +421,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 then
                 drop
             loop
+            5 pick swap to-value
             swap node>arg0 @ swap 5 pick -rot move
         loop
         dup block>insns @ array-size 0 ?do
@@ -429,10 +429,9 @@ $2000000 constant FILE_BUFFER_SIZE
             dup node>tag @ case
             Nmove of
                 ( interp fun prev cur node )
-                dup node>arg0 @
-                swap node>arg1 @
-                5 pick -rot
-                move
+                4 pick over node>arg1 @ to-value >r
+                node>arg0 @
+                4 pick swap r> move
             endof
             Nadd of 4 pick swap binexpr endof
             Nsub of 4 pick swap binexpr endof
