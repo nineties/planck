@@ -298,22 +298,29 @@ T{ test-buf 1+ u32@ -> 65536 }T
 ; export
 
 : decode-type ( buf -- new-buf type )
-    dup u8@ >r 1+ r> case
-    %11000000 of never-type endof
-    %11000001 of bool-type endof
-    %11000010 of char-type endof
-    %11000011 of u8-type endof
-    %11000100 of i8-type endof
-    %11000101 of u16-type endof
-    %11000110 of i16-type endof
-    %11000111 of u32-type endof
-    %11001000 of i32-type endof
-    %11001001 of u64-type endof
-    %11001010 of i64-type endof
-    %11001011 of f32-type endof
-    %11001100 of f64-type endof
-    %11001101 of str-type endof
+    dup u8@ >r 1+ r> dup case
+    %10000000 %10001111 rangeof
+        %00001111 and
+        0 make-array -rot
+        0 ?do recurse 2 pick array-push loop
+        swap TyTuple make-node1
+    endof
+    %11000000 of drop never-type endof
+    %11000001 of drop bool-type endof
+    %11000010 of drop char-type endof
+    %11000011 of drop u8-type endof
+    %11000100 of drop i8-type endof
+    %11000101 of drop u16-type endof
+    %11000110 of drop i16-type endof
+    %11000111 of drop u32-type endof
+    %11001000 of drop i32-type endof
+    %11001001 of drop u64-type endof
+    %11001010 of drop i64-type endof
+    %11001011 of drop f32-type endof
+    %11001100 of drop f64-type endof
+    %11001101 of drop str-type endof
     %11011010 of
+        drop
         ( function type )
         recurse >r ( R: ret )
         0 make-array swap
