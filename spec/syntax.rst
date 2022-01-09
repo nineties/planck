@@ -104,18 +104,17 @@ Instruction::
                       | "if" operand "<" operand label label
                       | "if" operand "<=" operand label label
 
-Basic Block::
+Toplevel Items::
 
+   function_definition : "export"?  "fun" label ":" type "{" basic_block+ "}"
    basic_block : label ":"
                  phi_instruction*
                  instruction*
                  branch_instruction
 
-Function::
-
-   function_definition : "export"?  "fun" label ":" type "{" basic_block+ "}"
-
-Program::
+   variable_definition : "export"? label "=" expression
 
    toplevel_definition : document* function_definition
+                       | document* variable_definition
+
    program : toplevel_definition*
