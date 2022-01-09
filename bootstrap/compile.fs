@@ -40,6 +40,8 @@ make-string-table constant IDTABLE  \ string -> ID
 0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
 0 make-array constant FUNDEFS       \ array of function definitions
 0 make-array constant VARDEFS       \ array of variable definitions
+$100000 allocate throw constant CODEBUF
+create CODEPOS CODEBUF ,
 
 make-compiler constant COMPILER export
 
@@ -192,7 +194,7 @@ make-compiler constant COMPILER export
 ; export
 
 : emit ( w 'encoder -- )
-    >r COMPILER compiler>pos @ r> execute COMPILER compiler>pos +!
+    >r CODEPOS @ r> execute CODEPOS +!
 ;
 
 : codegen ( file -- )
@@ -230,7 +232,7 @@ make-compiler constant COMPILER export
     loop
 
     \ write buf to file
-    COMPILER compiler>buf COMPILER compiler>pos @ over - r> write-file throw drop
+    CODEBUF CODEPOS @ over - r> write-file throw drop
     drop exit
 ; export
 
