@@ -24,8 +24,6 @@ private{
 
 struct
     cell% field compiler>program
-    cell% field compiler>fundefs ( array of function definitions )
-    cell% field compiler>vardefs ( array of variable definitions )
 
     \ NB: Since this script is only for bootstrapping, we allocate a buffer
     \ with enough size and don't care about reallocation of it if the size
@@ -36,13 +34,14 @@ end-struct compiler%
 
 : make-compiler ( -- compiler )
     compiler% %allocate throw
-    0 make-array over compiler>fundefs !
-    0 make-array over compiler>vardefs !
     dup compiler>buf over compiler>pos !
 ;
 
 make-string-table constant IDTABLE  \ string -> ID
 0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
+0 make-array constant FUNDEFS       \ array of function definitions
+0 make-array constant VARDEFS       \ array of variable definitions
+
 make-compiler constant COMPILER export
 
 \ Add an id to idtable section if not exist. Returns index of the id.
@@ -151,7 +150,7 @@ make-compiler constant COMPILER export
     ." compiling function: " over fundef>name @ pp-node cr
     over fundef>export @ if
         over fundef>comment @ >r
-        dup compiler>fundefs @ array-size >r
+        FUNDEFS array-size >r
         over fundef>name @ get-id >r
         'F' r> r> r> add-export
     then
@@ -160,7 +159,7 @@ make-compiler constant COMPILER export
     3 pick fundef>name @ node>arg0 @ over tuple0 !
     3 pick fundef>type @ over tuple1 !
     tuck tuple2 !
-    over compiler>fundefs @ array-push
+    FUNDEFS array-push
     2drop
 ;
 
@@ -168,7 +167,7 @@ make-compiler constant COMPILER export
     ." compiling variable definition: " over vardef>name @ pp-node cr
     over vardef>export @ if
         over vardef>comment @ >r
-        dup compiler>vardefs @ array-size >r
+        VARDEFS array-size >r
         over vardef>name @ get-id >r
         'D' r> r> r> 4 pick add-export
     then
@@ -213,9 +212,9 @@ make-compiler constant COMPILER export
 
     \ write function section
     $01 ['] encode-u8 emit \ section type
-    COMPILER compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
-    COMPILER compiler>fundefs @ array-size 0 ?do
-        i COMPILER compiler>fundefs @ array@ dup >r
+    FUNDEFS array-size ['] encode-uint emit \ num of funcs
+    FUNDEFS array-size 0 ?do
+        i FUNDEFS array@ dup >r
         tuple1 @ ['] encode-type emit           \ emit function type
         r> tuple2 @ ['] encode-basicblocks emit
     loop
