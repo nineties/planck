@@ -199,8 +199,7 @@ the index of corresponding definition.
 
 The type of ID is one of following ascii code.
 
-- 'V': variable
-- 'C': constant
+- 'D': constant or variable
 - 'F': function
 - 'G': generic function
 - 'T': type
