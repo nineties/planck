@@ -86,13 +86,13 @@ make-compiler constant COMPILER export
     endcase
 ;
 
-: lookup-fundef ( compiler name -- idx )
+: lookup-fundef ( name -- idx )
     0 PROGRAM @ program>defs @ array-size 0 ?do
         i PROGRAM @ program>defs @ array@
         dup node>tag @ Nfundef = if
             fundef>name @ node>arg0 @ 2 pick streq if
                 unloop
-                nip nip exit
+                nip exit
             else
                 1+
             then
@@ -105,7 +105,7 @@ make-compiler constant COMPILER export
 : compile-insn ( compiler insn -- insn )
     dup node>tag @ case
     Ncall of
-        over over node>arg1 @ node>arg0 @ lookup-fundef
+        dup node>arg1 @ node>arg0 @ lookup-fundef
         over node>arg0 @ swap
         2 pick node>arg2 @
         Nlcall make-node3
