@@ -375,6 +375,20 @@ T{ test-buf 1+ u32@ -> 65536 }T
     over node>arg2 @ over encode-operand r> + nip nip
 ;
 
+: encode-move ( insn buf -- n )
+    over node>arg0 @ node>tag @ Nid = if
+        not-implemented
+    else over node>arg1 @ node>tag @ Nid = if
+        \ load global variable
+        not-implemented
+    else
+        %00000010 over u8! 1+
+        1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-operand r> + nip nip
+    then then
+;
+
 : encode-insn ( insn buf -- n )
     over node>tag @ case
     Nnop of %00000000 over u8! 2drop 1 endof
@@ -402,12 +416,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
     Nne  of %00001100 encode-binexpr endof
     Nlt  of %00001101 encode-binexpr endof
     Nle  of %00001110 encode-binexpr endof
-    Nmove of
-        %00000010 over u8! 1+
-        1 >r
-        over node>arg0 @ over encode-operand dup r> + >r +
-        over node>arg1 @ over encode-operand r> + nip nip
-    endof
+    Nmove of encode-move endof
     Nlcall of
         %00100000 over u8! 1+ 1 >r
         over node>arg0 @ over encode-operand dup r> + >r +
