@@ -30,6 +30,7 @@ test-vm:
 	$(RUN_VM) ../tests/fib.pko; test $$? -eq 55
 	$(RUN_VM) ../tests/tuple.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/tuple2.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/tuple3.pko; test $$? -eq 123
 
 clean:
 	make -C $(VM_IMPL)
