@@ -1,4 +1,4 @@
-/// Test of comparison branch instructions
+/// Test of small tuple
 export fun main(): i32 {
 root:
     %0 = (123:i32, 456:i32, 789:i32)

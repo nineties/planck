@@ -24,7 +24,8 @@ TEST_OBJECTS=\
 	../tests/loop.pko \
 	../tests/recursive.pko \
 	../tests/fib.pko \
-	../tests/tuple.pko
+	../tests/tuple.pko \
+	../tests/tuple2.pko
 
 default: planck $(TEST_OBJECTS)
 
@@ -63,6 +64,7 @@ test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/recursive.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/fib.pko; test $$? -eq 55
 	$(RUN_VM) ../tests/tuple.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/tuple2.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs
