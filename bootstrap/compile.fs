@@ -23,8 +23,6 @@ private{
 ;
 
 struct
-    cell% field compiler>program
-
     \ NB: Since this script is only for bootstrapping, we allocate a buffer
     \ with enough size and don't care about reallocation of it if the size
     \ is not enough.
@@ -37,6 +35,7 @@ end-struct compiler%
     dup compiler>buf over compiler>pos !
 ;
 
+variable PROGRAM
 make-string-table constant IDTABLE  \ string -> ID
 0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
 0 make-array constant FUNDEFS       \ array of function definitions
@@ -86,8 +85,8 @@ make-compiler constant COMPILER export
 ;
 
 : lookup-fundef ( compiler name -- idx )
-    0 2 pick compiler>program @ program>defs @ array-size 0 ?do
-        i 3 pick compiler>program @ program>defs @ array@
+    0 PROGRAM @ program>defs @ array-size 0 ?do
+        i PROGRAM @ program>defs @ array@
         dup node>tag @ Nfundef = if
             fundef>name @ node>arg0 @ 2 pick streq if
                 unloop
@@ -185,7 +184,7 @@ make-compiler constant COMPILER export
 
 : compile-program ( program -- )
     COMPILER swap
-    dup 2 pick compiler>program !
+    dup PROGRAM !
     program>defs @ dup array-size 0 ?do
         i over array@ 2 pick compile-definition
     loop
