@@ -1,5 +1,5 @@
 /// Test of comparison operator
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     %0 = 0:i32 == 0:i32
     %1 = 0:i32 != 1:i32

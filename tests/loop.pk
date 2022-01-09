@@ -5,7 +5,7 @@
 /// for (int i = 0; i < 16; i++)
 ///    s += i;
 /// return s
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     %0 = 3:i32    // accumulation
     %1 = 0:i32    // counter

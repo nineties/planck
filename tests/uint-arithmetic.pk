@@ -1,5 +1,5 @@
 /// Test of uint arithmetic
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     %0 = 10:i32 * 20:i32
     %1 = %0 / 2:i32

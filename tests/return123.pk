@@ -1,5 +1,5 @@
 /// Exit code == 123
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     return 123:i32
 }

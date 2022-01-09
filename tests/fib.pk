@@ -1,4 +1,4 @@
-fun fib(i32): i32 {
+fun fib: (i32) -> i32 {
 root:
     if $0 < 2:i32 block0 block1
 block0:
@@ -12,7 +12,7 @@ block1:
     return %4
 }
 
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     %0 = fib(10:i32)
     return %0

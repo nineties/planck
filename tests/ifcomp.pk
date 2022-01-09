@@ -1,5 +1,5 @@
 /// Test of comparison branch instructions
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     %0 = 1:i32
     %1 = 2:i32
