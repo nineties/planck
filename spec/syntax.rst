@@ -33,7 +33,8 @@ Types::
     float_type : "f32" | "f64"
     str_type   : "str"
     tuple_type : "(" ")"
-               | "(" type ("," type)* ")"
+               | "(" type "," ")"
+               | "(" type ("," type)+ ")"
     array_type : "[" type ";" expr "]"
     slice_type : "[" type "]"
     
@@ -45,6 +46,7 @@ Types::
                | tuple_type
                | array_type
                | slice_type
+               | "(" type ")"
 
 Instruction::
 
