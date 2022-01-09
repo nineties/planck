@@ -35,6 +35,9 @@ include lib/string.fs
     enum Ncall
     enum Nlcall
 
+    enum Ntuple
+    enum Ntupleat
+
     enum Ngoto
     enum Nreturn
     enum Niftrue    ( opd block0 block1 )

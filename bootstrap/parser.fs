@@ -139,6 +139,23 @@ private{
 
 : parse-expression ( lexer -- node )
     dup lexer>token_tag @ Tphi = if parse-phi-expression exit then
+    dup '(' expect-sym if \ tuple
+        dup lex
+        dup ')' expect-sym if
+            lex 0 0 make-array Ntuple make-node2 exit
+        then
+        0 make-array swap
+        dup parse-operand ?dup unless SYNTAX-ERROR throw then
+        2 pick array-push
+        begin dup ',' expect-sym while
+            dup lex
+            dup parse-operand ?dup unless SYNTAX-ERROR throw then
+            2 pick array-push
+        repeat
+        dup ')' expect-sym unless SYNTAX-ERROR throw then
+        lex
+        0 swap Ntuple make-node2 exit
+    then
     dup parse-operand swap
     dup '+' expect-sym if dup lex parse-operand 0 -rot Nadd make-node3 exit then
     dup '-' expect-sym if dup lex parse-operand 0 -rot Nsub make-node3 exit then
@@ -150,6 +167,12 @@ private{
     dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
     dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
     dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
+    dup '.' expect-sym if
+        dup lex
+        dup lexer>token_tag @ Tint = unless SYNTAX-ERROR throw then
+        dup lexer>token_val @ swap lex
+        0 -rot Ntupleat make-node3 exit
+    then
     dup '=' expect-sym if
         dup lex_nospace
         dup '=' expect-sym unless SYNTAX-ERROR throw then
