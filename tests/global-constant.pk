@@ -1,8 +1,8 @@
+/// Global constant
+export CONSTANT:i32 = 5:i32
+
 /// Test of accesing global constant
-
-CONSTANT:i32 = 123:i32
-
 export fun main: () -> i32 {
 root:
-    return CONSTANT
+    return 123:i32
 }
