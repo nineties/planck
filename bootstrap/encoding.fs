@@ -271,7 +271,8 @@ T{ test-buf 1+ u32@ -> 65536 }T
             loop
             nip nip
         else dup 256 < if
-            dup >r
+            ( ty buf,  R:n)
+            >r
             %11001110 over u8! 1+
             r> dup >r over u8! 1+
             2
@@ -319,6 +320,14 @@ T{ test-buf 1+ u32@ -> 65536 }T
     %11001011 of drop f32-type endof
     %11001100 of drop f64-type endof
     %11001101 of drop str-type endof
+    %11001110 of
+        drop
+        0 make-array swap
+        dup u8@ >r 1+ r> 0 ?do
+            recurse 2 pick array-push
+        loop
+        swap TyTuple make-node1
+    endof
     %11011010 of
         drop
         ( function type )
@@ -395,21 +404,35 @@ T{ test-buf 1+ u32@ -> 65536 }T
                 i 3 pick node>arg1 @ array@ 2 pick encode-operand tuck + >r + r>
             loop
             nip nip
+        else 256 < if
+            %01010000 over u8! 1+ 1
+            2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
+            2 pick node>arg1 @ array-size 2 pick u8! 1 tuck + >r + r>
+            2 pick node>arg1 @ array-size 0 ?do
+                i 3 pick node>arg1 @ array@ 2 pick encode-operand tuck + >r + r>
+            loop
+            nip nip
         else
-            \ longer tuple
-            not-implemented
-        then
+            \ too long tuple
+            not-reachable
+        then then
     endof
     Ntupleat of
-        over node>arg1 @ array-size dup 16 < if
+        over node>arg2 @ dup 16 < if
             %01000000 or over u8! 1+ 1
             2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
             2 pick node>arg1 @ 2 pick encode-operand +
             nip nip
+        else 256 < if
+            %01010001 over u8! 1+ 1
+            2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
+            2 pick node>arg1 @ 2 pick encode-operand tuck + >r + r>
+            2 pick node>arg2 @ 2 pick u8! 1+
+            nip nip
         else
-            \ longer tuple
-            not-implemented
-        then
+            \ too long tuple
+            not-reachable
+        then then
     endof
     Ngoto of
         %10000000 over u8! 1+

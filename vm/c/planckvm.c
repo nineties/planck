@@ -88,8 +88,8 @@ typedef int64_t sint_t;
 #define I_LT        0x0d
 #define I_LE        0x0e
 #define I_LCALL     0x20    // local call
-#define I_TUPLE     0x30
-#define I_TUPLEAT   0x40
+#define I_TUPLE     0x50
+#define I_TUPLEAT   0x51
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 #define I_IFTRUE    0x82
@@ -365,6 +365,15 @@ decode_type(byte_t **cur) {
         case T_F32: return &f32_type;
         case T_F64: return &f64_type;
         case T_STR: return &str_type;
+        case T_TUPLE: {
+            type *t = calloc(1, sizeof(type));
+            t->tag = T_TUPLE;
+            t->len = *(*cur)++;
+            t->types = calloc(t->len, sizeof(type*));
+            for (int i = 0; i < t->len; i++)
+                t->types[i] = decode_type(cur);
+            return t;
+        }
         case T_FUN: {
             type *fun = calloc(1, sizeof(type));
             fun->tag = T_FUN;
@@ -491,10 +500,24 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         for (int i = 0; i < insn->n_args; i++)
             decode_operand(fun, &insn->args[i], cur);
         return;
+    case I_TUPLE:
+        insn->tag = I_TUPLE;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->n_args = *(*cur)++;
+        insn->args = calloc(insn->n_args, sizeof(insn->args[0]));
+        for (int i = 0; i < insn->n_args; i++)
+            decode_operand(fun, &insn->args[i], cur);
+        return;
+    case I_TUPLEAT:
+        insn->tag = I_TUPLEAT;
+        decode_operand(fun, &insn->lhs, cur);
+        decode_operand(fun, &insn->arg, cur);
+        insn->index = *(*cur)++;
+        return;
     default:
         break;
     }
-    if (I_TUPLE <= opcode && opcode < I_TUPLE + 16) {
+    if (0x30 <= opcode && opcode < 0x40) {
         insn->tag = I_TUPLE;
         decode_operand(fun, &insn->lhs, cur);
         insn->n_args = opcode & 0x0f;
@@ -503,7 +526,7 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
             decode_operand(fun, &insn->args[i], cur);
         return;
     }
-    if (I_TUPLEAT <= opcode && opcode < I_TUPLEAT + 16) {
+    if (0x40 <= opcode && opcode < 0x50) {
         insn->tag = I_TUPLEAT;
         decode_operand(fun, &insn->lhs, cur);
         decode_operand(fun, &insn->arg, cur);
