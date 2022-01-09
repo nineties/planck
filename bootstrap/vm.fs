@@ -549,6 +549,12 @@ $2000000 constant FILE_BUFFER_SIZE
     dup interp>stack STACK-SIZE cells + over interp>sp !
     tuck interp>obj !
     dup s" main" lookup-func
+
+    \ Check type of main
+    dup fun>ty @ dup node>tag @ TyFunc = unless not-reachable then
+    dup node>arg0 @ i32-type = unless not-reachable then
+    node>arg1 @ array-size 0= unless not-reachable then
+
     ( interp main )
     call
     nip

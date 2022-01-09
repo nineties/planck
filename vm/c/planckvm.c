@@ -887,6 +887,13 @@ interpret(object_file *obj) {
         fprintf(stderr, "\"main\" function is not found\n");
         exit(1);
     }
+    if (main_fun->ty->tag != T_FUN ||
+        main_fun->ty->n_params != 0 ||
+        main_fun->ty->ret != &i32_type) {
+        fprintf(stderr, "type of \"main\" must be () -> i32\n");
+        exit(1);
+    }
+
     value ret = call(&interp, obj, main_fun);
     return (int) ret.i;
 }
