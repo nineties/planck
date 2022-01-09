@@ -149,7 +149,6 @@ private{
 ;
 
 : compile-fundef ( node compiler -- )
-    over fundef>tag @ Nfundef <> if not-reachable then
     ." compiling function: " over fundef>name @ pp-node cr
     over fundef>export @ if
         over fundef>comment @ >r
