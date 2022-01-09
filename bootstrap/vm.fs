@@ -153,6 +153,22 @@ $2000000 constant FILE_BUFFER_SIZE
         r> r> swap r>
         Ntupleat make-node3
     endof
+    %01010000 of
+        drop
+        decode-operand >r
+        dup u8@ >r 1+
+        0 make-array -rot r> 0 ?do
+            decode-operand 3 pick array-push
+        loop rot
+        r> swap Nmaketuple make-node2
+    endof
+    %01010001 of
+        drop
+        decode-operand >r
+        decode-operand >r
+        dup u8@ >r 1+ r>
+        r> r> -rot swap Ntupleat make-node3
+    endof
     %10000000 of drop decode-uint make-goto endof
     %10000001 of drop decode-operand make-return endof
     %10000010 of
