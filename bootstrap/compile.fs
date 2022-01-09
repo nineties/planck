@@ -16,6 +16,7 @@ struct
     cell% field compiler>idtable ( name table: string -> ID )
     cell% field compiler>export  ( array of (type, ID idx, def idx) )
     cell% field compiler>fundefs ( array of function definitions )
+    cell% field compiler>vardefs ( array of variable definitions )
 
     \ NB: Since this script is only for bootstrapping, we allocate a buffer
     \ with enough size and don't care about reallocation of it if the size
@@ -40,6 +41,7 @@ private{
     make-string-table over compiler>idtable !
     0 make-array over compiler>export !
     0 make-array over compiler>fundefs !
+    0 make-array over compiler>vardefs !
     dup compiler>buf over compiler>pos !
 ;
 
@@ -165,9 +167,22 @@ private{
     2drop
 ;
 
+: compile-vardef ( node compiler -- )
+    ." compiling variable definition: " over vardef>name @ pp-node cr
+    over vardef>export @ if
+        over vardef>comment @ >r
+        dup compiler>vardefs @ array-size >r
+        over vardef>name @ over get-id >r
+        'D' r> r> r> 4 pick add-export
+    then
+    ." done" cr
+    2drop
+;
+
 : compile-definition ( def compiler -- )
     over node>tag @ case
     Nfundef of compile-fundef endof
+    Nvardef of compile-vardef endof
         not-reachable
     endcase
 ;
