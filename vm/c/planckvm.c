@@ -100,9 +100,15 @@ typedef int64_t sint_t;
 // Values
 #define V_NULL  0x00
 #define V_BOOL  0x01
-#define V_UINT  0x02
-#define V_INT   0x03
-#define V_TUPLE 0x04
+#define V_U8    0x02
+#define V_I8    0x03
+#define V_U16   0x04
+#define V_I16   0x05
+#define V_U32   0x06
+#define V_I32   0x07
+#define V_U64   0x08
+#define V_I64   0x09
+#define V_TUPLE 0x0a
 
 typedef struct value {
     byte_t tag;
@@ -118,6 +124,14 @@ typedef struct value {
         };
     };
 } value;
+
+static bool is_uint(value v) {
+    return v.tag == V_U8 || v.tag == V_U16 || v.tag == V_U32 || v.tag == V_U64;
+}
+
+static bool is_sint(value v) {
+    return v.tag == V_I8 || v.tag == V_I16 || v.tag == V_I32 || v.tag == V_I64;
+}
 
 typedef struct type {
     byte_t tag;   /* one of T_XXX */
@@ -252,18 +266,14 @@ operand_to_value(value *bp, operand *opd) {
         v.tag = V_BOOL;
         v.b = false;
         break;
-    case D_U8:
-    case D_U16:
-    case D_U32:
-        v.tag = V_UINT;
-        v.u = opd->uint;
-        break;
-    case D_I8:
-    case D_I16:
-    case D_I32:
-        v.tag = V_INT;
-        v.i = opd->sint;
-        break;
+    case D_U8:  v.tag = V_U8; v.u = opd->uint; break;
+    case D_U16: v.tag = V_U16; v.u = opd->uint; break;
+    case D_U32: v.tag = V_U32; v.u = opd->uint; break;
+    case D_U64: v.tag = V_U64; v.u = opd->uint; break;
+    case D_I8:  v.tag = V_I8; v.i = opd->sint; break;
+    case D_I16: v.tag = V_I16; v.i = opd->sint; break;
+    case D_I32: v.tag = V_I32; v.i = opd->sint; break;
+    case D_I64: v.tag = V_I64; v.i = opd->sint; break;
     case D_REG:
         v = LOCAL(bp, opd->reg);
         break;
@@ -583,6 +593,7 @@ decode_basicblock(function *fun, basicblock *block, byte_t **cur) {
 static void
 decode_function(function *fun, byte_t **cur) {
     fun->ty = decode_type(cur);
+    assert(fun->ty->tag == T_FUN);
     fun->n_blocks = decode_uint(cur);
     fun->blocks = calloc(fun->n_blocks, sizeof(basicblock));
     fun->n_locals = 0;
@@ -646,6 +657,30 @@ load_object_file(const char *path) {
     return obj;
 }
 
+static bool
+check_type(type *ty, value v) {
+    switch (v.tag) {
+    case V_NULL: not_reachable();
+    case V_BOOL: return ty == &bool_type;
+    case V_U8:   return ty == &u8_type;
+    case V_I8:   return ty == &i8_type;
+    case V_U16:  return ty == &u16_type;
+    case V_I16:  return ty == &i16_type;
+    case V_U32:  return ty == &u32_type;
+    case V_I32:  return ty == &i32_type;
+    case V_U64:  return ty == &u64_type;
+    case V_I64:  return ty == &i64_type;
+    case V_TUPLE:
+        if (ty->tag != T_TUPLE) return false;
+        if (ty->len != v.len) return false;
+        for (int i = 0; i < v.len; i++)
+            if (!check_type(ty->types[i], v.values[i]))
+                return false;
+        return true;
+    }
+    not_implemented();
+}
+
 static void
 drop(value v) {
     switch(v.tag) {
@@ -679,13 +714,17 @@ binexpr(byte_t op, value arg0, value arg1) {
     value v;
     switch (op) {
 #define BINOP(op) \
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) { \
-            v.tag = V_UINT; \
+        if (arg0.tag != arg1.tag) { \
+            fprintf(stderr, "type mismatch\n"); \
+            exit(1); \
+        } \
+        if (is_uint(arg0)) { \
+            v.tag = arg0.tag; \
             v.u = arg0.u op arg1.u; \
             return v; \
         } \
-        if (arg0.tag == V_INT && arg1.tag == V_INT) { \
-            v.tag = V_INT; \
+        if (is_sint(arg0)) { \
+            v.tag = arg0.tag; \
             v.i = arg0.i op arg1.i; \
             return v; \
         } \
@@ -696,17 +735,25 @@ binexpr(byte_t op, value arg0, value arg1) {
     case I_MUL: BINOP(*)
     case I_DIV: BINOP(/)
     case I_MOD: BINOP(%)
-
 #undef BINOP
 #define LOGICOP(op) \
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) { \
-            v.tag = V_UINT; \
+        if (arg0.tag != arg1.tag) { \
+            fprintf(stderr, "type mismatch\n"); \
+            exit(1); \
+        } \
+        if (is_uint(arg0)) { \
+            v.tag = arg0.tag; \
             v.u = arg0.u op arg1.u; \
             return v; \
         } \
-        if (arg0.tag == V_BOOL && arg1.tag == V_BOOL) { \
+        if (is_sint(arg0)) { \
+            v.tag = arg0.tag; \
+            v.i = arg0.i op arg1.i; \
+            return v; \
+        } \
+        if (arg0.tag == V_BOOL) {\
             v.tag = V_BOOL; \
-            v.b = arg0.u op arg1.u; \
+            v.b = arg0.b op arg1.b; \
             return v; \
         } \
         not_implemented();
@@ -716,13 +763,18 @@ binexpr(byte_t op, value arg0, value arg1) {
     case I_XOR: LOGICOP(^)
 
 #undef LOGICOP
+
 #define COMPOP(op) \
-        if (arg0.tag == V_UINT && arg1.tag == V_UINT) { \
+        if (arg0.tag != arg1.tag) { \
+            fprintf(stderr, "type mismatch\n"); \
+            exit(1); \
+        } \
+        if (is_uint(arg0)) { \
             v.tag = V_BOOL; \
             v.b = arg0.u op arg1.u; \
             return v; \
         } \
-        if (arg0.tag == V_INT && arg1.tag == V_INT) { \
+        if (is_sint(arg0)) { \
             v.tag = V_BOOL; \
             v.b = arg0.i op arg1.i; \
             return v; \
@@ -748,6 +800,14 @@ binexpr(byte_t op, value arg0, value arg1) {
 static value
 call(interpreter *interp, object_file *obj, function *fun) {
     value *bp = interp->sp;
+
+    /* type check of arguments */
+    for (int i = 0; i < fun->ty->n_params; i++) {
+        if (!check_type(fun->ty->params[i], ARG(bp, i))) {
+            fprintf(stderr, "type mismatch at %d-th argument\n", i);
+            exit(1);
+        }
+    }
 
     /* allocate local variables and initialize them as V_NULL */
     interp->sp -= fun->n_locals;
@@ -806,7 +866,12 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 interp->sp -= insn->n_args; /* allocate space for arguments */
                 for (int i = 0; i < insn->n_args; i++)
                     interp->sp[i] = operand_to_value(bp, &insn->args[i]);
-                value ret = call(interp, obj, &obj->funcs[insn->fun]);
+                function *f = &obj->funcs[insn->fun];
+                if (f->ty->n_params != insn->n_args) {
+                    fprintf(stderr, "wrong number of arguments\n");
+                    exit(1);
+                }
+                value ret = call(interp, obj, f);
                 move(bp, &insn->lhs, ret);
                 interp->sp += insn->n_args;
                 break;
@@ -822,8 +887,8 @@ call(interpreter *interp, object_file *obj, function *fun) {
             }
             case I_TUPLEAT: {
                 value v = operand_to_value(bp, &insn->arg);
-                if (v.tag != V_TUPLE) not_reachable();
-                if (insn->index >= v.len) not_reachable();
+                assert(v.tag  == V_TUPLE);
+                assert(insn->index < v.len);
                 move(bp, &insn->lhs, v.values[insn->index]);
                 break;
             }
