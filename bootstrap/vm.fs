@@ -83,7 +83,9 @@ $2000000 constant FILE_BUFFER_SIZE
     %11000001 of true-value exit then
     %11000010 of false-value exit then
     %11000011 of dup u8@ >r 1+ r> u8-type Nint make-node2 exit endof
+    %11000100 of dup i8@ >r 1+ r> i8-type Nint make-node2 exit endof
     %11000101 of dup u16@ >r 2 + r> u16-type Nint make-node2 exit endof
+    %11000110 of dup i16@ >r 2 + r> i16-type Nint make-node2 exit endof
     %11000111 of dup u32@ >r 4 + r> u32-type Nint make-node2 exit endof
     %11001000 of dup i32@ >r 4 + r> i32-type Nint make-node2 exit endof
     endcase
@@ -337,6 +339,24 @@ $2000000 constant FILE_BUFFER_SIZE
     endcase
 ;
 
+: check-type ( ty val -- bool )
+    dup node>tag @ case
+    Nbool of drop bool-type = endof
+    Nint of node>arg1 @ = endof
+    Ntuple of
+        over node>arg0 @ array-size
+        over node>arg0 @ array-size = unless TYPE-ERROR throw then
+        over node>arg0 @ array-size 0 ?do
+            i 2 pick node>arg0 @ array@
+            i 2 pick node>arg0 @ array@
+            recurse unless TYPE-ERROR throw then
+        loop
+        2drop true
+    endof
+    not-implemented
+    endcase
+;
+
 : move ( interp lhs rhs -- )
     ( interp lhs val )
     over node>tag @ case
@@ -433,6 +453,11 @@ $2000000 constant FILE_BUFFER_SIZE
     over interp>bp @ >r     \ save base pointer
     over interp>sp @ 2 pick interp>bp !
 
+    \ type check of arguments
+    dup fun>ty @ node>arg1 @ dup array-size 0 ?do
+        i over array@ 3 pick i argp @ check-type unless TYPE-ERROR throw then
+    loop drop
+
     \ allocate space for local variables
     dup fun>nlocals @ cells 2 pick interp>sp -!
 
@@ -519,6 +544,12 @@ $2000000 constant FILE_BUFFER_SIZE
             Nreturn of
                 node>arg0 @
                 4 pick swap to-value
+
+                \ check type of return value
+                3 pick fun>ty @ node>arg0 @ over check-type unless
+                    TYPE-ERROR throw
+                then
+
                 nip nip nip unloop
                 \ restore base pointer
                 r>
