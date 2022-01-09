@@ -97,10 +97,11 @@ typedef int64_t sint_t;
 #define I_IFLT      0x85
 #define I_IFLE      0x86
 // Values
-#define V_BOOL  0x00
-#define V_UINT  0x01
-#define V_INT   0x02
-#define V_TUPLE 0x03
+#define V_NULL  0x00
+#define V_BOOL  0x01
+#define V_UINT  0x02
+#define V_INT   0x03
+#define V_TUPLE 0x04
 
 typedef struct value {
     byte_t tag;
@@ -608,11 +609,28 @@ load_object_file(const char *path) {
 }
 
 static void
+drop(value v) {
+    switch(v.tag) {
+    case V_TUPLE:
+        for (int i = 0; i < v.len; i++)
+            drop(v.values[i]);
+        free(v.values);
+        v.tag = V_NULL;
+        break;
+    default:
+        break; /* do nothing */
+    }
+}
+
+static void
 move(value *bp, operand *lhs, value v) {
     switch (lhs->tag) {
-    case D_REG:
-        LOCAL(bp, lhs->reg) = v;
+    case D_REG: {
+        value *p = &LOCAL(bp, lhs->reg);
+        if (p->tag != V_NULL) drop(*p);
+        *p = v;
         break;
+    }
     default:
         not_implemented();
     }
@@ -692,7 +710,11 @@ binexpr(byte_t op, value arg0, value arg1) {
 static value
 call(interpreter *interp, object_file *obj, function *fun) {
     value *bp = interp->sp;
-    interp->sp -= fun->n_locals; /* allocate space for local variables */
+
+    /* allocate local variables and initialize them as V_NULL */
+    interp->sp -= fun->n_locals;
+    memset(interp->sp, 0, fun->n_locals*sizeof(value));
+
     basicblock *prev = NULL;
     basicblock *block = &fun->blocks[0];
 
