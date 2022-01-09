@@ -102,16 +102,16 @@ make-compiler constant COMPILER export
     loop
 ;
 
-: compile-insn ( compiler insn -- insn )
+: compile-insn ( insn -- insn )
     dup node>tag @ case
     Ncall of
         dup node>arg1 @ node>arg0 @ lookup-fundef
         over node>arg0 @ swap
         2 pick node>arg2 @
         Nlcall make-node3
-        nip nip
+        nip
     endof
-        drop nip 0
+        drop 0
     endcase
 ;
 
@@ -137,8 +137,7 @@ make-compiler constant COMPILER export
     dup fundef>blocks @ array-size 0 ?do
         i over fundef>blocks @ array@ ( compiler node block )
         dup node>arg2 @ array-size 0 ?do
-            i over node>arg2 @ array@
-            3 pick swap compile-insn
+            i over node>arg2 @ array@ compile-insn
             i 2 pick node>arg2 @ array!
         loop
         drop
