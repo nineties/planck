@@ -48,7 +48,8 @@ include lib/string.fs
     enum Nifle      ( opd0 opd1 block0 block1 )
 
     enum Nbblock    ( name insns jump )
-    enum Nfundef    ( export name params rettype blocks )
+    enum Nfundef    ( export name type blocks comment )
+    enum Nvardef    ( export name type insn comment )
     enum Nprogram   ( defs )
 
     enum TyNever
@@ -88,6 +89,15 @@ struct
     cell% field fundef>blocks  ( array of basic blocks )
     cell% field fundef>comment
 end-struct fundef%
+
+struct
+    int%  field vardef>tag
+    cell% field vardef>export
+    cell% field vardef>name
+    cell% field vardef>type
+    cell% field vardef>insn
+    cell% field vardef>comment
+end-struct vardef%
 
 struct
     int%  field program>tag
@@ -190,6 +200,9 @@ private{
 : make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
 : make-fundef ( export name type blocks comment -- node )
     Nfundef make-node5
+; export
+: make-vardef ( export name type insn comment -- node )
+    Nvardef make-node5
 ; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 

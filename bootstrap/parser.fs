@@ -336,7 +336,7 @@ create parse-type-p 0 ,
 ;
 
 : parse-function-definition ( lexer -- node )
-    dup lexer>token_tag @ Texport = if dup lex true else false then swap
+    false swap \ export
     dup lexer>token_tag @ Tfun = if dup lex else 2drop 0 exit then
     dup parse-label ?dup if swap else SYNTAX-ERROR throw then
     dup ':' expect-sym if dup lex else SYNTAX-ERROR throw then
@@ -357,21 +357,39 @@ create parse-type-p 0 ,
     make-fundef
 ;
 
+: parse-variable-definition ( lexer -- node )
+    drop 0
+;
+
 : parse-toplevel-definition ( lexer -- node )
     \ parse document
     s" " make-string swap
     begin dup lexer>token_tag @ Tdocument = while
         swap over lexer>token_buf concat-string swap
         dup lex
-    repeat
+    repeat swap >r
 
-    parse-function-definition ?dup unless drop 0 exit then
+    dup lexer>token_tag @ Texport = if dup lex true else false then >r
 
-    \ set document
+    dup parse-function-definition ?dup unless
+    dup parse-variable-definition ?dup unless
+        r> r> drop if SYNTAX-ERROR throw then
+        drop 0 exit
+    then then
+
+    \ set export and document
     dup node>tag @ case
-    Nfundef of tuck fundef>comment ! endof
+    Nfundef of
+        r> over fundef>export !
+        r> over fundef>comment !
+    endof
+    Nvardef of
+        r> over vardef>export !
+        r> over vardef>comment !
+    endof
     not-reachable
     endcase
+    nip
 ;
 
 ( Parse `input` string and returns abstract syntax tree )
