@@ -211,6 +211,7 @@ TyU64 make-node0 constant u64-type export
 TyF32 make-node0 constant f32-type export
 TyF64 make-node0 constant f64-type export
 TyStr make-node0 constant str-type export
+0 make-array TyTuple make-node1 constant unit-type export
 
 : pp-node ( node -- )
     dup node>tag @ case
