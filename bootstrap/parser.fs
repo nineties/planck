@@ -213,7 +213,7 @@ private{
         lex
         0 -rot Ncall make-node3 exit
     then
-    drop
+    drop 0 swap make-move
 ;
 
 : parse-instruction ( lexer -- node )
@@ -224,25 +224,7 @@ private{
     over '=' expect-sym unless SYNTAX-ERROR throw then
     over lex
     over parse-expression ?dup unless SYNTAX-ERROR throw then
-    ( lexer lhs rhs )
-
-    dup node>tag @ case
-    Nphi of tuck node>arg0 ! endof
-    Nadd of tuck node>arg0 ! endof
-    Nsub of tuck node>arg0 ! endof
-    Nmul of tuck node>arg0 ! endof
-    Ndiv of tuck node>arg0 ! endof
-    Nmod of tuck node>arg0 ! endof
-    Nand of tuck node>arg0 ! endof
-    Nor  of tuck node>arg0 ! endof
-    Nxor of tuck node>arg0 ! endof
-    Neq  of tuck node>arg0 ! endof
-    Nne  of tuck node>arg0 ! endof
-    Nlt  of tuck node>arg0 ! endof
-    Nle  of tuck node>arg0 ! endof
-    Ncall of tuck node>arg0 ! endof
-    drop make-move 0
-    endcase
+    tuck node>arg0 !
     nip
 ;
 
@@ -266,7 +248,8 @@ private{
         Nne of dup node>arg1 @ swap node>arg2 @ r> r> Nifne make-node4 endof
         Nlt of dup node>arg1 @ swap node>arg2 @ r> r> Niflt make-node4 endof
         Nle of dup node>arg1 @ swap node>arg2 @ r> r> Nifle make-node4 endof
-        drop r> r> Niftrue make-node3 0
+        Nmove of node>arg1 @ r> r> Niftrue make-node3 endof
+        not-reachable
         endcase
     else
         drop 0
