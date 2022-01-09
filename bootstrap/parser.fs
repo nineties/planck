@@ -358,7 +358,14 @@ create parse-type-p 0 ,
 ;
 
 : parse-variable-definition ( lexer -- node )
-    drop 0
+    false swap \ export
+    dup parse-label ?dup if swap else 2drop 0 exit then
+    dup ':' expect-sym if dup lex else SYNTAX-ERROR throw then
+    dup parse-type ?dup if swap else SYNTAX-ERROR throw then
+    dup '=' expect-sym if dup lex else SYNTAX-ERROR throw then
+    parse-expression ?dup unless SYNTAX-ERROR throw then
+    2 pick over node>arg0 !
+    0 make-vardef
 ;
 
 : parse-toplevel-definition ( lexer -- node )

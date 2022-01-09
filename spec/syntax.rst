@@ -106,15 +106,15 @@ Instruction::
 
 Toplevel Items::
 
-   function_definition : "export"?  "fun" label ":" type "{" basic_block+ "}"
+   function_definition : "fun" label ":" type "{" basic_block+ "}"
    basic_block : label ":"
                  phi_instruction*
                  instruction*
                  branch_instruction
 
-   variable_definition : "export"? label "=" expression
+   variable_definition : label ":" type "=" expression
 
-   toplevel_definition : document* function_definition
-                       | document* variable_definition
+   toplevel_definition : document* "export"? function_definition
+                       | document* "export"? variable_definition
 
    program : toplevel_definition*

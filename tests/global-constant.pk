@@ -1,6 +1,6 @@
 /// Test of accesing global constant
 
-CONSTANT = 123:i32
+CONSTANT:i32 = 123:i32
 
 export fun main: () -> i32 {
 root:
