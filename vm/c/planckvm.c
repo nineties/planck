@@ -87,6 +87,8 @@ typedef int64_t sint_t;
 #define I_LT        0x0d
 #define I_LE        0x0e
 #define I_LCALL     0x20    // local call
+#define I_TUPLE     0x30
+#define I_TUPLEAT   0x40
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 #define I_IFTRUE    0x82
@@ -98,8 +100,9 @@ typedef int64_t sint_t;
 #define V_BOOL  0x00
 #define V_UINT  0x01
 #define V_INT   0x02
+#define V_TUPLE 0x03
 
-typedef struct {
+typedef struct value {
     byte_t tag;
     union {
         bool b;
@@ -107,6 +110,10 @@ typedef struct {
         int64_t i;
         float f32;
         double f64;
+        struct {
+            size_t len;
+            struct value *values;
+        };
     };
 } value;
 
@@ -173,7 +180,11 @@ typedef struct {
                     operand arg0;
                     operand arg1;
                 };
-                struct {    // local function call
+                struct {        // index access
+                    operand arg;
+                    uint_t index;
+                };
+                struct { // local function call and tuple
                     uint_t fun;
                     size_t n_args;
                     operand *args;
@@ -428,7 +439,8 @@ decode_phi_instruction(function *fun, phi_instruction *phi, byte_t **cur) {
 
 static void
 decode_instruction(function *fun, instruction *insn, byte_t **cur) {
-    switch (*(*cur)++) {
+    byte_t opcode = *(*cur)++;
+    switch (opcode) {
     case I_NOP:
         insn->tag = I_NOP;
         return;
@@ -462,6 +474,24 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         insn->args = calloc(insn->n_args, sizeof(insn->args[0]));
         for (int i = 0; i < insn->n_args; i++)
             decode_operand(fun, &insn->args[i], cur);
+        return;
+    default:
+        break;
+    }
+    if (I_TUPLE <= opcode && opcode < I_TUPLE + 16) {
+        insn->tag = I_TUPLE;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->n_args = opcode & 0x0f;
+        insn->args = calloc(insn->n_args, sizeof(insn->args[0]));
+        for (int i = 0; i < insn->n_args; i++)
+            decode_operand(fun, &insn->args[i], cur);
+        return;
+    }
+    if (I_TUPLEAT <= opcode && opcode < I_TUPLEAT + 16) {
+        insn->tag = I_TUPLEAT;
+        decode_operand(fun, &insn->lhs, cur);
+        decode_operand(fun, &insn->arg, cur);
+        insn->index = opcode & 0x0f;
         return;
     }
     not_implemented();
@@ -720,6 +750,23 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 move(bp, &insn->lhs, ret);
                 interp->sp += insn->n_args;
                 break;
+            case I_TUPLE: {
+                value t;
+                t.tag = V_TUPLE;
+                t.len = insn->n_args;
+                t.values = calloc(t.len, sizeof(value));
+                for (int i = 0; i < t.len; i++)
+                    t.values[i] = operand_to_value(bp, &insn->args[i]);
+                move(bp, &insn->lhs, t);
+                break;
+            }
+            case I_TUPLEAT: {
+                value v = operand_to_value(bp, &insn->arg);
+                if (v.tag != V_TUPLE) not_reachable();
+                if (insn->index >= v.len) not_reachable();
+                move(bp, &insn->lhs, v.values[insn->index]);
+                break;
+            }
             case I_GOTO:
                 prev = block;
                 block = &fun->blocks[insn->next];

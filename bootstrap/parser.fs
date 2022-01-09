@@ -139,6 +139,23 @@ private{
 
 : parse-expression ( lexer -- node )
     dup lexer>token_tag @ Tphi = if parse-phi-expression exit then
+    dup '(' expect-sym if \ tuple
+        dup lex
+        dup ')' expect-sym if
+            lex 0 0 make-array Nmaketuple make-node2 exit
+        then
+        0 make-array swap
+        dup parse-operand ?dup unless SYNTAX-ERROR throw then
+        2 pick array-push
+        begin dup ',' expect-sym while
+            dup lex
+            dup parse-operand ?dup unless SYNTAX-ERROR throw then
+            2 pick array-push
+        repeat
+        dup ')' expect-sym unless SYNTAX-ERROR throw then
+        lex
+        0 swap Nmaketuple make-node2 exit
+    then
     dup parse-operand swap
     dup '+' expect-sym if dup lex parse-operand 0 -rot Nadd make-node3 exit then
     dup '-' expect-sym if dup lex parse-operand 0 -rot Nsub make-node3 exit then
@@ -150,6 +167,12 @@ private{
     dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
     dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
     dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
+    dup '.' expect-sym if
+        dup lex
+        dup lexer>token_tag @ Tint = unless SYNTAX-ERROR throw then
+        dup lexer>token_val @ swap lex
+        0 -rot Ntupleat make-node3 exit
+    then
     dup '=' expect-sym if
         dup lex_nospace
         dup '=' expect-sym unless SYNTAX-ERROR throw then
@@ -190,7 +213,7 @@ private{
         lex
         0 -rot Ncall make-node3 exit
     then
-    drop
+    drop 0 swap make-move
 ;
 
 : parse-instruction ( lexer -- node )
@@ -201,25 +224,7 @@ private{
     over '=' expect-sym unless SYNTAX-ERROR throw then
     over lex
     over parse-expression ?dup unless SYNTAX-ERROR throw then
-    ( lexer lhs rhs )
-
-    dup node>tag @ case
-    Nphi of tuck node>arg0 ! endof
-    Nadd of tuck node>arg0 ! endof
-    Nsub of tuck node>arg0 ! endof
-    Nmul of tuck node>arg0 ! endof
-    Ndiv of tuck node>arg0 ! endof
-    Nmod of tuck node>arg0 ! endof
-    Nand of tuck node>arg0 ! endof
-    Nor  of tuck node>arg0 ! endof
-    Nxor of tuck node>arg0 ! endof
-    Neq  of tuck node>arg0 ! endof
-    Nne  of tuck node>arg0 ! endof
-    Nlt  of tuck node>arg0 ! endof
-    Nle  of tuck node>arg0 ! endof
-    Ncall of tuck node>arg0 ! endof
-    drop make-move 0
-    endcase
+    tuck node>arg0 !
     nip
 ;
 
@@ -243,7 +248,8 @@ private{
         Nne of dup node>arg1 @ swap node>arg2 @ r> r> Nifne make-node4 endof
         Nlt of dup node>arg1 @ swap node>arg2 @ r> r> Niflt make-node4 endof
         Nle of dup node>arg1 @ swap node>arg2 @ r> r> Nifle make-node4 endof
-        drop r> r> Niftrue make-node3 0
+        Nmove of node>arg1 @ r> r> Niftrue make-node3 endof
+        not-reachable
         endcase
     else
         drop 0
