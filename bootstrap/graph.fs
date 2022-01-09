@@ -84,8 +84,7 @@ struct
     int%  field fundef>tag
     cell% field fundef>export
     cell% field fundef>name
-    cell% field fundef>params
-    cell% field fundef>retty
+    cell% field fundef>type
     cell% field fundef>blocks  ( array of basic blocks )
     cell% field fundef>comment
 end-struct fundef%
@@ -189,8 +188,8 @@ private{
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
 : make-phi ( lhs args -- node ) Nphi make-node2 ; export
 : make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
-: make-fundef ( export name params rettype blocks comment -- node )
-    Nfundef make-node6
+: make-fundef ( export name type blocks comment -- node )
+    Nfundef make-node5
 ; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 

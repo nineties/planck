@@ -62,15 +62,6 @@ private{
     drop
 ;
 
-: compile-function-type ( node -- type )
-    0 make-array swap
-    dup fundef>params @ array-size 0 ?do
-        i over fundef>params @ array@
-        2 pick array-push
-    loop
-    fundef>retty @ swap TyFunc make-node2
-;
-
 : replace-label-impl ( table node idx -- table node )
     cells over node>arg0 + dup >r @ node>arg0 @ 2 pick table@ r> !
 ;
@@ -168,12 +159,10 @@ private{
         ." > name idx: " . cr
         'F' r> r> r> 4 pick add-export
     then
-    over compile-function-type >r
-    over compile-function-body >r
-    r> r>
+    over compile-function-body
     3 cells allocate throw
-    4 pick fundef>name @ node>arg0 @ over tuple0 !
-    tuck tuple1 !
+    3 pick fundef>name @ node>arg0 @ over tuple0 !
+    3 pick fundef>type @ over tuple1 !
     tuck tuple2 !
     over compiler>fundefs @ array-push
     2drop
