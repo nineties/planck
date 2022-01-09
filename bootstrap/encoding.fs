@@ -262,6 +262,18 @@ T{ test-buf 1+ u32@ -> 65536 }T
     TyF32   of %11001011 over u8! 2drop 1 endof
     TyF64   of %11001100 over u8! 2drop 1 endof
     TyStr   of %11001101 over u8! 2drop 1 endof
+    TyTuple of
+        over node>arg0 @ array-size dup 16 < if
+            dup >r
+            %10000000 or over u8! 1+ 1
+            r> 0 ?do
+                i 3 pick node>arg0 @ array@ 2 pick recurse tuck + >r + r>
+            loop
+            nip nip
+        else
+            not-implemented
+        then
+    endof
     TyFunc of
         %11011010 over u8! 1+
         over node>arg0 @ over recurse dup 1+ >r + r> \ return type
