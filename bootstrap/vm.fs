@@ -339,6 +339,13 @@ $2000000 constant FILE_BUFFER_SIZE
     endcase
 ;
 
+: check-type ( ty val -- bool )
+    dup node>tag @ case
+    Nint of node>arg1 @ = endof
+    not-implemented
+    endcase
+;
+
 : move ( interp lhs rhs -- )
     ( interp lhs val )
     over node>tag @ case
@@ -434,6 +441,11 @@ $2000000 constant FILE_BUFFER_SIZE
 : call ( interp fun -- interp retvalue )
     over interp>bp @ >r     \ save base pointer
     over interp>sp @ 2 pick interp>bp !
+
+    \ type check of arguments
+    dup fun>ty @ node>arg1 @ dup array-size 0 ?do
+        i over array@ 3 pick i argp @ check-type unless TYPE-ERROR throw then
+    loop drop
 
     \ allocate space for local variables
     dup fun>nlocals @ cells 2 pick interp>sp -!
