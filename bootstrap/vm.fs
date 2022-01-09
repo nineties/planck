@@ -83,7 +83,9 @@ $2000000 constant FILE_BUFFER_SIZE
     %11000001 of true-value exit then
     %11000010 of false-value exit then
     %11000011 of dup u8@ >r 1+ r> u8-type Nint make-node2 exit endof
+    %11000100 of dup i8@ >r 1+ r> i8-type Nint make-node2 exit endof
     %11000101 of dup u16@ >r 2 + r> u16-type Nint make-node2 exit endof
+    %11000110 of dup i16@ >r 2 + r> i16-type Nint make-node2 exit endof
     %11000111 of dup u32@ >r 4 + r> u32-type Nint make-node2 exit endof
     %11001000 of dup i32@ >r 4 + r> i32-type Nint make-node2 exit endof
     endcase
