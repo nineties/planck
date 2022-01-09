@@ -15,6 +15,7 @@ include lib/string.fs
 
     enum Nbool      ( 0 or 1 )
     enum Nint       ( val type )
+    enum Ntuple     ( values )
 
     enum Nnop
     enum Nmove      ( lhs rhs )
@@ -35,7 +36,7 @@ include lib/string.fs
     enum Ncall
     enum Nlcall
 
-    enum Ntuple
+    enum Nmaketuple
     enum Ntupleat
 
     enum Ngoto

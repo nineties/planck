@@ -142,7 +142,7 @@ private{
     dup '(' expect-sym if \ tuple
         dup lex
         dup ')' expect-sym if
-            lex 0 0 make-array Ntuple make-node2 exit
+            lex 0 0 make-array Nmaketuple make-node2 exit
         then
         0 make-array swap
         dup parse-operand ?dup unless SYNTAX-ERROR throw then
@@ -154,7 +154,7 @@ private{
         repeat
         dup ')' expect-sym unless SYNTAX-ERROR throw then
         lex
-        0 swap Ntuple make-node2 exit
+        0 swap Nmaketuple make-node2 exit
     then
     dup parse-operand swap
     dup '+' expect-sym if dup lex parse-operand 0 -rot Nadd make-node3 exit then

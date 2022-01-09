@@ -108,25 +108,27 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : decode-insn ( fun buf -- fun new-buf insn )
-    dup u8@ >r 1+ r> case
+    dup u8@ >r 1+ r> dup case
     %00000010 of
+        drop
         decode-operand >r
         decode-operand
         r> swap make-move
     endof
-    %00000011 of Nadd decode-binexpr endof
-    %00000100 of Nsub decode-binexpr endof
-    %00000101 of Nmul decode-binexpr endof
-    %00000110 of Ndiv decode-binexpr endof
-    %00000111 of Nmod decode-binexpr endof
-    %00001000 of Nand decode-binexpr endof
-    %00001001 of Nor  decode-binexpr endof
-    %00001010 of Nxor decode-binexpr endof
-    %00001011 of Neq  decode-binexpr endof
-    %00001100 of Nne  decode-binexpr endof
-    %00001101 of Nlt  decode-binexpr endof
-    %00001110 of Nle  decode-binexpr endof
+    %00000011 of drop Nadd decode-binexpr endof
+    %00000100 of drop Nsub decode-binexpr endof
+    %00000101 of drop Nmul decode-binexpr endof
+    %00000110 of drop Ndiv decode-binexpr endof
+    %00000111 of drop Nmod decode-binexpr endof
+    %00001000 of drop Nand decode-binexpr endof
+    %00001001 of drop Nor  decode-binexpr endof
+    %00001010 of drop Nxor decode-binexpr endof
+    %00001011 of drop Neq  decode-binexpr endof
+    %00001100 of drop Nne  decode-binexpr endof
+    %00001101 of drop Nlt  decode-binexpr endof
+    %00001110 of drop Nle  decode-binexpr endof
     %00100000 of
+        drop
         decode-operand >r   ( lhs )
         decode-uint >r      ( index of function )
         0 make-array -rot   ( array for args )
@@ -135,18 +137,35 @@ $2000000 constant FILE_BUFFER_SIZE
         loop rot
         r> r> 3 reverse Nlcall make-node3
     endof
-    %10000000 of decode-uint make-goto endof
-    %10000001 of decode-operand make-return endof
+    %00110000 %00111111 rangeof
+        %00001111 and >r    ( R:len )
+        decode-operand >r   ( R:len lhs )
+        0 make-array -rot
+        r> r> swap >r 0 ?do
+            decode-operand 3 pick array-push
+        loop rot
+        r> swap Nmaketuple make-node2
+    endof
+    %01000000 %01001111 rangeof
+        %00001111 and >r    ( R:index )
+        decode-operand >r   ( R:index lhs arg )
+        decode-operand >r   ( R:index lhs arg )
+        r> r> swap r>
+        Ntupleat make-node3
+    endof
+    %10000000 of drop decode-uint make-goto endof
+    %10000001 of drop decode-operand make-return endof
     %10000010 of
+        drop
         decode-operand >r   ( arg )
         decode-uint >r      ( ifthen block )
         decode-uint         ( ifelse block )
         r> r> 3 reverse Niftrue make-node3
     endof
-    %10000011 of Nifeq decode-comp-branch endof
-    %10000100 of Nifne decode-comp-branch endof
-    %10000101 of Niflt decode-comp-branch endof
-    %10000110 of Nifle decode-comp-branch endof
+    %10000011 of drop Nifeq decode-comp-branch endof
+    %10000100 of drop Nifne decode-comp-branch endof
+    %10000101 of drop Niflt decode-comp-branch endof
+    %10000110 of drop Nifle decode-comp-branch endof
     not-implemented
     endcase
 ;
@@ -459,6 +478,22 @@ $2000000 constant FILE_BUFFER_SIZE
 
                 \ restore stack pointer
                 node>arg2 @ array-size cells 4 pick interp>sp +!
+            endof
+            Nmaketuple of
+                0 make-array
+                over node>arg1 @ array-size 0 ?do
+                    5 pick i 3 pick node>arg1 @ array@
+                    to-value over array-push
+                loop
+                Ntuple make-node1 >r
+                4 pick over node>arg0 @ r> move
+                drop
+            endof
+            Ntupleat of
+                4 pick over node>arg1 @ to-value
+                dup node>tag @ Ntuple = unless TYPE-ERROR throw then
+                node>arg0 @ over node>arg2 @ swap array@
+                swap node>arg0 @ swap 5 pick -rot move
             endof
             Ngoto of
                 node>arg0 @ ( index of next block )
