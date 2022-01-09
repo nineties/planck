@@ -360,7 +360,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
         nip nip
     endof
     Ntuple of
-        over node>arg1 @ array-size dup < 16 if
+        over node>arg1 @ array-size dup 16 < if
             %00110000 or over u8! 1+ 1
             2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
             2 pick node>arg1 @ array-size 0 ?do
@@ -373,7 +373,7 @@ T{ test-buf 1+ u32@ -> 65536 }T
         then
     endof
     Ntupleat of
-        over node>arg1 @ array-size dup < 16 if
+        over node>arg1 @ array-size dup 16 < if
             %01000000 or over u8! 1+ 1
             2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
             2 pick node>arg1 @ 2 pick encode-operand +
