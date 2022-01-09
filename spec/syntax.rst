@@ -37,6 +37,9 @@ Types::
                | "(" type ("," type)+ ")"
     array_type : "[" type ";" expr "]"
     slice_type : "[" type "]"
+    function_type : "(" function_params ")" "->" type
+    function_params : 
+                    | type ("," type)*
     
     type       : never_type
                | bool_type
@@ -46,6 +49,7 @@ Types::
                | tuple_type
                | array_type
                | slice_type
+               | function_type
                | "(" type ")"
 
 Instruction::
@@ -109,13 +113,7 @@ Basic Block::
 
 Function::
 
-   function_params :
-                   | type ( "," type )*
-
-   function_definition :
-      "export"?
-      "fun" label "(" function_params ")" ":" type
-      "{" basic_block+ "}"
+   function_definition : "export"?  "fun" label ":" type "{" basic_block+ "}"
 
 Program::
 

@@ -1,11 +1,11 @@
 /// Test of returning a tuple from a function
-fun f(): (i32, i32, i32) {
+fun f: () -> (i32, i32, i32) {
 root:
     %0 = (123:i32, 456:i32, 789:i32)
     return %0
 }
 
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     %0 = f()
     %1 = %0.0

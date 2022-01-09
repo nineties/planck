@@ -1,5 +1,5 @@
 /// Test of if-true branch
-export fun main(): i32 {
+export fun main: () -> i32 {
 root:
     if true iftrue iffalse
 iftrue:

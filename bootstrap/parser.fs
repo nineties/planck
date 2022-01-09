@@ -74,37 +74,68 @@ private{
     endcase
 ;
 
-: parse-type ( lexer -- node )
-    dup parse-never-type ?dup if nip exit then
-    dup parse-prim-type ?dup if nip exit then
+\ for mutual recursion
+create parse-type-p 0 ,
+
+: parse-tuple-type ( lexer -- node is-tuple )
     dup '(' expect-sym if
         dup lex
-        dup ')' expect-sym if lex unit-type exit then
-        dup recurse ?dup if swap else SYNTAX-ERROR throw then
-        dup ')' expect-sym if lex exit then \ "(" type ")" == type
+        dup ')' expect-sym if lex unit-type true exit then
+        dup parse-type-p @ execute ?dup if swap else SYNTAX-ERROR throw then
+        dup ')' expect-sym if lex false exit then \ "(" type ")" == type
         dup ',' expect-sym if dup lex else SYNTAX-ERROR throw then
         dup ')' expect-sym if \ "(" type "," ")"
             lex
             0 make-array tuck array-push
             TyTuple make-node1
+            true
             exit
         then
         ( ty lexer )
         swap 0 make-array tuck array-push swap
-        dup recurse ?dup unless SYNTAX-ERROR throw then
+        dup parse-type-p @ execute ?dup unless SYNTAX-ERROR throw then
         2 pick array-push
         begin dup ',' expect-sym while
             dup lex
-            dup recurse ?dup unless SYNTAX-ERROR throw then
+            dup parse-type-p @ execute ?dup unless SYNTAX-ERROR throw then
             2 pick array-push
         repeat
         dup ')' expect-sym unless SYNTAX-ERROR throw then
         lex
         TyTuple make-node1
-        exit
+        true
+    else
+        drop 0 0
     then
-    drop 0
 ;
+
+: parse-type ( lexer -- node )
+    dup parse-never-type ?dup if nip exit then
+    dup parse-prim-type ?dup if nip exit then
+    dup parse-tuple-type swap ?dup if
+        ( lexer is-tuple ty )
+        rot dup '-' expect-sym if
+            dup lex_nospace
+            dup '>' expect-sym unless SYNTAX-ERROR throw then
+            dup lex
+            recurse ?dup unless SYNTAX-ERROR throw then
+            ( tup ret )
+            rot if
+                swap node>arg0 @
+            else
+                swap 0 make-array tuck array-push
+            then
+            TyFunc make-node2
+        else
+            drop nip
+        then
+        exit
+    else
+        2drop 0
+    then
+;
+
+' parse-type parse-type-p !
 
 : parse-place ( lexer -- node )
     dup parse-label ?dup if nip exit then
@@ -304,26 +335,10 @@ private{
     nip
 ;
 
-: parse-function-params ( lexer -- node )
-    0 make-array swap
-    dup parse-type ?dup unless drop exit then
-    2 pick array-push
-    begin
-        dup ',' expect-sym unless drop exit then
-        dup lex
-        dup parse-type ?dup unless SYNTAX-ERROR throw then
-        ( arr lexer type )
-        2 pick array-push
-    again
-;
-
 : parse-function-definition ( lexer -- node )
     dup lexer>token_tag @ Texport = if dup lex true else false then swap
     dup lexer>token_tag @ Tfun = if dup lex else 2drop 0 exit then
     dup parse-label ?dup if swap else SYNTAX-ERROR throw then
-    dup '(' expect-sym if dup lex else SYNTAX-ERROR throw then
-    dup parse-function-params ?dup if swap else SYNTAX-ERROR throw then
-    dup ')' expect-sym if dup lex else SYNTAX-ERROR throw then
     dup ':' expect-sym if dup lex else SYNTAX-ERROR throw then
     dup parse-type ?dup if swap else SYNTAX-ERROR throw then
     dup '{' expect-sym if dup lex else SYNTAX-ERROR throw then
@@ -337,7 +352,7 @@ private{
     dup '}' expect-sym if dup lex else SYNTAX-ERROR throw then
 
     drop
-    ( export label params rettype body )
+    ( export label ty body )
     0 \ place for comment
     make-fundef
 ;
