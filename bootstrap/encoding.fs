@@ -320,6 +320,13 @@ T{ test-buf 1+ u32@ -> 65536 }T
     %11001011 of drop f32-type endof
     %11001100 of drop f64-type endof
     %11001101 of drop str-type endof
+    %11010001 of
+        0 make-array swap
+        dup u8@ >r 1+ r> 0 ?do
+            recurse 2 pick array-push
+        loop
+        swap TyTuple make-node1
+    endof
     %11011010 of
         drop
         ( function type )
