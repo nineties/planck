@@ -1,0 +1,7 @@
+import lib
+
+export fun main: () -> i32 {
+root:
+    %0 = lib::f()
+    return %0
+}
