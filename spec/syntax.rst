@@ -18,7 +18,7 @@ Lexical Tokens::
     comment  : "//" [^\n]* "\n"
     document : "///" [^\n]* "\n"
 
-    keyword : "nop" | "phi" | "goto" | "return" | "export" | "fun"
+    keyword : "nop" | "phi" | "goto" | "return" | "export" | "import" | "fun"
             | "true" | "false" | "bool" | "char" "i8" | "u8" | "i16" | "u16"
             | "i32" | "u32" | "i64" | "u64" | "f32" | "f64" | "str" | "mod" | "if"
 
