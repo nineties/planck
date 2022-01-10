@@ -1,0 +1,15 @@
+/// Global constant
+Constant: i32
+
+fun startup: () -> () {
+root:
+    Constant = 123:i32
+    return ()
+}
+
+/// Test of accesing global constant
+export fun main: () -> i32 {
+root:
+    %0 = Constant
+    return %0
+}

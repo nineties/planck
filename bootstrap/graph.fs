@@ -19,6 +19,8 @@ include lib/string.fs
 
     enum Nnop
     enum Nmove      ( lhs rhs )
+    enum Nload      ( lhs id )
+    enum Nstore     ( id rhs )
     enum Nphi       ( lhs args )
     enum Nadd
     enum Nsub
@@ -48,7 +50,8 @@ include lib/string.fs
     enum Nifle      ( opd0 opd1 block0 block1 )
 
     enum Nbblock    ( name insns jump )
-    enum Nfundef    ( export name params rettype blocks )
+    enum Nfundef    ( export name type blocks comment )
+    enum Nvardef    ( export name type comment )
     enum Nprogram   ( defs )
 
     enum TyNever
@@ -88,6 +91,14 @@ struct
     cell% field fundef>blocks  ( array of basic blocks )
     cell% field fundef>comment
 end-struct fundef%
+
+struct
+    int%  field vardef>tag
+    cell% field vardef>export
+    cell% field vardef>name
+    cell% field vardef>type
+    cell% field vardef>comment
+end-struct vardef%
 
 struct
     int%  field program>tag
@@ -186,15 +197,21 @@ private{
 : make-goto ( label -- node ) Ngoto make-node1 ; export
 : make-return ( arg -- node ) Nreturn make-node1 ; export
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
+: make-load ( lhs id -- node ) Nload make-node2 ; export
+: make-store ( id rhs -- node ) Nstore make-node2 ; export
 : make-phi ( lhs args -- node ) Nphi make-node2 ; export
 : make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
 : make-fundef ( export name type blocks comment -- node )
     Nfundef make-node5
 ; export
+: make-vardef ( export name type comment -- node )
+    Nvardef make-node4
+; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 
 1 Nbool make-node1 constant true-value export
 0 Nbool make-node1 constant false-value export
+0 make-array Ntuple make-node1 constant unit-value export
 
 TyNever make-node0 constant never-type export
 TyBool make-node0 constant bool-type export

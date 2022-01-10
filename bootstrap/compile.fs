@@ -11,20 +11,15 @@ include parser.fs
 include encoding.fs
 include lib/table.fs
 
-struct
-    cell% field compiler>program
-    cell% field compiler>idtable ( name table: string -> ID )
-    cell% field compiler>export  ( array of (type, ID idx, def idx) )
-    cell% field compiler>fundefs ( array of function definitions )
-
-    \ NB: Since this script is only for bootstrapping, we allocate a buffer
-    \ with enough size and don't care about reallocation of it if the size
-    \ is not enough.
-    byte% $100000 * field compiler>buf ( bytecode buffer )
-    ptr% field compiler>pos
-end-struct compiler%
-
 private{
+
+variable PROGRAM
+make-string-table constant IDTABLE  \ string -> ID
+0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
+0 make-array constant FUNDEFS       \ array of function definitions
+0 make-array constant VARDEFS       \ array of variable definitions
+$100000 allocate throw constant CODEBUF
+create CODEPOS CODEBUF ,
 
 : list-length ( list -- n )
     0 >r
@@ -35,31 +30,54 @@ private{
     r>
 ;
 
-: make-compiler ( -- compiler )
-    compiler% %allocate throw
-    make-string-table over compiler>idtable !
-    0 make-array over compiler>export !
-    0 make-array over compiler>fundefs !
-    dup compiler>buf over compiler>pos !
-;
-
 \ Add an id to idtable section if not exist. Returns index of the id.
-: get-id ( id compiler -- n )
-    swap node>arg0 @ swap compiler>idtable @
+: get-id ( id -- n )
+    node>arg0 @ IDTABLE
     2dup ?table-in if table@ exit then
     dup table-size dup >r -rot table! r>
 ;
 
-: add-export ( type id-idx def-idx comment compiler -- )
-    >r
+: lookup-fundef ( name -- idx )
+    0 PROGRAM @ program>defs @ array-size 0 ?do
+        i PROGRAM @ program>defs @ array@
+        dup node>tag @ Nfundef = if
+            fundef>name @ node>arg0 @ 2 pick streq if
+                unloop
+                nip exit
+            else
+                1+
+            then
+        else
+            drop
+        then
+    loop
+    2drop -1
+;
+
+: lookup-vardef ( name -- idx )
+    0 PROGRAM @ program>defs @ array-size 0 ?do
+        i PROGRAM @ program>defs @ array@
+        dup node>tag @ Nvardef = if
+            vardef>name @ node>arg0 @ 2 pick streq if
+                unloop
+                nip exit
+            else
+                1+
+            then
+        else
+            drop
+        then
+    loop
+    not-reachable
+;
+
+: add-export ( type id-idx def-idx comment -- )
     4 cells allocate throw
     tuck tuple3 !
     tuck tuple2 !
     tuck tuple1 !
     tuck tuple0 !
-    r>
-    tuck compiler>export @ array-push
-    drop
+    EXPORTS array-push
 ;
 
 : replace-label-impl ( table node idx -- table node )
@@ -83,40 +101,32 @@ private{
     Nifne of 2 replace-label-impl 3 replace-label-impl drop endof
     Niflt of 2 replace-label-impl 3 replace-label-impl drop endof
     Nifle of 2 replace-label-impl 3 replace-label-impl drop endof
-    not-reachable
+    Nload of
+        dup node>arg1 @ node>arg0 @ lookup-vardef
+        swap node>arg1 !
+    endof
+    Nstore of
+        dup node>arg0 @ node>arg0 @ lookup-vardef
+        swap node>arg0 !
+    endof
+    drop
     endcase
 ;
 
-: lookup-fundef ( compiler name -- idx )
-    0 2 pick compiler>program @ program>defs @ array-size 0 ?do
-        i 3 pick compiler>program @ program>defs @ array@
-        dup node>tag @ Nfundef = if
-            fundef>name @ node>arg0 @ 2 pick streq if
-                unloop
-                nip nip exit
-            else
-                1+
-            then
-        else
-            drop
-        then
-    loop
-;
-
-: compile-insn ( compiler insn -- insn )
+: compile-insn ( insn -- insn )
     dup node>tag @ case
     Ncall of
-        over over node>arg1 @ node>arg0 @ lookup-fundef
+        dup node>arg1 @ node>arg0 @ lookup-fundef dup 0< if not-reachable then
         over node>arg0 @ swap
         2 pick node>arg2 @
         Nlcall make-node3
-        nip nip
+        nip
     endof
-        drop nip 0
+        drop 0
     endcase
 ;
 
-: compile-function-body ( compiler node -- compiler basicblocks )
+: compile-function-body ( node -- basicblocks )
     make-string-table
     over fundef>blocks @ array-size 0 ?do
         i 2 pick fundef>blocks @ array@
@@ -126,20 +136,22 @@ private{
     \ replace label of phi and branch instruction with block index
     ( node tbl )
     over fundef>blocks @ array-size 0 ?do
-        i 2 pick fundef>blocks @ array@ dup >r
+        i 2 pick fundef>blocks @ array@ dup dup >r >r
         node>arg1 @ tuck array-size 0 ?do
             i 2 pick array@ replace-label
-        loop
-        nip
+        loop nip
+        r>
+        node>arg2 @ tuck array-size 0 ?do
+            i 2 pick array@ replace-label
+        loop nip
         r> node>arg3 @ replace-label   ( branch insn )
     loop
     drop \ drop the basicblock table
 
     dup fundef>blocks @ array-size 0 ?do
-        i over fundef>blocks @ array@ ( compiler node block )
+        i over fundef>blocks @ array@ ( node block )
         dup node>arg2 @ array-size 0 ?do
-            i over node>arg2 @ array@
-            3 pick swap compile-insn
+            i over node>arg2 @ array@ compile-insn
             i 2 pick node>arg2 @ array!
         loop
         drop
@@ -148,55 +160,63 @@ private{
     fundef>blocks @
 ;
 
-: compile-fundef ( node compiler -- )
-    over fundef>tag @ Nfundef <> if not-reachable then
-    ." compiling function: " over fundef>name @ pp-node cr
-    over fundef>export @ if
-        over fundef>comment @ >r
-        dup compiler>fundefs @ array-size dup >r
-        ." > fundef idx: " . cr
-        over fundef>name @ over get-id dup >r
-        ." > name idx: " . cr
-        'F' r> r> r> 4 pick add-export
+: compile-fundef ( node -- )
+    ." compiling function: " dup fundef>name @ pp-node cr
+    dup fundef>export @ if
+        dup fundef>comment @ >r
+        FUNDEFS array-size >r
+        dup fundef>name @ get-id >r
+        'F' r> r> r> add-export
     then
-    over compile-function-body
+    dup compile-function-body
     3 cells allocate throw
-    3 pick fundef>name @ node>arg0 @ over tuple0 !
-    3 pick fundef>type @ over tuple1 !
+    2 pick fundef>name @ node>arg0 @ over tuple0 !
+    2 pick fundef>type @ over tuple1 !
     tuck tuple2 !
-    over compiler>fundefs @ array-push
-    2drop
+    FUNDEFS array-push
+    drop
 ;
 
-: compile-definition ( def compiler -- )
-    over node>tag @ case
+: compile-vardef ( node -- )
+    ." compiling variable definition: " dup vardef>name @ pp-node cr
+    dup vardef>export @ if
+        dup vardef>comment @ >r
+        VARDEFS array-size >r
+        dup vardef>name @ get-id >r
+        'D' r> r> r> add-export
+    then
+    VARDEFS array-push
+;
+
+: compile-definition ( def -- )
+    dup node>tag @ case
     Nfundef of compile-fundef endof
+    Nvardef of compile-vardef endof
         not-reachable
     endcase
 ;
 
-: compile-program ( program -- compiler )
-    make-compiler swap
-    dup 2 pick compiler>program !
+: compile-program ( program -- )
+    dup PROGRAM !
     program>defs @ dup array-size 0 ?do
-        i over array@ 2 pick compile-definition
+        i over array@ compile-definition
     loop
     drop
 ; export
 
-: emit ( compiler w 'encoder -- compiler )
-    >r over compiler>pos @ r> execute over compiler>pos +!
+: emit ( w 'encoder -- )
+    >r CODEPOS @ r> execute CODEPOS +!
 ;
 
-: codegen ( compiler file -- )
+: codegen ( file -- )
     >r
     %11011111 ['] encode-u8 emit
     %11111111 ['] encode-u8 emit
-    3 ['] encode-uint emit  \ number of sections
+    4 ['] encode-uint emit  \ number of sections
 
     \ write ID section
     $00 ['] encode-u8 emit  \ section type
-    dup compiler>idtable @ table-keys dup >r
+    IDTABLE table-keys dup >r
     list-length ['] encode-uint emit
     r> begin ?dup while
         dup >r car ['] encode-str emit r> cdr
@@ -204,18 +224,30 @@ private{
 
     \ write function section
     $01 ['] encode-u8 emit \ section type
-    dup compiler>fundefs @ array-size ['] encode-uint emit \ num of funcs
-    dup compiler>fundefs @ array-size 0 ?do
-        i over compiler>fundefs @ array@ dup >r
+    FUNDEFS array-size ['] encode-uint emit \ num of funcs
+    FUNDEFS array-size 0 ?do
+        i FUNDEFS array@ dup >r
         tuple1 @ ['] encode-type emit           \ emit function type
         r> tuple2 @ ['] encode-basicblocks emit
     loop
+    s" startup" lookup-fundef dup 0< if
+        \ no startup code
+        drop %11000000 ['] encode-u8 emit    \ none
+    else
+        ['] encode-uint emit
+    then
+
+    $02 ['] encode-u8 emit \ section type
+    VARDEFS array-size ['] encode-uint emit
+    VARDEFS array-size 0 ?do
+        i VARDEFS array@ vardef>type @ ['] encode-type emit
+    loop
 
     \ write export section
-    $02 ['] encode-u8 emit  \ section type
-    dup compiler>export @ array-size ['] encode-uint emit
-    dup compiler>export @ array-size 0 ?do
-        i over compiler>export @ array@ dup dup dup >r >r >r
+    $03 ['] encode-u8 emit  \ section type
+    EXPORTS array-size ['] encode-uint emit
+    EXPORTS array-size 0 ?do
+        i EXPORTS array@ dup dup dup >r >r >r
         tuple0 @ ['] encode-uint emit    \ type of the ID
         r> tuple1 @ ['] encode-uint emit \ index of the ID
         r> tuple2 @ ['] encode-uint emit \ index of corresponding def
@@ -223,7 +255,7 @@ private{
     loop
 
     \ write buf to file
-    dup compiler>buf over compiler>pos @ over - r> write-file throw drop
+    CODEBUF CODEPOS @ over - r> write-file throw drop
     drop exit
 ; export
 

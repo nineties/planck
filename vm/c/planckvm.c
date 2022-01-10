@@ -15,12 +15,12 @@
 #include <string.h>
 
 #define not_reachable() do { \
-    fprintf(stderr, "Not reachable here: %s\n", __func__); \
+    fprintf(stderr, "Not reachable here: %s [%s:%d]\n", __func__, __FILE__, __LINE__); \
     exit(1); \
 } while (0)
 
 #define not_implemented() do { \
-    fprintf(stderr, "Not implemented: %s\n", __func__); \
+    fprintf(stderr, "Not implemented: %s [%s:%d]\n", __func__, __FILE__, __LINE__); \
     exit(1); \
 } while (0)
 
@@ -33,8 +33,10 @@ typedef int64_t sint_t;
 #define STACK_SIZE  (1024*1024)
 
 // Operands
-#define D_REG   0x90
-#define D_ARG   0xa0
+#define D_REG   0x80
+#define D_ARG   0x90
+#define D_UNIT  0xa0
+#define D_NONE  0xc0
 #define D_TRUE  0xc1
 #define D_FALSE 0xc2
 #define D_U8    0xc3
@@ -70,7 +72,8 @@ typedef int64_t sint_t;
 // Sections
 #define SEC_ID      0x00
 #define SEC_FUN     0x01
-#define SEC_EXPORT  0x02
+#define SEC_VAR     0x02
+#define SEC_EXPORT  0x03
 // Instructions
 #define I_NOP       0x00
 #define I_PHI       0x01
@@ -90,6 +93,8 @@ typedef int64_t sint_t;
 #define I_LCALL     0x20    // local call
 #define I_TUPLE     0x50
 #define I_TUPLEAT   0x51
+#define I_LOAD      0x60
+#define I_STORE     0x61
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 #define I_IFTRUE    0x82
@@ -99,16 +104,17 @@ typedef int64_t sint_t;
 #define I_IFLE      0x86
 // Values
 #define V_NULL  0x00
-#define V_BOOL  0x01
-#define V_U8    0x02
-#define V_I8    0x03
-#define V_U16   0x04
-#define V_I16   0x05
-#define V_U32   0x06
-#define V_I32   0x07
-#define V_U64   0x08
-#define V_I64   0x09
-#define V_TUPLE 0x0a
+#define V_UNIT  0x01
+#define V_BOOL  0x02
+#define V_U8    0x03
+#define V_I8    0x04
+#define V_U16   0x05
+#define V_I16   0x06
+#define V_U32   0x07
+#define V_I32   0x08
+#define V_U64   0x09
+#define V_I64   0x0a
+#define V_TUPLE 0x0b
 
 typedef struct value {
     byte_t tag;
@@ -193,9 +199,13 @@ typedef struct {
             uint_t ifelse;
         };
         struct {
-            operand lhs;
+            union {
+                operand lhs;
+                uint_t store_idx;
+            };
             union {
                 operand rhs;    // lhs = rhs
+                uint_t load_idx;
                 struct {        // binary expression
                     operand arg0;
                     operand arg1;
@@ -241,6 +251,12 @@ typedef struct {
     char **ids;
     size_t n_func;
     function *funcs;
+    size_t n_var;
+    int startup;    /* -1 for none */
+    struct {
+        type *ty;
+        value v;
+    } *vars;
     size_t n_export;
     export_item *exports;
 } object_file;
@@ -258,6 +274,9 @@ static value
 operand_to_value(value *bp, operand *opd) {
     value v = { 0 };
     switch (opd->tag) {
+    case D_UNIT:
+        v.tag = V_UNIT;
+        break;
     case D_TRUE:
         v.tag = V_BOOL;
         v.b = true;
@@ -423,6 +442,7 @@ decode_operand(function *fun, operand *opd, byte_t **cur)
         return;
     }
     switch (*(*cur)++) {
+    case D_UNIT: opd->tag = D_UNIT; return;
     case D_TRUE: opd->tag = D_TRUE; return;
     case D_FALSE: opd->tag = D_FALSE; return;
     case D_U8:
@@ -524,6 +544,16 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         decode_operand(fun, &insn->arg, cur);
         insn->index = *(*cur)++;
         return;
+    case I_LOAD:
+        insn->tag = I_LOAD;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->load_idx = decode_uint(cur);
+        return;
+    case I_STORE:
+        insn->tag = I_STORE;
+        insn->store_idx = decode_uint(cur);
+        decode_operand(fun, &insn->rhs, cur);
+        return;
     default:
         break;
     }
@@ -617,6 +647,18 @@ decode_section(object_file *obj, byte_t **cur) {
         obj->funcs = calloc(obj->n_func, sizeof(obj->funcs[0]));
         for (int i = 0; i < obj->n_func; i++)
             decode_function(&obj->funcs[i], cur);
+        if (**cur == D_NONE) {
+            obj->startup = -1;
+            (*cur)++;
+        } else {
+            obj->startup = decode_uint(cur);
+        }
+        return;
+    case SEC_VAR:
+        obj->n_var = decode_uint(cur);
+        obj->vars = calloc(obj->n_var, sizeof(obj->vars[0]));
+        for (int i = 0; i < obj->n_var; i++)
+            obj->vars[i].ty = decode_type(cur);
         return;
     case SEC_EXPORT:
         obj->n_export = decode_uint(cur);
@@ -661,6 +703,8 @@ static bool
 check_type(type *ty, value v) {
     switch (v.tag) {
     case V_NULL: not_reachable();
+    case V_UNIT:
+        return ty->tag == T_TUPLE && ty->len == 0;
     case V_BOOL: return ty == &bool_type;
     case V_U8:   return ty == &u8_type;
     case V_I8:   return ty == &i8_type;
@@ -680,6 +724,13 @@ check_type(type *ty, value v) {
     }
     not_implemented();
 }
+
+#define CHECK_TYPE(ty, v) do { \
+    if (!check_type(ty, v)) { \
+        fprintf(stderr, "Type mismatch at %s [%s:%d]\n", __func__, __FILE__, __LINE__); \
+        exit(1); \
+    } \
+} while (0)
 
 static void
 drop(value v) {
@@ -892,6 +943,16 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 move(bp, &insn->lhs, v.values[insn->index]);
                 break;
             }
+            case I_LOAD:
+                assert(insn->load_idx < obj->n_var);
+                move(bp, &insn->lhs, obj->vars[insn->load_idx].v);
+                break;
+            case I_STORE:
+                assert(insn->store_idx < obj->n_var);
+                value v = operand_to_value(bp, &insn->rhs);
+                CHECK_TYPE(obj->vars[insn->store_idx].ty, v);
+                obj->vars[insn->store_idx].v = v;
+                break;
             case I_GOTO:
                 prev = block;
                 block = &fun->blocks[insn->next];
@@ -904,10 +965,7 @@ call(interpreter *interp, object_file *obj, function *fun) {
                     drop(LOCAL(bp, i));
                 }
                 value ret = operand_to_value(bp, &insn->retval);
-                if (!check_type(fun->ty->ret, ret)) {
-                    fprintf(stderr, "type mismatch of return value\n");
-                    exit(1);
-                }
+                CHECK_TYPE(fun->ty->ret, ret);
                 return ret;
             }
             case I_IFTRUE: {
@@ -944,6 +1002,12 @@ interpret(object_file *obj) {
     interpreter interp;
     interp.stack = calloc(STACK_SIZE, sizeof(value));
     interp.sp = interp.stack + STACK_SIZE;
+
+    /* if the object file has startup function, call it */
+    if (obj->startup >= 0) {
+        function *startup_fun = &obj->funcs[obj->startup];
+        call(&interp, obj, startup_fun); /* todo type check */
+    }
 
     uint_t main_id = lookup_id(obj, "main");
     function *main_fun = NULL;

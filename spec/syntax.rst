@@ -67,6 +67,7 @@ Instruction::
             | "true" | "false"
             | register
             | arguments
+            | "(" ")"
             | "*" place
 
    expression : operand
@@ -104,18 +105,23 @@ Instruction::
                       | "if" operand "<" operand label label
                       | "if" operand "<=" operand label label
 
-Basic Block::
+Toplevel Items::
 
+   function_definition : "fun" label ":" type "{" basic_block+ "}"
    basic_block : label ":"
                  phi_instruction*
                  instruction*
                  branch_instruction
 
-Function::
+   variable_definition : label ":" type
 
-   function_definition : "export"?  "fun" label ":" type "{" basic_block+ "}"
+   toplevel_definition : document* "export"? function_definition
+                       | document* "export"? variable_definition
 
-Program::
-
-   toplevel_definition : document* function_definition
    program : toplevel_definition*
+
+Order of Toplevel Definitions
+=============================
+
+PlanckIR does not care about the order where top-level variables, constants,
+functions, etc. are defined.

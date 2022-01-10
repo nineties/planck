@@ -36,8 +36,8 @@ function-local variables. Registers with the same name used in different functio
 point different locations and will not be overwritten by function calls.
 Therefore, there are no special function call conventions in PlanckVM.
 
-Order of Toplevel Definitions
-=============================
+Module System
+=============
 
-PlanckIR does not care about the order where top-level variables, constants,
-functions, etc. are defined.
+Startup Function
+----------------
