@@ -84,6 +84,7 @@ $2000000 constant FILE_BUFFER_SIZE
     then
     dup $9f <= if $0f and Nargument make-node1 exit then
     case
+    %10100000 of unit-value exit then
     %11000001 of true-value exit then
     %11000010 of false-value exit then
     %11000011 of dup u8@ >r 1+ r> u8-type Nint make-node2 exit endof
@@ -174,6 +175,16 @@ $2000000 constant FILE_BUFFER_SIZE
         decode-operand >r
         dup u8@ >r 1+ r>
         r> r> -rot swap Ntupleat make-node3
+    endof
+    %01100000 of
+        drop
+        decode-operand >r
+        decode-uint r> swap Nload make-node2
+    endof
+    %01100001 of
+        drop
+        decode-uint >r
+        decode-operand r> swap Nstore make-node2
     endof
     %10000000 of drop decode-uint make-goto endof
     %10000001 of drop decode-operand make-return endof
@@ -375,8 +386,7 @@ $2000000 constant FILE_BUFFER_SIZE
     endcase
 ;
 
-: move ( interp lhs rhs -- )
-    ( interp lhs val )
+: move ( interp lhs value -- )
     over node>tag @ case
     Nregister of
         ( intep lhs val )
@@ -554,6 +564,17 @@ $2000000 constant FILE_BUFFER_SIZE
                 node>arg0 @ over node>arg2 @ swap array@
                 swap node>arg0 @ swap 5 pick -rot move
             endof
+            Nload of
+                dup node>arg1 @ 5 pick interp>obj @ obj>vars @ array@ tuple1 @
+                swap node>arg0 @ swap 5 pick -rot move
+                ( interp fun prev cur lhs value )
+            endof
+            Nstore of
+                4 pick over node>arg1 @ to-value swap node>arg0 @
+                5 pick interp>obj @ obj>vars @ array@
+                tuck tuple0 @ over check-type unless TYPE-ERROR throw then
+                swap tuple1 !
+            endof
             Ngoto of
                 node>arg0 @ ( index of next block )
                 3 pick fun>blocks @ array@ ( next block )
@@ -597,6 +618,14 @@ $2000000 constant FILE_BUFFER_SIZE
     STACK-SIZE cells allocate throw over interp>stack !
     dup interp>stack STACK-SIZE cells + over interp>sp !
     tuck interp>obj !
+
+    \ run startup code if it exists
+    dup interp>obj @ obj>startup @ dup 0>= unless drop else
+        over interp>obj @ obj>funcs @ array@
+        call \ TODO: type check
+        drop
+    then
+
     dup s" main" lookup-func
 
     \ Check type of main
