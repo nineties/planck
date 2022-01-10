@@ -1,16 +1,13 @@
-VM_IMPL?=c
-RUN_VM=$(VM_IMPL)/planckvm
+RUN_VM=./planckvm
 
-default:
-	make -C $(VM_IMPL)
+default: planckvm
 
-.PHONY: clean test
+planckvm: planckvm.c
+	gcc -Wall -O2 $< -o $@
 
-test:
-	make -C $(VM_IMPL)
+.PHONY: clean test-vm
 
-test-vm:
-	make -C $(VM_IMPL)
+test-vm: planckvm
 	$(RUN_VM) ../tests/return123.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/goto.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/assign.pko; test $$? -eq 123
@@ -34,4 +31,5 @@ test-vm:
 	$(RUN_VM) ../tests/global-constant.pko; test $$? -eq 123
 
 clean:
-	make -C $(VM_IMPL)
+	rm -f *.o planckvm
+
