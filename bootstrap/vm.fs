@@ -11,6 +11,7 @@ s" Type Error" exception constant TYPE-ERROR
 struct
     cell% field obj>ids     ( vector of identifiers )
     cell% field obj>funcs   ( vector of functions )
+    cell% field obj>vars    ( vector of variables (type, value) )
     cell% field obj>exports ( vector of exported items )
 end-struct object-file%
 
@@ -55,6 +56,7 @@ end-struct interpreter%
     object-file% %allocate throw
     0 make-array over obj>ids !
     0 make-array over obj>funcs !
+    0 make-array over obj>vars !
     0 make-array over obj>exports !
 ;
 
@@ -240,6 +242,14 @@ $2000000 constant FILE_BUFFER_SIZE
     loop
 ;
 
+: decode-variable-section ( obj buf -- obj new-buf )
+    1+ decode-uint 0 ?do
+        2 cells allocate throw swap
+        decode-type 2 pick tuple0 !
+        swap 2 pick obj>vars @ array-push
+    loop
+;
+
 : decode-export-section ( obj buf -- obj new-buf )
     1+ decode-uint 0 ?do
         decode-uint swap
@@ -278,6 +288,7 @@ $2000000 constant FILE_BUFFER_SIZE
         dup u8@ case
         $00 of decode-id-section endof
         $01 of decode-function-section endof
+        $02 of decode-variable-section endof
         $03 of decode-export-section endof
         not-reachable
         endcase

@@ -70,6 +70,7 @@ typedef int64_t sint_t;
 // Sections
 #define SEC_ID      0x00
 #define SEC_FUN     0x01
+#define SEC_VAR     0x02
 #define SEC_EXPORT  0x03
 // Instructions
 #define I_NOP       0x00
@@ -247,6 +248,11 @@ typedef struct {
     char **ids;
     size_t n_func;
     function *funcs;
+    size_t n_var;
+    struct {
+        type *ty;
+        value v;
+    } *vars;
     size_t n_export;
     export_item *exports;
 } object_file;
@@ -633,6 +639,12 @@ decode_section(object_file *obj, byte_t **cur) {
         obj->funcs = calloc(obj->n_func, sizeof(obj->funcs[0]));
         for (int i = 0; i < obj->n_func; i++)
             decode_function(&obj->funcs[i], cur);
+        return;
+    case SEC_VAR:
+        obj->n_var = decode_uint(cur);
+        obj->vars = calloc(obj->n_var, sizeof(obj->vars[0]));
+        for (int i = 0; i < obj->n_var; i++)
+            obj->vars[i].ty = decode_type(cur);
         return;
     case SEC_EXPORT:
         obj->n_export = decode_uint(cur);
