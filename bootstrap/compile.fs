@@ -51,7 +51,7 @@ create CODEPOS CODEBUF ,
             drop
         then
     loop
-    not-reachable
+    2drop -1
 ;
 
 : lookup-vardef ( name -- idx )
@@ -116,7 +116,7 @@ create CODEPOS CODEBUF ,
 : compile-insn ( insn -- insn )
     dup node>tag @ case
     Ncall of
-        dup node>arg1 @ node>arg0 @ lookup-fundef
+        dup node>arg1 @ node>arg0 @ lookup-fundef dup 0< if not-reachable then
         over node>arg0 @ swap
         2 pick node>arg2 @
         Nlcall make-node3
@@ -230,6 +230,12 @@ create CODEPOS CODEBUF ,
         tuple1 @ ['] encode-type emit           \ emit function type
         r> tuple2 @ ['] encode-basicblocks emit
     loop
+    s" startup" lookup-fundef dup 0< if
+        \ no startup code
+        drop %11000000 ['] encode-u8 emit    \ none
+    else
+        ['] encode-uint emit
+    then
 
     $02 ['] encode-u8 emit \ section type
     VARDEFS array-size ['] encode-uint emit

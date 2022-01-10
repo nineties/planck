@@ -13,7 +13,7 @@ struct
     cell% field obj>funcs    ( vector of functions )
     cell% field obj>vars     ( vector of variables (type, value) )
     cell% field obj>exports  ( vector of exported items )
-    cell% field obj>startup  ( index of startup function )
+    cell% field obj>startup  ( index of startup function. -1 for none )
 end-struct object-file%
 
 struct
@@ -242,6 +242,11 @@ $2000000 constant FILE_BUFFER_SIZE
         over obj>funcs @ array-push
         r>
     loop
+    dup u8@ %11000000 = if
+        1+ -1 2 pick obj>startup !
+    else
+        decode-uint 2 pick obj>startup !
+    then
 ;
 
 : decode-variable-section ( obj buf -- obj new-buf )
