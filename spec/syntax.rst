@@ -89,6 +89,7 @@ Instruction::
               | operand "<" operand
               | operand "<=" operand
               | label "(" operands ")"
+              | long_id "(" operands ")"
               | "(" operands ")"
               | operand "." int
 
