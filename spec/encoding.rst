@@ -233,9 +233,9 @@ Function table
 
 ::
 
-   +------+~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~+
-   | 0x01 | uint(n) | n functions | uint(s) |
-   +------+~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~+
+   +------+~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~+
+   | 0x01 | uint(n) | n functions | uint(s) or none |
+   +------+~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~+
 
    Each function consists of its type and basic blocks.
    Block 0 is always the entry block.
@@ -251,7 +251,7 @@ Function table
    | uint (n) | n phi insns | uint (m) | m non-branch insns | branch insn |
    +~~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~+
 
-   The last uint (s) is the index of the **startup** function.
+   The last uint (s) is the index of the **startup** function if any.
 
 See `Instructions <instruction.rst>`_ for encoding of instructions.
 See `Virtual Machine <vm.rst>`_ for details about the startup function.
