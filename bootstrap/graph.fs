@@ -19,6 +19,8 @@ include lib/string.fs
 
     enum Nnop
     enum Nmove      ( lhs rhs )
+    enum Nload      ( lhs id )
+    enum Nstore     ( id rhs )
     enum Nphi       ( lhs args )
     enum Nadd
     enum Nsub
@@ -196,6 +198,8 @@ private{
 : make-goto ( label -- node ) Ngoto make-node1 ; export
 : make-return ( arg -- node ) Nreturn make-node1 ; export
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
+: make-load ( lhs id -- node ) Nload make-node2 ; export
+: make-store ( id rhs -- node ) Nstore make-node2 ; export
 : make-phi ( lhs args -- node ) Nphi make-node2 ; export
 : make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
 : make-fundef ( export name type blocks comment -- node )

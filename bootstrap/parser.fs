@@ -282,6 +282,21 @@ create parse-type-p 0 ,
     over lex
     over parse-expression ?dup unless SYNTAX-ERROR throw then
     tuck node>arg0 !
+
+    \ rewrite move to load/store
+    dup node>tag @ Nmove = if
+        dup node>arg0 @ node>tag @ Nid = if
+            dup node>arg1 @ node>tag @ Nid = if SYNTAX-ERROR throw then
+            dup node>arg0 @
+            swap node>arg1 @
+            make-store
+        else dup node>arg1 @ node>tag @ Nid = if
+            dup node>arg0 @
+            swap node>arg1 @
+            make-load
+        then then
+    then
+
     nip
 ;
 

@@ -13,6 +13,14 @@ include lib/table.fs
 
 private{
 
+variable PROGRAM
+make-string-table constant IDTABLE  \ string -> ID
+0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
+0 make-array constant FUNDEFS       \ array of function definitions
+0 make-array constant VARDEFS       \ array of variable definitions
+$100000 allocate throw constant CODEBUF
+create CODEPOS CODEBUF ,
+
 : list-length ( list -- n )
     0 >r
     begin ?dup while
@@ -21,14 +29,6 @@ private{
     repeat
     r>
 ;
-
-variable PROGRAM
-make-string-table constant IDTABLE  \ string -> ID
-0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
-0 make-array constant FUNDEFS       \ array of function definitions
-0 make-array constant VARDEFS       \ array of variable definitions
-$100000 allocate throw constant CODEBUF
-create CODEPOS CODEBUF ,
 
 \ Add an id to idtable section if not exist. Returns index of the id.
 : get-id ( id -- n )
@@ -67,7 +67,15 @@ create CODEPOS CODEBUF ,
     Nifne of 2 replace-label-impl 3 replace-label-impl drop endof
     Niflt of 2 replace-label-impl 3 replace-label-impl drop endof
     Nifle of 2 replace-label-impl 3 replace-label-impl drop endof
-    not-reachable
+    Nload of
+        ." load" cr
+        not-implemented
+    endof
+    Nstore of
+        ." store" cr
+        not-implemented
+    endof
+    drop
     endcase
 ;
 
@@ -110,11 +118,14 @@ create CODEPOS CODEBUF ,
     \ replace label of phi and branch instruction with block index
     ( node tbl )
     over fundef>blocks @ array-size 0 ?do
-        i 2 pick fundef>blocks @ array@ dup >r
+        i 2 pick fundef>blocks @ array@ dup dup >r >r
         node>arg1 @ tuck array-size 0 ?do
             i 2 pick array@ replace-label
-        loop
-        nip
+        loop nip
+        r>
+        node>arg2 @ tuck array-size 0 ?do
+            i 2 pick array@ replace-label
+        loop nip
         r> node>arg3 @ replace-label   ( branch insn )
     loop
     drop \ drop the basicblock table
