@@ -67,6 +67,7 @@ Instruction::
             | "true" | "false"
             | register
             | arguments
+            | "(" ")"
             | "*" place
 
    expression : operand

@@ -160,6 +160,11 @@ create parse-type-p 0 ,
     dup parse-label ?dup if nip exit then
     dup parse-register ?dup if nip exit then
     dup parse-argument ?dup if nip exit then
+    dup '(' expect-sym if
+        dup lex
+        dup ')' expect-sym unless SYNTAX-ERROR then
+        lex unit-value exit
+    then
     dup '*' expect-sym unless drop 0 exit then
     dup lex
     recurse ?dup if make-deref else 0 then

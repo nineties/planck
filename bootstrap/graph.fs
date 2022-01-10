@@ -212,6 +212,7 @@ private{
 
 1 Nbool make-node1 constant true-value export
 0 Nbool make-node1 constant false-value export
+0 make-array Ntuple make-node1 constant unit-value export
 
 TyNever make-node0 constant never-type export
 TyBool make-node0 constant bool-type export

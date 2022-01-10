@@ -267,6 +267,10 @@ T{ test-buf 1+ u32@ -> 65536 }T
     Nint of encode-int-literal endof
     Nregister of encode-register endof
     Nargument of encode-argument endof
+    Ntuple of
+        over unit-value = unless not-reachable endof
+        %10100000 over u8! 2drop 1
+    endof
     not-reachable
     endcase
 ;
