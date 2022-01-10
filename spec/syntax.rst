@@ -24,6 +24,11 @@ Lexical Tokens::
 
    The lexer ignores comments.
 
+Long Identifier::
+
+   long_id : id
+           | id "::" long_id
+
 Types::
 
     never_type : "!"
@@ -117,6 +122,7 @@ Toplevel Items::
 
    toplevel_definition : document* "export"? function_definition
                        | document* "export"? variable_definition
+                       | "import" long_id
 
    program : toplevel_definition*
 
