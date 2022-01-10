@@ -245,11 +245,20 @@ Function table
    - zero or more phi instructions
    - zero or more non-branch instructions
    - one branch instruction
-   +~~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
-   | uint (n) | n phi insns | uint (m) | m non-branch insns | branch instruction |
-   +~~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+
+   +~~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~+
+   | uint (n) | n phi insns | uint (m) | m non-branch insns | branch insn |
+   +~~~~~~~~~~+~~~~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~+~~~~~~~~~~~~~+
 
 See `Instructions <instruction.rst>`_ for encoding of instructions.
+
+Variable table
+--------------
+
+::
+
+   +------+~~~~~~~~~+~~~~~~~~~+
+   | 0x02 | uint(n) | n types |
+   +------+~~~~~~~~~+~~~~~~~~~+
 
 Export table
 ------------
@@ -276,6 +285,6 @@ as the document text::
 ::
 
    +------+~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
-   | 0x02 | uint(n) | n x (uint, uint, uint, str) |
+   | 0x03 | uint(n) | n x (uint, uint, uint, str) |
    +------+~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
 
