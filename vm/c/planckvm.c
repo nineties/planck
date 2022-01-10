@@ -90,6 +90,8 @@ typedef int64_t sint_t;
 #define I_LCALL     0x20    // local call
 #define I_TUPLE     0x50
 #define I_TUPLEAT   0x51
+#define I_LOAD      0x60
+#define I_STORE     0x61
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 #define I_IFTRUE    0x82
@@ -193,9 +195,13 @@ typedef struct {
             uint_t ifelse;
         };
         struct {
-            operand lhs;
+            union {
+                operand lhs;
+                uint_t store_idx;
+            };
             union {
                 operand rhs;    // lhs = rhs
+                uint_t load_idx;
                 struct {        // binary expression
                     operand arg0;
                     operand arg1;
@@ -523,6 +529,16 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         decode_operand(fun, &insn->lhs, cur);
         decode_operand(fun, &insn->arg, cur);
         insn->index = *(*cur)++;
+        return;
+    case I_LOAD:
+        insn->tag = I_LOAD;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->load_idx = decode_uint(cur);
+        return;
+    case I_STORE:
+        insn->tag = I_STORE;
+        insn->store_idx = decode_uint(cur);
+        decode_operand(fun, &insn->rhs, cur);
         return;
     default:
         break;
@@ -892,6 +908,10 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 move(bp, &insn->lhs, v.values[insn->index]);
                 break;
             }
+            case I_LOAD:
+                not_implemented();
+            case I_STORE:
+                not_implemented();
             case I_GOTO:
                 prev = block;
                 block = &fun->blocks[insn->next];
