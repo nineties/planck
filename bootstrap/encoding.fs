@@ -468,6 +468,18 @@ T{ test-buf 1+ u32@ -> 65536 }T
             not-reachable
         then then
     endof
+    Nload of
+        %01100000 over u8! 1+ 1
+        2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
+        2 pick node>arg1 @ 2 pick encode-uint tuck + >r + r>
+        nip nip
+    endof
+    Nstore of
+        %01100001 over u8! 1+ 1
+        2 pick node>arg0 @ 2 pick encode-uint tuck + >r + r>
+        2 pick node>arg1 @ 2 pick encode-operand tuck + >r + r>
+        nip nip
+    endof
     Ngoto of
         %10000000 over u8! 1+
         over node>arg0 @ over encode-uint 1+

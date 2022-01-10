@@ -37,6 +37,40 @@ create CODEPOS CODEBUF ,
     dup table-size dup >r -rot table! r>
 ;
 
+: lookup-fundef ( name -- idx )
+    0 PROGRAM @ program>defs @ array-size 0 ?do
+        i PROGRAM @ program>defs @ array@
+        dup node>tag @ Nfundef = if
+            fundef>name @ node>arg0 @ 2 pick streq if
+                unloop
+                nip exit
+            else
+                1+
+            then
+        else
+            drop
+        then
+    loop
+    not-reachable
+;
+
+: lookup-vardef ( name -- idx )
+    0 PROGRAM @ program>defs @ array-size 0 ?do
+        i PROGRAM @ program>defs @ array@
+        dup node>tag @ Nvardef = if
+            vardef>name @ node>arg0 @ 2 pick streq if
+                unloop
+                nip exit
+            else
+                1+
+            then
+        else
+            drop
+        then
+    loop
+    not-reachable
+;
+
 : add-export ( type id-idx def-idx comment -- )
     4 cells allocate throw
     tuck tuple3 !
@@ -68,31 +102,15 @@ create CODEPOS CODEBUF ,
     Niflt of 2 replace-label-impl 3 replace-label-impl drop endof
     Nifle of 2 replace-label-impl 3 replace-label-impl drop endof
     Nload of
-        ." load" cr
-        not-implemented
+        dup node>arg1 @ node>arg0 @ lookup-vardef
+        swap node>arg1 !
     endof
     Nstore of
-        ." store" cr
-        not-implemented
+        dup node>arg2 @ node>arg0 @ lookup-vardef
+        swap node>arg2 !
     endof
     drop
     endcase
-;
-
-: lookup-fundef ( name -- idx )
-    0 PROGRAM @ program>defs @ array-size 0 ?do
-        i PROGRAM @ program>defs @ array@
-        dup node>tag @ Nfundef = if
-            fundef>name @ node>arg0 @ 2 pick streq if
-                unloop
-                nip exit
-            else
-                1+
-            then
-        else
-            drop
-        then
-    loop
 ;
 
 : compile-insn ( insn -- insn )
@@ -167,7 +185,6 @@ create CODEPOS CODEBUF ,
         dup vardef>name @ get-id >r
         'D' r> r> r> add-export
     then
-    ." done" cr
     drop
 ;
 
