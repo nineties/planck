@@ -35,9 +35,3 @@ On the other hand, registers of PlanckVM are not physical registers, but actuall
 function-local variables. Registers with the same name used in different functions
 point different locations and will not be overwritten by function calls.
 Therefore, there are no special function call conventions in PlanckVM.
-
-Order of Toplevel Definitions
-=============================
-
-PlanckIR does not care about the order where top-level variables, constants,
-functions, etc. are defined.

@@ -9,10 +9,11 @@ include encoding.fs
 s" Type Error" exception constant TYPE-ERROR
 
 struct
-    cell% field obj>ids     ( vector of identifiers )
-    cell% field obj>funcs   ( vector of functions )
-    cell% field obj>vars    ( vector of variables (type, value) )
-    cell% field obj>exports ( vector of exported items )
+    cell% field obj>ids      ( vector of identifiers )
+    cell% field obj>funcs    ( vector of functions )
+    cell% field obj>vars     ( vector of variables (type, value) )
+    cell% field obj>exports  ( vector of exported items )
+    cell% field obj>startup  ( index of startup function )
 end-struct object-file%
 
 struct
@@ -58,6 +59,7 @@ end-struct interpreter%
     0 make-array over obj>funcs !
     0 make-array over obj>vars !
     0 make-array over obj>exports !
+    -1 over obj>startup !
 ;
 
 \ Since it is cumbersome to get the file size with PlanckForth's function,

@@ -51,7 +51,7 @@ include lib/string.fs
 
     enum Nbblock    ( name insns jump )
     enum Nfundef    ( export name type blocks comment )
-    enum Nvardef    ( export name type insn comment )
+    enum Nvardef    ( export name type comment )
     enum Nprogram   ( defs )
 
     enum TyNever
@@ -97,7 +97,6 @@ struct
     cell% field vardef>export
     cell% field vardef>name
     cell% field vardef>type
-    cell% field vardef>insn
     cell% field vardef>comment
 end-struct vardef%
 
@@ -205,8 +204,8 @@ private{
 : make-fundef ( export name type blocks comment -- node )
     Nfundef make-node5
 ; export
-: make-vardef ( export name type insn comment -- node )
-    Nvardef make-node5
+: make-vardef ( export name type comment -- node )
+    Nvardef make-node4
 ; export
 : make-program ( defs -- node ) Nprogram make-node1 ; export
 

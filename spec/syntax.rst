@@ -113,9 +113,15 @@ Toplevel Items::
                  instruction*
                  branch_instruction
 
-   variable_definition : label ":" type "=" expression
+   variable_definition : label ":" type
 
    toplevel_definition : document* "export"? function_definition
                        | document* "export"? variable_definition
 
    program : toplevel_definition*
+
+Order of Toplevel Definitions
+=============================
+
+PlanckIR does not care about the order where top-level variables, constants,
+functions, etc. are defined.
