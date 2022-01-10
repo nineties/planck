@@ -185,7 +185,7 @@ create CODEPOS CODEBUF ,
         dup vardef>name @ get-id >r
         'D' r> r> r> add-export
     then
-    drop
+    VARDEFS array-push
 ;
 
 : compile-definition ( def -- )
@@ -212,7 +212,7 @@ create CODEPOS CODEBUF ,
     >r
     %11011111 ['] encode-u8 emit
     %11111111 ['] encode-u8 emit
-    3 ['] encode-uint emit  \ number of sections
+    4 ['] encode-uint emit  \ number of sections
 
     \ write ID section
     $00 ['] encode-u8 emit  \ section type
@@ -229,6 +229,12 @@ create CODEPOS CODEBUF ,
         i FUNDEFS array@ dup >r
         tuple1 @ ['] encode-type emit           \ emit function type
         r> tuple2 @ ['] encode-basicblocks emit
+    loop
+
+    $02 ['] encode-u8 emit \ section type
+    VARDEFS array-size ['] encode-uint emit
+    VARDEFS array-size 0 ?do
+        i VARDEFS array@ vardef>type @ ['] encode-type emit
     loop
 
     \ write export section
