@@ -106,8 +106,8 @@ create CODEPOS CODEBUF ,
         swap node>arg1 !
     endof
     Nstore of
-        dup node>arg2 @ node>arg0 @ lookup-vardef
-        swap node>arg2 !
+        dup node>arg0 @ node>arg0 @ lookup-vardef
+        swap node>arg0 !
     endof
     drop
     endcase
