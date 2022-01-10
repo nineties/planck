@@ -28,6 +28,7 @@ TEST_OBJECTS=\
 	../tests/tuple2.pko \
 	../tests/tuple3.pko \
 	../tests/global-constant.pko \
+	../tests/lib.pko \
 	../tests/import.pko
 
 default: planck $(TEST_OBJECTS)
