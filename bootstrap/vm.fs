@@ -278,7 +278,7 @@ $2000000 constant FILE_BUFFER_SIZE
         dup u8@ case
         $00 of decode-id-section endof
         $01 of decode-function-section endof
-        $02 of decode-export-section endof
+        $03 of decode-export-section endof
         not-reachable
         endcase
     loop

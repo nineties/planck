@@ -70,7 +70,7 @@ typedef int64_t sint_t;
 // Sections
 #define SEC_ID      0x00
 #define SEC_FUN     0x01
-#define SEC_EXPORT  0x02
+#define SEC_EXPORT  0x03
 // Instructions
 #define I_NOP       0x00
 #define I_PHI       0x01

@@ -232,7 +232,7 @@ create CODEPOS CODEBUF ,
     loop
 
     \ write export section
-    $02 ['] encode-u8 emit  \ section type
+    $03 ['] encode-u8 emit  \ section type
     EXPORTS array-size ['] encode-uint emit
     EXPORTS array-size 0 ?do
         i EXPORTS array@ dup dup dup >r >r >r
