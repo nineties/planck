@@ -88,7 +88,7 @@ Instruction::
               | operand "!=" operand
               | operand "<" operand
               | operand "<=" operand
-              | "label" "(" operands ")"
+              | label "(" operands ")"
               | "(" operands ")"
               | operand "." int
 
