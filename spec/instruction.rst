@@ -46,6 +46,8 @@ Non-Branch Instructions
    +----------+----------+-----------------+--------------------------------+
    | lcall    | 00100000 | see below       | local function call            |
    +----------+----------+-----------------+--------------------------------+
+   | ecall    | 00100001 | see below       | external function call         |
+   +----------+----------+-----------------+--------------------------------+
    |          | 00100001 |                 |                                |
    |          |    -     |                 | reserved                       |
    |          | 00101111 |                 |                                |
@@ -94,6 +96,19 @@ Function calls::
    +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+
 
    f is the index of the function in the object file.
+
+
+   * External function call
+
+   Calling a function of other module.
+   lhs == <module name(m)>::f(arg0, arg1, ...)
+
+   +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+
+   | 00100001 | lhs | uint (m) | uint (f) | uint (n) | n x args |
+   +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+
+
+   m is the index of module name in ID table section.
+   f is also the index of function name in the section.
 
 
 Branch Instructions
