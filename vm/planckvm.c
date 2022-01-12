@@ -74,6 +74,7 @@ typedef int64_t sint_t;
 #define SEC_FUN     0x01
 #define SEC_VAR     0x02
 #define SEC_EXPORT  0x03
+#define SEC_IMPORT  0x04
 // Instructions
 #define I_NOP       0x00
 #define I_PHI       0x01
@@ -259,6 +260,8 @@ typedef struct {
     } *vars;
     size_t n_export;
     export_item *exports;
+    size_t n_import;
+    uint_t *imports;
 } object_file;
 
 typedef struct {
@@ -669,6 +672,12 @@ decode_section(object_file *obj, byte_t **cur) {
             obj->exports[i].def = decode_uint(cur);
             obj->exports[i].comment = decode_str(cur);
         }
+        return;
+    case SEC_IMPORT:
+        obj->n_import = decode_uint(cur);
+        obj->imports = calloc(obj->n_import, sizeof(obj->imports[0]));
+        for (int i = 0; i < obj->n_import; i++)
+            obj->imports[i] = decode_uint(cur);
         return;
     }
     not_reachable();
