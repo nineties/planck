@@ -91,7 +91,8 @@ typedef int64_t sint_t;
 #define I_NE        0x0c
 #define I_LT        0x0d
 #define I_LE        0x0e
-#define I_LCALL     0x20    // local call
+#define I_LCALL     0x20
+#define I_ECALL     0x21
 #define I_TUPLE     0x50
 #define I_TUPLEAT   0x51
 #define I_LOAD      0x60
@@ -215,7 +216,8 @@ typedef struct {
                     operand arg;
                     uint_t index;
                 };
-                struct { // local function call and tuple
+                struct { // local and external function call and tuple
+                    uint_t mod;
                     uint_t fun;
                     size_t n_args;
                     operand *args;
@@ -527,6 +529,16 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
     case I_LCALL:
         insn->tag = I_LCALL;
         decode_operand(fun, &insn->lhs, cur);
+        insn->fun = decode_uint(cur);
+        insn->n_args = decode_uint(cur);
+        insn->args = calloc(insn->n_args, sizeof(insn->args[0]));
+        for (int i = 0; i < insn->n_args; i++)
+            decode_operand(fun, &insn->args[i], cur);
+        return;
+    case I_ECALL:
+        insn->tag = I_ECALL;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->mod = decode_uint(cur);
         insn->fun = decode_uint(cur);
         insn->n_args = decode_uint(cur);
         insn->args = calloc(insn->n_args, sizeof(insn->args[0]));
