@@ -16,6 +16,16 @@ s" Syntax Error" exception constant SYNTAX-ERROR
 
 private{
 
+: list-length ( list -- n )
+    0 >r
+    begin ?dup while
+        r> 1+ >r
+        cdr
+    repeat
+    r>
+;
+
+
 : expect-sym ( lexer c -- bool )
     over lexer>token_tag @ Tsymbol = unless 2drop false exit then
     swap lexer>token_val @ =
@@ -46,7 +56,7 @@ private{
 
 : parse-long-id ( lexer -- node )
     parse-long-id-impl ?dup unless 0 exit then
-    Nlogid make-node1
+    Nlongid make-node1
 ;
 
 : parse-register ( lexer -- node )
@@ -274,12 +284,20 @@ create parse-type-p 0 ,
         then
         drop 0 swap make-move exit
     then
-    dup parse-label ?dup if swap else SYNTAX-ERROR throw then
+    dup parse-long-id ?dup unless SYNTAX-ERROR throw then
+    dup node>arg0 @ list-length 1 = if
+        node>arg0 @ car Nid make-node1
+    then
+
+    swap
     dup '(' expect-sym if
         dup lex
 
         \ function call
-        over node>tag @ Nid = unless SYNTAX-ERROR throw then
+        over node>tag @ Nid = unless
+        over node>tag @ Nlongid = unless SYNTAX-ERROR throw
+        then then
+
         dup ')' expect-sym if
             lex
             \ function call with no argument

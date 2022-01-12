@@ -16,6 +16,7 @@ private{
 variable PROGRAM
 make-string-table constant IDTABLE  \ string -> ID
 0 make-array constant EXPORTS       \ array of (type, ID idx, def idx)
+0 make-array constant IMPORTS       \ array of ID idx
 0 make-array constant FUNDEFS       \ array of function definitions
 0 make-array constant VARDEFS       \ array of variable definitions
 $100000 allocate throw constant CODEBUF
@@ -31,10 +32,34 @@ create CODEPOS CODEBUF ,
 ;
 
 \ Add an id to idtable section if not exist. Returns index of the id.
-: get-id ( id -- n )
-    node>arg0 @ IDTABLE
+: get-id ( str -- n )
+    IDTABLE
     2dup ?table-in if table@ exit then
     dup table-size dup >r -rot table! r>
+;
+
+\ list of ids to foo::bar::baz style string
+: join-longid ( list -- s )
+    dup cdr if
+        dup cdr recurse
+        s" ::" swap concat-string
+        swap car swap concat-string
+    else
+        car
+    then
+;
+
+\ convert a list like (foo bar baz f) to two strings foo::bar:baz and f
+: split-longid ( list -- m f )
+    dup cdr cdr if
+        dup cdr recurse >r ( list m f )
+        s" ::" swap concat-string
+        swap car swap concat-string r>
+    else dup cdr if
+        dup car swap cdr car
+    else
+        not-reachable
+    then then
 ;
 
 : lookup-fundef ( name -- idx )
@@ -116,11 +141,19 @@ create CODEPOS CODEBUF ,
 : compile-insn ( insn -- insn )
     dup node>tag @ case
     Ncall of
-        dup node>arg1 @ node>arg0 @ lookup-fundef dup 0< if not-reachable then
-        over node>arg0 @ swap
-        2 pick node>arg2 @
-        Nlcall make-node3
-        nip
+        dup node>arg1 @ node>tag @ Nid = if
+            dup node>arg1 @ node>arg0 @ lookup-fundef dup 0< if not-reachable then
+            over node>arg0 @ swap
+            2 pick node>arg2 @
+            Nlcall make-node3
+            nip
+        else
+            dup node>arg1 @ node>tag @ Nlongid = unless not-reachable then
+
+            dup node>arg2 >r
+            dup node>arg1 @ node>arg0 @ split-longid get-id swap get-id >r >r
+            node>arg0 @ r> r> r> Necall make-node4
+        then
     endof
         drop 0
     endcase
@@ -165,7 +198,7 @@ create CODEPOS CODEBUF ,
     dup fundef>export @ if
         dup fundef>comment @ >r
         FUNDEFS array-size >r
-        dup fundef>name @ get-id >r
+        dup fundef>name @ node>arg0 @ get-id >r
         'F' r> r> r> add-export
     then
     dup compile-function-body
@@ -182,16 +215,22 @@ create CODEPOS CODEBUF ,
     dup vardef>export @ if
         dup vardef>comment @ >r
         VARDEFS array-size >r
-        dup vardef>name @ get-id >r
+        dup vardef>name @ node>arg0 @ get-id >r
         'D' r> r> r> add-export
     then
     VARDEFS array-push
 ;
 
+: compile-import ( node -- )
+    node>arg0 @ node>arg0 @ join-longid get-id IMPORTS array-push
+;
+
+
 : compile-definition ( def -- )
     dup node>tag @ case
     Nfundef of compile-fundef endof
     Nvardef of compile-vardef endof
+    Nimport of compile-import endof
         not-reachable
     endcase
 ;
@@ -212,7 +251,7 @@ create CODEPOS CODEBUF ,
     >r
     %11011111 ['] encode-u8 emit
     %11111111 ['] encode-u8 emit
-    4 ['] encode-uint emit  \ number of sections
+    5 ['] encode-uint emit  \ number of sections
 
     \ write ID section
     $00 ['] encode-u8 emit  \ section type
@@ -252,6 +291,13 @@ create CODEPOS CODEBUF ,
         r> tuple1 @ ['] encode-uint emit \ index of the ID
         r> tuple2 @ ['] encode-uint emit \ index of corresponding def
         r> tuple3 @ ['] encode-str emit  \ documentation
+    loop
+
+    \ write import section
+    $04 ['] encode-u8 emit  \ section type
+    EXPORTS array-size ['] encode-uint emit
+    EXPORTS array-size 0 ?do
+        i EXPORTS array@ ['] encode-uint emit
     loop
 
     \ write buf to file

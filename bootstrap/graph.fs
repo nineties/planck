@@ -9,7 +9,7 @@ include lib/string.fs
 ( node type )
 0
     enum Nid        ( name )
-    enum Nlogid     ( list of names )
+    enum Nlongid     ( list of names )
     enum Nregister  ( idx )
     enum Nargument  ( idx )
     enum Nderef     ( node )
@@ -37,7 +37,8 @@ include lib/string.fs
     enum Nle
 
     enum Ncall
-    enum Nlcall
+    enum Nlcall \ local call
+    enum Necall \ external call
 
     enum Nmaketuple
     enum Ntupleat
