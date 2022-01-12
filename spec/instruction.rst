@@ -107,8 +107,8 @@ Function calls::
    | 00100001 | lhs | uint (m) | uint (f) | uint (n) | n x args |
    +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+
 
-   m is the index of module name in ID table section.
-   f is also the index of function name in the section.
+   m is the index of the module in Import table section.
+   f is the index of name of the function in ID table section.
 
 
 Branch Instructions
