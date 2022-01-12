@@ -696,7 +696,7 @@ decode_section(object_file *obj, byte_t **cur) {
 }
 
 static object_file *
-load_object_file(const char *path) {
+load_object_file(interpreter *interp, const char *path) {
     FILE *fp = fopen(path, "rb");
     fpos_t pos;
     fseek(fp, 0, SEEK_END);
@@ -1019,15 +1019,11 @@ call(interpreter *interp, object_file *obj, function *fun) {
 }
 
 static int
-interpret(object_file *obj) {
-    interpreter interp;
-    interp.stack = calloc(STACK_SIZE, sizeof(value));
-    interp.sp = interp.stack + STACK_SIZE;
-
+interpret(interpreter *interp, object_file *obj) {
     /* if the object file has startup function, call it */
     if (obj->startup >= 0) {
         function *startup_fun = &obj->funcs[obj->startup];
-        call(&interp, obj, startup_fun); /* todo type check */
+        call(interp, obj, startup_fun); /* todo type check */
     }
 
     uint_t main_id = lookup_id(obj, "main");
@@ -1050,7 +1046,7 @@ interpret(object_file *obj) {
         exit(1);
     }
 
-    value ret = call(&interp, obj, main_fun);
+    value ret = call(interp, obj, main_fun);
     return (int) ret.i;
 }
 
@@ -1060,6 +1056,10 @@ main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s <object file>\n", argv[0]);
         return 1;
     }
-    object_file *obj = load_object_file(argv[1]);
-    return interpret(obj);
+    interpreter interp;
+    interp.stack = calloc(STACK_SIZE, sizeof(value));
+    interp.sp = interp.stack + STACK_SIZE;
+
+    object_file *obj = load_object_file(&interp, argv[1]);
+    return interpret(&interp, obj);
 }
