@@ -36,11 +36,9 @@ struct
     cell% field expt>doc
 end-struct export-item%
 
-struct
-    cell% field interp>stack
-    cell% field interp>sp
-    cell% field interp>bp
-end-struct interpreter%
+1024 1024 * constant STACK-SIZE
+variable SP
+variable BP
 
 0 make-array constant MODULES
 
@@ -51,7 +49,6 @@ end-struct interpreter%
 : push-module ( mod -- ) MODULES array-push ;
 : pop-module  ( -- ) MODULES array-pop drop ;
 
-1024 1024 * constant STACK-SIZE
 
 : reverse ( xu ... x1 u -- x1 ... xu )
     case
@@ -370,12 +367,14 @@ $2000000 constant FILE_BUFFER_SIZE
 
 \ address of local variable
 : localp ( interp index -- a-addr )
-    1+ cells negate swap interp>bp @ +
+    nip
+    1+ cells negate BP @ +
 ;
 
 \ address of call argument
 : argp ( interp index -- a-addr )
-    cells swap interp>bp @ +
+    nip
+    cells BP @ +
 ;
 
 \ evaluate operand to value
@@ -497,8 +496,8 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : call ( interp fun -- interp retvalue )
-    over interp>bp @ >r     \ save base pointer
-    over interp>sp @ 2 pick interp>bp !
+    BP @ >r \ save base pointer
+    SP @ BP !
 
     \ type check of arguments
     dup fun>ty @ node>arg1 @ dup array-size 0 ?do
@@ -506,7 +505,7 @@ $2000000 constant FILE_BUFFER_SIZE
     loop drop
 
     \ allocate space for local variables
-    dup fun>nlocals @ cells 2 pick interp>sp -!
+    dup fun>nlocals @ cells SP -!
 
     ( interp fun prev cur )
     0 0 2 pick fun>blocks @ array@
@@ -552,11 +551,11 @@ $2000000 constant FILE_BUFFER_SIZE
             Nle  of 4 pick swap binexpr endof
             Nlcall of
                 \ allocate space for arguments
-                dup node>arg2 @ array-size cells 5 pick interp>sp -!
+                dup node>arg2 @ array-size cells SP -!
                 \ push arguments to the stack
                 dup node>arg2 @ array-size 0 ?do
                     4 pick i 2 pick node>arg2 @ array@ to-value
-                    5 pick interp>sp @ i cells + !
+                    SP i cells + !
                 loop
                 dup node>arg1 @ ( index of the function )
                 current-module obj>funcs @ array@
@@ -565,7 +564,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 2 pick node>arg0 @ swap move \ assign retval to lhs
 
                 \ restore stack pointer
-                node>arg2 @ array-size cells 4 pick interp>sp +!
+                node>arg2 @ array-size cells SP +!
             endof
             Nmaketuple of
                 0 make-array
@@ -610,8 +609,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
                 nip nip nip unloop
                 \ restore base pointer
-                r>
-                2 pick interp>bp !
+                r> BP !
                 exit
             endof
             Niftrue of
@@ -638,9 +636,8 @@ $2000000 constant FILE_BUFFER_SIZE
         bye
     then
 
-    interpreter% %allocate throw
-    STACK-SIZE cells allocate throw over interp>stack !
-    dup interp>stack STACK-SIZE cells + over interp>sp !
+    STACK-SIZE cells allocate throw SP !
+    0 \ temp
 
     1 cells argv @ + @ ( object file )
 
