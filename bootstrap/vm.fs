@@ -372,8 +372,7 @@ $2000000 constant FILE_BUFFER_SIZE
 : argp ( index -- a-addr ) cells BP @ + ;
 
 \ evaluate operand to value
-: to-value ( interp operand -- value )
-    nip
+: to-value ( operand -- value )
     dup node>tag @ case
     Nregister of node>arg0 @ localp @ endof
     Nargument of node>arg0 @ argp @ endof
@@ -452,8 +451,8 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : binexpr ( interp node -- )
-    over over node>arg2 @ to-value >r
-    over over node>arg1 @ to-value r>
+    dup node>arg2 @ to-value >r
+    dup node>arg1 @ to-value r>
     ( interp node arg0 arg1 )
     over node>tag @ over node>tag @ <> if TYPE-ERROR throw then
     2 pick node>tag @ case
@@ -477,8 +476,8 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : comp-branch ( interp fun prev cur node -- interp fun prev cur )
-    4 pick over node>arg0 @ to-value >r
-    4 pick over node>arg1 @ to-value r> swap
+    dup node>arg0 @ to-value >r
+    dup node>arg1 @ to-value r> swap
     2 pick node>tag @ case
     Nifeq of ['] = binexpr-comp endof
     Nifne of ['] <> binexpr-comp endof
@@ -521,7 +520,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 then
                 drop
             loop
-            5 pick swap to-value
+            to-value
             swap node>arg0 @ swap 5 pick -rot move
         loop
         dup block>insns @ array-size 0 ?do
@@ -529,7 +528,7 @@ $2000000 constant FILE_BUFFER_SIZE
             dup node>tag @ case
             Nmove of
                 ( interp fun prev cur node )
-                4 pick over node>arg1 @ to-value >r
+                dup node>arg1 @ to-value >r
                 node>arg0 @
                 4 pick swap r> move
             endof
@@ -550,7 +549,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 dup node>arg2 @ array-size cells SP -!
                 \ push arguments to the stack
                 dup node>arg2 @ array-size 0 ?do
-                    4 pick i 2 pick node>arg2 @ array@ to-value
+                    i over node>arg2 @ array@ to-value
                     SP @ i cells + !
                 loop
                 dup node>arg1 @ ( index of the function )
@@ -565,7 +564,7 @@ $2000000 constant FILE_BUFFER_SIZE
             Nmaketuple of
                 0 make-array
                 over node>arg1 @ array-size 0 ?do
-                    5 pick i 3 pick node>arg1 @ array@
+                    i 2 pick node>arg1 @ array@
                     to-value over array-push
                 loop
                 Ntuple make-node1 >r
@@ -573,7 +572,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 drop
             endof
             Ntupleat of
-                4 pick over node>arg1 @ to-value
+                dup node>arg1 @ to-value
                 dup node>tag @ Ntuple = unless TYPE-ERROR throw then
                 node>arg0 @ over node>arg2 @ swap array@
                 swap node>arg0 @ swap 5 pick -rot move
@@ -584,7 +583,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 ( interp fun prev cur lhs value )
             endof
             Nstore of
-                4 pick over node>arg1 @ to-value swap node>arg0 @
+                dup node>arg1 @ to-value swap node>arg0 @
                 current-module obj>vars @ array@
                 tuck tuple0 @ over check-type unless TYPE-ERROR throw then
                 swap tuple1 !
@@ -595,8 +594,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 rot drop ( interp fun prev cur next -> interp fun cur next )
             endof
             Nreturn of
-                node>arg0 @
-                4 pick swap to-value
+                node>arg0 @ to-value
 
                 \ check type of return value
                 3 pick fun>ty @ node>arg0 @ over check-type unless
@@ -609,7 +607,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 exit
             endof
             Niftrue of
-                dup node>arg0 @ 5 pick swap to-value
+                dup node>arg0 @ to-value
                 dup node>tag @ Nbool = unless not-reachable then
                 node>arg0 @ if node>arg1 @ else node>arg2 @ then
                 3 pick fun>blocks @ array@ ( next block )
