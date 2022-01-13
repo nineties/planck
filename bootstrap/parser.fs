@@ -334,11 +334,11 @@ create parse-type-p 0 ,
             dup node>arg1 @ node>tag @ Nid = if SYNTAX-ERROR throw then
             dup node>arg0 @
             swap node>arg1 @
-            make-store
+            make-lstore
         else dup node>arg1 @ node>tag @ Nid = if
             dup node>arg0 @
             swap node>arg1 @
-            make-load
+            make-lload
         then then
     then
 

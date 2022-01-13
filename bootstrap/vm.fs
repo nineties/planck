@@ -206,12 +206,12 @@ $2000000 constant FILE_BUFFER_SIZE
     %01100000 of
         drop
         decode-operand >r
-        decode-uint r> swap Nload make-node2
+        decode-uint r> swap Nlload make-node2
     endof
     %01100001 of
         drop
         decode-uint >r
-        decode-operand r> swap Nstore make-node2
+        decode-operand r> swap Nlstore make-node2
     endof
     %10000000 of drop decode-uint make-goto endof
     %10000001 of drop decode-operand make-return endof
@@ -596,12 +596,12 @@ $2000000 constant FILE_BUFFER_SIZE
                 node>arg0 @ over node>arg2 @ swap array@
                 swap node>arg0 @ swap move
             endof
-            Nload of
+            Nlload of
                 dup node>arg1 @ current-module mod>vars @ array@ tuple1 @
                 swap node>arg0 @ swap move
                 ( fun prev cur lhs value )
             endof
-            Nstore of
+            Nlstore of
                 dup node>arg1 @ to-value swap node>arg0 @
                 current-module mod>vars @ array@
                 tuck tuple0 @ over check-type unless TYPE-ERROR throw then

@@ -134,11 +134,11 @@ create CODEPOS CODEBUF ,
     Nifne of 2 replace-label-impl 3 replace-label-impl drop endof
     Niflt of 2 replace-label-impl 3 replace-label-impl drop endof
     Nifle of 2 replace-label-impl 3 replace-label-impl drop endof
-    Nload of
+    Nlload of
         dup node>arg1 @ node>arg0 @ lookup-vardef
         swap node>arg1 !
     endof
-    Nstore of
+    Nlstore of
         dup node>arg0 @ node>arg0 @ lookup-vardef
         swap node>arg0 !
     endof

@@ -1,0 +1,8 @@
+import lib
+
+/// Test of loading variable defined in other module
+export fun main: () -> i32 {
+root:
+    %0 = lib::CONSTANT
+    return %0
+}
