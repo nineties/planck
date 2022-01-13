@@ -40,8 +40,16 @@ struct
     cell% field interp>stack
     cell% field interp>sp
     cell% field interp>bp
-    cell% field interp>mod
 end-struct interpreter%
+
+0 make-array constant MODULES
+
+: current-module ( -- mod )
+    MODULES array-size 1- MODULES array@
+;
+
+: push-module ( mod -- ) MODULES array-push ;
+: pop-module  ( -- ) MODULES array-pop drop ;
 
 1024 1024 * constant STACK-SIZE
 
@@ -327,7 +335,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
 : lookup-func ( interp c-addr -- function )
     \ lookup id of the name
-    over interp>mod @ obj>ids @
+    current-module obj>ids @
     -1 over array-size 0 ?do
         ( c-addr arr -1 )
         i 2 pick array@ 3 pick streq if
@@ -343,14 +351,14 @@ $2000000 constant FILE_BUFFER_SIZE
 
     ( interp name name-id )
     \ lookup export table
-    2 pick interp>mod @ obj>exports @ 0
+    current-module obj>exports @ 0
     over array-size 0 ?do
         i 2 pick array@
         ( interp name name-id exports tup )
         dup expt>id @ 4 pick = if
             dup expt>type @ [char] F = unless DECODE-ERROR throw then
             expt>def @
-            5 pick interp>mod @ obj>funcs @ array@
+            current-module obj>funcs @ array@
             nip
             leave
         else
@@ -551,7 +559,7 @@ $2000000 constant FILE_BUFFER_SIZE
                     5 pick interp>sp @ i cells + !
                 loop
                 dup node>arg1 @ ( index of the function )
-                5 pick interp>mod @ obj>funcs @ array@
+                current-module obj>funcs @ array@
                 5 pick swap recurse \ call the function
                 ( interp fun prev cur node interp retval )
                 2 pick node>arg0 @ swap move \ assign retval to lhs
@@ -576,13 +584,13 @@ $2000000 constant FILE_BUFFER_SIZE
                 swap node>arg0 @ swap 5 pick -rot move
             endof
             Nload of
-                dup node>arg1 @ 5 pick interp>mod @ obj>vars @ array@ tuple1 @
+                dup node>arg1 @ current-module obj>vars @ array@ tuple1 @
                 swap node>arg0 @ swap 5 pick -rot move
                 ( interp fun prev cur lhs value )
             endof
             Nstore of
                 4 pick over node>arg1 @ to-value swap node>arg0 @
-                5 pick interp>mod @ obj>vars @ array@
+                current-module obj>vars @ array@
                 tuck tuple0 @ over check-type unless TYPE-ERROR throw then
                 swap tuple1 !
             endof
@@ -639,11 +647,11 @@ $2000000 constant FILE_BUFFER_SIZE
     over load-module
     ( interp mod )
 
-    over interp>mod !
+    push-module
 
     \ run startup code if it exists
-    dup interp>mod @ obj>startup @ dup 0>= unless drop else
-        over interp>mod @ obj>funcs @ array@
+    current-module obj>startup @ dup 0>= unless drop else
+        current-module obj>funcs @ array@
         call \ TODO: type check
         drop
     then
