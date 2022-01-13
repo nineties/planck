@@ -621,7 +621,9 @@ $2000000 constant FILE_BUFFER_SIZE
     \ run startup code if it exists
     dup mod>startup @ dup 0>= unless drop else
         over mod>funcs @ array@
+        over push-module
         call \ TODO: type check
+        pop-module
         drop
     then
 ;
@@ -646,6 +648,8 @@ $2000000 constant FILE_BUFFER_SIZE
     node>arg1 @ array-size 0= unless not-reachable then
 
     call    \ call main
+    pop-module
+
     dup node>tag @ Nint <> if not-reachable then
     node>arg0 @
 
