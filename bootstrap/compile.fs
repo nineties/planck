@@ -304,9 +304,9 @@ create CODEPOS CODEBUF ,
 
     \ write import section
     $04 ['] encode-u8 emit  \ section type
-    EXPORTS array-size ['] encode-uint emit
-    EXPORTS array-size 0 ?do
-        i EXPORTS array@ ['] encode-uint emit
+    IMPORTS array-size ['] encode-uint emit
+    IMPORTS array-size 0 ?do
+        i IMPORTS array@ ['] encode-uint emit
     loop
 
     \ write buf to file
