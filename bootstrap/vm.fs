@@ -292,7 +292,9 @@ $2000000 constant FILE_BUFFER_SIZE
     loop
 ;
 
-: load-module ( file -- object )
+: load-module ( file interp -- module )
+    drop
+
     \ Read file content
     R/O open-file throw
     FILE_BUFFER_SIZE allocate throw dup >r
@@ -627,13 +629,17 @@ $2000000 constant FILE_BUFFER_SIZE
         ." Usage: ./planck < bootstrap.fs " argv @ @ type ."  <object file>" cr
         bye
     then
-    1 cells argv @ + @ ( object file )
-    load-module
 
     interpreter% %allocate throw
     STACK-SIZE cells allocate throw over interp>stack !
     dup interp>stack STACK-SIZE cells + over interp>sp !
-    tuck interp>mod !
+
+    1 cells argv @ + @ ( object file )
+
+    over load-module
+    ( interp mod )
+
+    over interp>mod !
 
     \ run startup code if it exists
     dup interp>mod @ obj>startup @ dup 0>= unless drop else
