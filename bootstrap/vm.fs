@@ -398,8 +398,7 @@ $2000000 constant FILE_BUFFER_SIZE
     endcase
 ;
 
-: move ( interp lhs value -- )
-    rot drop
+: move ( lhs value -- )
     over node>tag @ case
     Nregister of
         ( intep lhs val )
@@ -451,9 +450,9 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : binexpr ( interp node -- )
+    swap drop
     dup node>arg2 @ to-value >r
     dup node>arg1 @ to-value r>
-    ( interp node arg0 arg1 )
     over node>tag @ over node>tag @ <> if TYPE-ERROR throw then
     2 pick node>tag @ case
     Nadd of ['] + binexpr-int endof
@@ -470,7 +469,7 @@ $2000000 constant FILE_BUFFER_SIZE
     Nle  of ['] <= binexpr-comp endof
     not-implemented
     endcase
-    ( interp node value )
+    ( node value )
     >r node>arg0 @ r>
     move
 ;
@@ -521,7 +520,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 drop
             loop
             to-value
-            swap node>arg0 @ swap 5 pick -rot move
+            swap node>arg0 @ swap move
         loop
         dup block>insns @ array-size 0 ?do
             i over block>insns @ array@ ( insn )
@@ -529,8 +528,7 @@ $2000000 constant FILE_BUFFER_SIZE
             Nmove of
                 ( interp fun prev cur node )
                 dup node>arg1 @ to-value >r
-                node>arg0 @
-                4 pick swap r> move
+                node>arg0 @ r> move
             endof
             Nadd of 4 pick swap binexpr endof
             Nsub of 4 pick swap binexpr endof
@@ -556,7 +554,8 @@ $2000000 constant FILE_BUFFER_SIZE
                 current-module obj>funcs @ array@
                 5 pick swap recurse \ call the function
                 ( interp fun prev cur node interp retval )
-                2 pick node>arg0 @ swap move \ assign retval to lhs
+                nip
+                over node>arg0 @ swap move \ assign retval to lhs
 
                 \ restore stack pointer
                 node>arg2 @ array-size cells SP +!
@@ -568,18 +567,18 @@ $2000000 constant FILE_BUFFER_SIZE
                     to-value over array-push
                 loop
                 Ntuple make-node1 >r
-                4 pick over node>arg0 @ r> move
+                dup node>arg0 @ r> move
                 drop
             endof
             Ntupleat of
                 dup node>arg1 @ to-value
                 dup node>tag @ Ntuple = unless TYPE-ERROR throw then
                 node>arg0 @ over node>arg2 @ swap array@
-                swap node>arg0 @ swap 5 pick -rot move
+                swap node>arg0 @ swap move
             endof
             Nload of
                 dup node>arg1 @ current-module obj>vars @ array@ tuple1 @
-                swap node>arg0 @ swap 5 pick -rot move
+                swap node>arg0 @ swap move
                 ( interp fun prev cur lhs value )
             endof
             Nstore of
