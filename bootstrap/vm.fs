@@ -366,23 +366,18 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 \ address of local variable
-: localp ( interp index -- a-addr )
-    nip
-    1+ cells negate BP @ +
-;
+: localp ( index -- a-addr ) 1+ cells negate BP @ + ;
 
 \ address of call argument
-: argp ( interp index -- a-addr )
-    nip
-    cells BP @ +
-;
+: argp ( index -- a-addr ) cells BP @ + ;
 
 \ evaluate operand to value
 : to-value ( interp operand -- value )
+    nip
     dup node>tag @ case
     Nregister of node>arg0 @ localp @ endof
     Nargument of node>arg0 @ argp @ endof
-    drop nip 0
+    drop 0
     endcase
 ;
 
@@ -405,6 +400,7 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : move ( interp lhs value -- )
+    rot drop
     over node>tag @ case
     Nregister of
         ( intep lhs val )
@@ -501,7 +497,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
     \ type check of arguments
     dup fun>ty @ node>arg1 @ dup array-size 0 ?do
-        i over array@ 3 pick i argp @ check-type unless TYPE-ERROR throw then
+        i over array@ i argp @ check-type unless TYPE-ERROR throw then
     loop drop
 
     \ allocate space for local variables
