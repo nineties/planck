@@ -297,37 +297,6 @@ $2000000 constant FILE_BUFFER_SIZE
     loop
 ;
 
-: load-module ( file -- module )
-    \ Read file content
-    R/O open-file throw
-    FILE_BUFFER_SIZE allocate throw dup >r
-    FILE_BUFFER_SIZE
-    2 pick read-file throw
-    dup FILE_BUFFER_SIZE >= if
-        ." The size of file buffer is not enough" cr
-        1 quit
-    then
-    drop
-    close-file throw
-    r> ( buf )
-
-    make-module swap
-
-    dup u8@ %11011111 <> if DECODE-ERROR throw then 1+
-    dup u8@ %11111111 <> if DECODE-ERROR throw then 1+
-    decode-uint 0 ?do
-        dup u8@ case
-        $00 of decode-id-section endof
-        $01 of decode-function-section endof
-        $02 of decode-variable-section endof
-        $03 of decode-export-section endof
-        $04 of decode-import-section endof
-        not-reachable
-        endcase
-    loop
-    drop
-;
-
 : lookup-func ( c-addr -- function )
     \ lookup id of the name
     current-module mod>ids @
@@ -619,6 +588,45 @@ $2000000 constant FILE_BUFFER_SIZE
     not-implemented
 ;
 
+: load-module ( file -- module )
+    \ Read file content
+    R/O open-file throw
+    FILE_BUFFER_SIZE allocate throw dup >r
+    FILE_BUFFER_SIZE
+    2 pick read-file throw
+    dup FILE_BUFFER_SIZE >= if
+        ." The size of file buffer is not enough" cr
+        1 quit
+    then
+    drop
+    close-file throw
+    r> ( buf )
+
+    make-module swap
+
+    dup u8@ %11011111 <> if DECODE-ERROR throw then 1+
+    dup u8@ %11111111 <> if DECODE-ERROR throw then 1+
+    decode-uint 0 ?do
+        dup u8@ case
+        $00 of decode-id-section endof
+        $01 of decode-function-section endof
+        $02 of decode-variable-section endof
+        $03 of decode-export-section endof
+        $04 of decode-import-section endof
+        not-reachable
+        endcase
+    loop
+    drop
+
+    \ run startup code if it exists
+    dup mod>startup @ dup 0>= unless drop else
+        over mod>funcs @ array@
+        call \ TODO: type check
+        drop
+    then
+;
+
+
 :noname
     argc @ 2 <> if
         ." Usage: ./planck < bootstrap.fs " argv @ @ type ."  <object file>" cr
@@ -629,13 +637,6 @@ $2000000 constant FILE_BUFFER_SIZE
 
     1 cells argv @ + @ load-module
     push-module
-
-    \ run startup code if it exists
-    current-module mod>startup @ dup 0>= unless drop else
-        current-module mod>funcs @ array@
-        call \ TODO: type check
-        drop
-    then
 
     s" main" lookup-func
 
