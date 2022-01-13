@@ -134,14 +134,6 @@ create CODEPOS CODEBUF ,
     Nifne of 2 replace-label-impl 3 replace-label-impl drop endof
     Niflt of 2 replace-label-impl 3 replace-label-impl drop endof
     Nifle of 2 replace-label-impl 3 replace-label-impl drop endof
-    Nlload of
-        dup node>arg1 @ node>arg0 @ lookup-vardef
-        swap node>arg1 !
-    endof
-    Nlstore of
-        dup node>arg0 @ node>arg0 @ lookup-vardef
-        swap node>arg0 !
-    endof
     drop
     endcase
 ;
@@ -163,6 +155,14 @@ create CODEPOS CODEBUF ,
             get-id swap lookup-import-index swap >r >r
             node>arg0 @ r> r> r> Necall make-node4
         then
+    endof
+    Nlload of
+        dup node>arg1 @ node>arg0 @ lookup-vardef
+        over node>arg1 !
+    endof
+    Nlstore of
+        dup node>arg0 @ node>arg0 @ lookup-vardef
+        over node>arg0 !
     endof
         drop 0
     endcase
