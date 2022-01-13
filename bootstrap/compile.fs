@@ -155,15 +155,14 @@ create CODEPOS CODEBUF ,
             make-lload
         else dup node>arg0 @ node>tag @ Nlongid = if
             dup node>arg1 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
-            dup node>arg0 @
-            swap node>arg1 @
-            not-implemented
-            make-estore
+            dup node>arg0 @ node>arg0 @ split-longid
+            get-id swap lookup-import-index swap
+            rot node>arg1 @ Nestore make-node3
         else dup node>arg1 @ node>tag @ Nlongid = if
             dup node>arg0 @
-            swap node>arg1 @
-            not-implemented
-            make-eload
+            swap node>arg1 @ node>arg0 @ split-longid
+            get-id swap lookup-import-index swap
+            Neload make-node3
         then then then then
     endof
 

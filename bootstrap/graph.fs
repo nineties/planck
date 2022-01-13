@@ -204,8 +204,6 @@ private{
 : make-move ( lhs rhs -- node ) Nmove make-node2 ; export
 : make-lload ( lhs id -- node ) Nlload make-node2 ; export
 : make-lstore ( id rhs -- node ) Nlstore make-node2 ; export
-: make-eload ( lhs id -- node ) Neload make-node2 ; export
-: make-estore ( id rhs -- node ) Nestore make-node2 ; export
 : make-phi ( lhs args -- node ) Nphi make-node2 ; export
 : make-bblock ( name phis insns jump -- node ) Nbblock make-node4 ; export
 : make-fundef ( export name type blocks comment -- node )

@@ -498,6 +498,20 @@ T{ test-buf 1+ u32@ -> 65536 }T
         2 pick node>arg1 @ 2 pick encode-operand tuck + >r + r>
         nip nip
     endof
+    Neload of
+        %01100010 over u8! 1+ 1
+        2 pick node>arg0 @ 2 pick encode-operand tuck + >r + r>
+        2 pick node>arg1 @ 2 pick encode-uint tuck + >r + r>
+        2 pick node>arg2 @ 2 pick encode-uint tuck + >r + r>
+        nip nip
+    endof
+    Nestore of
+        %01100011 over u8! 1+ 1
+        2 pick node>arg0 @ 2 pick encode-uint tuck + >r + r>
+        2 pick node>arg1 @ 2 pick encode-uint tuck + >r + r>
+        2 pick node>arg2 @ 2 pick encode-operand tuck + >r + r>
+        nip nip
+    endof
     Ngoto of
         %10000000 over u8! 1+
         over node>arg0 @ over encode-uint 1+
