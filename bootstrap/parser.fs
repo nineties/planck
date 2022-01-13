@@ -332,14 +332,25 @@ create parse-type-p 0 ,
     dup node>tag @ Nmove = if
         dup node>arg0 @ node>tag @ Nid = if
             dup node>arg1 @ node>tag @ Nid = if SYNTAX-ERROR throw then
+            dup node>arg1 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
             dup node>arg0 @
             swap node>arg1 @
             make-lstore
         else dup node>arg1 @ node>tag @ Nid = if
+            dup node>arg0 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
             dup node>arg0 @
             swap node>arg1 @
             make-lload
-        then then
+        else dup node>arg0 @ node>tag @ Nlongid = if
+            dup node>arg1 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
+            dup node>arg0 @
+            swap node>arg1 @
+            make-estore
+        else dup node>arg1 @ node>tag @ Nlongid = if
+            dup node>arg0 @
+            swap node>arg1 @
+            make-eload
+        then then then then
     then
 
     nip
