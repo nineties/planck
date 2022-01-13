@@ -68,6 +68,10 @@ Non-Branch Instructions
    +----------+----------+-----------------+-----------------------------------+
    | lstore   | 01100001 | uint(i),rhs     | store to module local variable(i) |
    +----------+----------+-----------------+-----------------------------------+
+   | eload    | 01100010 | see below       | load variable of other module     |
+   +----------+----------+-----------------+-----------------------------------+
+   | estore   | 01100011 | see below       | store to variable of other module |
+   +----------+----------+-----------------+-----------------------------------+
 
 Phi instruction::
 
@@ -101,7 +105,7 @@ Function calls::
    * External function call
 
    Calling a function of other module.
-   lhs == <module(m)>::f(arg0, arg1, ...)
+   lhs = <module(m)>::f(arg0, arg1, ...)
 
    +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+
    | 00100001 | lhs | uint (m) | uint (f) | uint (n) | n x args |
@@ -110,6 +114,26 @@ Function calls::
    m is the index of the module in Import table section.
    f is the index of name of the function in ID table section.
 
+Reading/Writing module variable::
+
+   * eload operation
+
+   lhs = <module(m)>::x
+
+   +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+
+   | 01100010 | lhs | uint (m) | uint (x) |
+   +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+
+
+   * estore operation
+
+   <module(m)>::x = rhs
+
+   +----------+~~~~~~~~~~+~~~~~~~~~~+~~~~~+
+   | 01100011 | uint (m) | uint (x) | rhs |
+   +----------+~~~~~~~~~~+~~~~~~~~~~+~~~~~+
+
+   m is the index of the module in Import table section.
+   x is the index of name of the variable in ID table section.
 
 Branch Instructions
 ===================
