@@ -96,6 +96,14 @@ create CODEPOS CODEBUF ,
     not-reachable
 ;
 
+: lookup-import-index ( name -- idx )
+    get-id
+    IMPORTS array-size 0 ?do
+        i IMPORTS array@ over = if drop i unloop exit then
+    loop
+    not-reachable
+;
+
 : add-export ( type id-idx def-idx comment -- )
     4 cells allocate throw
     tuck tuple3 !
@@ -151,7 +159,8 @@ create CODEPOS CODEBUF ,
             dup node>arg1 @ node>tag @ Nlongid = unless not-reachable then
 
             dup node>arg2 >r
-            dup node>arg1 @ node>arg0 @ split-longid get-id swap get-id >r >r
+            dup node>arg1 @ node>arg0 @ split-longid
+            get-id swap lookup-import-index >r >r
             node>arg0 @ r> r> r> Necall make-node4
         then
     endof
