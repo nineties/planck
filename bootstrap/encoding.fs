@@ -434,6 +434,20 @@ T{ test-buf 1+ u32@ -> 65536 }T
         ( insn buf n )
         nip nip
     endof
+    Necall of
+        %00100001 over u8! 1+ 1 >r
+        over node>arg0 @ over encode-operand dup r> + >r +
+        over node>arg1 @ over encode-uint dup r> + >r +
+        over node>arg2 @ over encode-uint dup r> + >r +
+        over node>arg3 @ array-size over encode-uint dup r> + >r +
+        r>
+        ( insn buf n )
+        2 pick node>arg3 @ array-size 0 ?do
+            i 3 pick node>arg3 @ array@ 2 pick encode-operand tuck + >r + r>
+        loop
+        ( insn buf n )
+        nip nip
+    endof
     Nmaketuple of
         over node>arg1 @ array-size dup 16 < if
             %00110000 or over u8! 1+ 1

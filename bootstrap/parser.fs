@@ -16,6 +16,16 @@ s" Syntax Error" exception constant SYNTAX-ERROR
 
 private{
 
+: list-length ( list -- n )
+    0 >r
+    begin ?dup while
+        r> 1+ >r
+        cdr
+    repeat
+    r>
+;
+
+
 : expect-sym ( lexer c -- bool )
     over lexer>token_tag @ Tsymbol = unless 2drop false exit then
     swap lexer>token_val @ =
@@ -28,6 +38,25 @@ private{
     else
         drop 0
     then
+;
+
+: parse-long-id-impl ( lexer -- list )
+    dup lexer>token_tag @ Tid = unless drop 0 exit then
+    dup lexer>token_buf make-string swap
+    dup lex
+    dup ':' expect-sym unless
+        drop 0 cons exit
+    then
+    dup lex_nospace
+    dup ':' expect-sym unless SYNTAX-ERROR throw then
+    dup lex
+    recurse
+    cons
+;
+
+: parse-long-id ( lexer -- node )
+    parse-long-id-impl ?dup unless 0 exit then
+    Nlongid make-node1
 ;
 
 : parse-register ( lexer -- node )
@@ -157,7 +186,6 @@ create parse-type-p 0 ,
     then
     dup lexer>token_tag @ Ttrue = if lex true-value exit then
     dup lexer>token_tag @ Tfalse = if lex false-value exit then
-    dup parse-label ?dup if nip exit then
     dup parse-register ?dup if nip exit then
     dup parse-argument ?dup if nip exit then
     dup '(' expect-sym if
@@ -218,46 +246,58 @@ create parse-type-p 0 ,
         lex
         0 swap Nmaketuple make-node2 exit
     then
-    dup parse-operand swap
-    dup '+' expect-sym if dup lex parse-operand 0 -rot Nadd make-node3 exit then
-    dup '-' expect-sym if dup lex parse-operand 0 -rot Nsub make-node3 exit then
-    dup '*' expect-sym if dup lex parse-operand 0 -rot Nmul make-node3 exit then
-    dup '/' expect-sym if dup lex parse-operand 0 -rot Ndiv make-node3 exit then
-    dup lexer>token_tag @ Tmod = if
-        dup lex parse-operand 0 -rot Nmod make-node3 exit
-    then
-    dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
-    dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
-    dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
-    dup '.' expect-sym if
-        dup lex
-        dup lexer>token_tag @ Tint = unless SYNTAX-ERROR throw then
-        dup lexer>token_val @ swap lex
-        0 -rot Ntupleat make-node3 exit
-    then
-    dup '=' expect-sym if
-        dup lex_nospace
-        dup '=' expect-sym unless SYNTAX-ERROR throw then
-        dup lex parse-operand 0 -rot Neq make-node3 exit
-    then
-    dup '!' expect-sym if
-        dup lex_nospace
-        dup '=' expect-sym unless SYNTAX-ERROR throw then
-        dup lex parse-operand 0 -rot Nne make-node3 exit
-    then
-    dup '<' expect-sym if
-        dup lex_nospace
-        dup '=' expect-sym if
-            dup lex parse-operand 0 -rot Nle make-node3 exit
-        else
-            dup lex parse-operand 0 -rot Nlt make-node3 exit
+    dup parse-operand ?dup if
+        swap
+        dup '+' expect-sym if dup lex parse-operand 0 -rot Nadd make-node3 exit then
+        dup '-' expect-sym if dup lex parse-operand 0 -rot Nsub make-node3 exit then
+        dup '*' expect-sym if dup lex parse-operand 0 -rot Nmul make-node3 exit then
+        dup '/' expect-sym if dup lex parse-operand 0 -rot Ndiv make-node3 exit then
+        dup lexer>token_tag @ Tmod = if
+            dup lex parse-operand 0 -rot Nmod make-node3 exit
         then
+        dup '&' expect-sym if dup lex parse-operand 0 -rot Nand make-node3 exit then
+        dup '|' expect-sym if dup lex parse-operand 0 -rot Nor  make-node3 exit then
+        dup '^' expect-sym if dup lex parse-operand 0 -rot Nxor make-node3 exit then
+        dup '.' expect-sym if
+            dup lex
+            dup lexer>token_tag @ Tint = unless SYNTAX-ERROR throw then
+            dup lexer>token_val @ swap lex
+            0 -rot Ntupleat make-node3 exit
+        then
+        dup '=' expect-sym if
+            dup lex_nospace
+            dup '=' expect-sym unless SYNTAX-ERROR throw then
+            dup lex parse-operand 0 -rot Neq make-node3 exit
+        then
+        dup '!' expect-sym if
+            dup lex_nospace
+            dup '=' expect-sym unless SYNTAX-ERROR throw then
+            dup lex parse-operand 0 -rot Nne make-node3 exit
+        then
+        dup '<' expect-sym if
+            dup lex_nospace
+            dup '=' expect-sym if
+                dup lex parse-operand 0 -rot Nle make-node3 exit
+            else
+                dup lex parse-operand 0 -rot Nlt make-node3 exit
+            then
+        then
+        drop 0 swap make-move exit
     then
+    dup parse-long-id ?dup unless SYNTAX-ERROR throw then
+    dup node>arg0 @ list-length 1 = if
+        node>arg0 @ car Nid make-node1
+    then
+
+    swap
     dup '(' expect-sym if
         dup lex
 
         \ function call
-        over node>tag @ Nid = unless SYNTAX-ERROR throw then
+        over node>tag @ Nid = unless
+        over node>tag @ Nlongid = unless SYNTAX-ERROR throw
+        then then
+
         dup ')' expect-sym if
             lex
             \ function call with no argument
@@ -386,6 +426,13 @@ create parse-type-p 0 ,
 ;
 
 : parse-toplevel-definition ( lexer -- node )
+    \ import
+    dup lexer>token_tag @ Timport = if
+        dup lex parse-long-id ?dup unless SYNTAX-ERROR throw then
+        Nimport make-node1 exit
+    then
+
+    \ function or variable definition
     \ parse document
     s" " make-string swap
     begin dup lexer>token_tag @ Tdocument = while

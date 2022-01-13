@@ -47,6 +47,7 @@ s" Invalid escape" exception constant INVALID-ESCAPE
     enum Tgoto
     enum Treturn
     enum Texport
+    enum Timport
     enum Tfun
 drop
 
@@ -87,6 +88,7 @@ Tphi s" phi" make-string reserved-words table!
 Tgoto s" goto" make-string reserved-words table!
 Treturn s" return" make-string reserved-words table!
 Texport s" export" make-string reserved-words table!
+Timport s" import" make-string reserved-words table!
 Tfun s" fun" make-string reserved-words table!
 
 : make-lexer ( input -- lexer )

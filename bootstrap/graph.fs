@@ -9,6 +9,7 @@ include lib/string.fs
 ( node type )
 0
     enum Nid        ( name )
+    enum Nlongid     ( list of names )
     enum Nregister  ( idx )
     enum Nargument  ( idx )
     enum Nderef     ( node )
@@ -36,7 +37,8 @@ include lib/string.fs
     enum Nle
 
     enum Ncall
-    enum Nlcall
+    enum Nlcall \ local call
+    enum Necall \ external call
 
     enum Nmaketuple
     enum Ntupleat
@@ -52,6 +54,7 @@ include lib/string.fs
     enum Nbblock    ( name insns jump )
     enum Nfundef    ( export name type blocks comment )
     enum Nvardef    ( export name type comment )
+    enum Nimport    ( long_id )
     enum Nprogram   ( defs )
 
     enum TyNever

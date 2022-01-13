@@ -228,7 +228,7 @@ Sections
 ID table
 --------
 
-Identifiers used for variables, constants, functions, types, etc.::
+Identifiers used for variables, constants, functions, types, modules, etc.::
 
    +------+~~~~~~~~~+~~~~~~~~~~~~~~~+
    | 0x00 | uint(n) | n str objects |
@@ -298,4 +298,16 @@ as the document text::
    +------+~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
    | 0x03 | uint(n) | n x (uint, uint, uint, str) |
    +------+~~~~~~~~~+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~+
+
+Import table
+------------
+
+List of module names such as ``foo::bar::baz``.
+Each module name is registered to the ID table section and this section is a collection of the indices.
+
+::
+
+   +------+~~~~~~~~~+~~~~~~~~~~+
+   | 0x04 | uint(n) | n x uint |
+   +------+~~~~~~~~~+~~~~~~~~~~+
 

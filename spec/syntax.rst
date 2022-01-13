@@ -18,11 +18,16 @@ Lexical Tokens::
     comment  : "//" [^\n]* "\n"
     document : "///" [^\n]* "\n"
 
-    keyword : "nop" | "phi" | "goto" | "return" | "export" | "fun"
+    keyword : "nop" | "phi" | "goto" | "return" | "export" | "import" | "fun"
             | "true" | "false" | "bool" | "char" "i8" | "u8" | "i16" | "u16"
             | "i32" | "u32" | "i64" | "u64" | "f32" | "f64" | "str" | "mod" | "if"
 
    The lexer ignores comments.
+
+Long Identifier::
+
+   long_id : id
+           | id "::" long_id
 
 Types::
 
@@ -83,7 +88,8 @@ Instruction::
               | operand "!=" operand
               | operand "<" operand
               | operand "<=" operand
-              | "label" "(" operands ")"
+              | label "(" operands ")"
+              | long_id "(" operands ")"
               | "(" operands ")"
               | operand "." int
 
@@ -117,6 +123,7 @@ Toplevel Items::
 
    toplevel_definition : document* "export"? function_definition
                        | document* "export"? variable_definition
+                       | "import" long_id
 
    program : toplevel_definition*
 

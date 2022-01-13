@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <libgen.h>
 
 #define not_reachable() do { \
     fprintf(stderr, "Not reachable here: %s [%s:%d]\n", __func__, __FILE__, __LINE__); \
@@ -74,6 +75,7 @@ typedef int64_t sint_t;
 #define SEC_FUN     0x01
 #define SEC_VAR     0x02
 #define SEC_EXPORT  0x03
+#define SEC_IMPORT  0x04
 // Instructions
 #define I_NOP       0x00
 #define I_PHI       0x01
@@ -90,7 +92,8 @@ typedef int64_t sint_t;
 #define I_NE        0x0c
 #define I_LT        0x0d
 #define I_LE        0x0e
-#define I_LCALL     0x20    // local call
+#define I_LCALL     0x20
+#define I_ECALL     0x21
 #define I_TUPLE     0x50
 #define I_TUPLEAT   0x51
 #define I_LOAD      0x60
@@ -214,7 +217,8 @@ typedef struct {
                     operand arg;
                     uint_t index;
                 };
-                struct { // local function call and tuple
+                struct { // local and external function call and tuple
+                    uint_t mod;
                     uint_t fun;
                     size_t n_args;
                     operand *args;
@@ -246,7 +250,8 @@ typedef struct {
     char *comment;
 } export_item;
 
-typedef struct {
+typedef struct module {
+    const char *name;
     size_t n_ids;
     char **ids;
     size_t n_func;
@@ -259,11 +264,16 @@ typedef struct {
     } *vars;
     size_t n_export;
     export_item *exports;
-} object_file;
+    size_t n_import;
+    uint_t *import_ids;
+    struct module **import_mods;
+} module;
 
 typedef struct {
     value *stack;
     value *sp;          /* stack pointer */
+    size_t n_module;
+    module **modules;
 } interpreter;
 
 // n-th local variable
@@ -306,9 +316,9 @@ operand_to_value(value *bp, operand *opd) {
 }
 
 static uint_t
-lookup_id(object_file *obj, char *name) {
-    for (int i = 0; i < obj->n_ids; i++) {
-        if (strcmp(name, obj->ids[i]) == 0)
+lookup_id(module *mod, char *name) {
+    for (int i = 0; i < mod->n_ids; i++) {
+        if (strcmp(name, mod->ids[i]) == 0)
             return i;
     }
     fprintf(stderr, "ID \"%s\" is not found\n", name);
@@ -530,6 +540,16 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         for (int i = 0; i < insn->n_args; i++)
             decode_operand(fun, &insn->args[i], cur);
         return;
+    case I_ECALL:
+        insn->tag = I_ECALL;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->mod = decode_uint(cur);
+        insn->fun = decode_uint(cur);
+        insn->n_args = decode_uint(cur);
+        insn->args = calloc(insn->n_args, sizeof(insn->args[0]));
+        for (int i = 0; i < insn->n_args; i++)
+            decode_operand(fun, &insn->args[i], cur);
+        return;
     case I_TUPLE:
         insn->tag = I_TUPLE;
         decode_operand(fun, &insn->lhs, cur);
@@ -634,69 +654,51 @@ decode_function(function *fun, byte_t **cur) {
 }
 
 static void
-decode_section(object_file *obj, byte_t **cur) {
+decode_section(module *mod, byte_t **cur) {
     switch (*(*cur)++) {
     case SEC_ID:
-        obj->n_ids = decode_uint(cur);
-        obj->ids = calloc(obj->n_ids, sizeof(char*));
-        for (int i = 0; i < obj->n_ids; i++)
-            obj->ids[i] = decode_str(cur);
+        mod->n_ids = decode_uint(cur);
+        mod->ids = calloc(mod->n_ids, sizeof(char*));
+        for (int i = 0; i < mod->n_ids; i++)
+            mod->ids[i] = decode_str(cur);
         return;
     case SEC_FUN:
-        obj->n_func = decode_uint(cur);
-        obj->funcs = calloc(obj->n_func, sizeof(obj->funcs[0]));
-        for (int i = 0; i < obj->n_func; i++)
-            decode_function(&obj->funcs[i], cur);
+        mod->n_func = decode_uint(cur);
+        mod->funcs = calloc(mod->n_func, sizeof(mod->funcs[0]));
+        for (int i = 0; i < mod->n_func; i++)
+            decode_function(&mod->funcs[i], cur);
         if (**cur == D_NONE) {
-            obj->startup = -1;
+            mod->startup = -1;
             (*cur)++;
         } else {
-            obj->startup = decode_uint(cur);
+            mod->startup = decode_uint(cur);
         }
         return;
     case SEC_VAR:
-        obj->n_var = decode_uint(cur);
-        obj->vars = calloc(obj->n_var, sizeof(obj->vars[0]));
-        for (int i = 0; i < obj->n_var; i++)
-            obj->vars[i].ty = decode_type(cur);
+        mod->n_var = decode_uint(cur);
+        mod->vars = calloc(mod->n_var, sizeof(mod->vars[0]));
+        for (int i = 0; i < mod->n_var; i++)
+            mod->vars[i].ty = decode_type(cur);
         return;
     case SEC_EXPORT:
-        obj->n_export = decode_uint(cur);
-        obj->exports = calloc(obj->n_export, sizeof(obj->exports[0]));
-        for (int i = 0; i < obj->n_export; i++) {
-            obj->exports[i].type = decode_uint(cur);
-            obj->exports[i].id = decode_uint(cur);
-            obj->exports[i].def = decode_uint(cur);
-            obj->exports[i].comment = decode_str(cur);
+        mod->n_export = decode_uint(cur);
+        mod->exports = calloc(mod->n_export, sizeof(mod->exports[0]));
+        for (int i = 0; i < mod->n_export; i++) {
+            mod->exports[i].type = decode_uint(cur);
+            mod->exports[i].id = decode_uint(cur);
+            mod->exports[i].def = decode_uint(cur);
+            mod->exports[i].comment = decode_str(cur);
         }
+        return;
+    case SEC_IMPORT:
+        mod->n_import = decode_uint(cur);
+        mod->import_ids = calloc(mod->n_import, sizeof(mod->import_ids[0]));
+        mod->import_mods = calloc(mod->n_import, sizeof(mod->import_mods[0]));
+        for (int i = 0; i < mod->n_import; i++)
+            mod->import_ids[i] = decode_uint(cur);
         return;
     }
     not_reachable();
-}
-
-static object_file *
-load_object_file(const char *path) {
-    FILE *fp = fopen(path, "rb");
-    fpos_t pos;
-    fseek(fp, 0, SEEK_END);
-    fgetpos(fp, &pos);
-    fseek(fp, 0, SEEK_SET);
-    size_t size = pos.__pos;
-    byte_t *buffer = calloc(1, size);
-    fread(buffer, 1, size, fp);
-    fclose(fp);
-
-    assert(buffer[0] == D_USER);
-    assert(buffer[1] == T_OBJ);
-
-    byte_t *cur = buffer + 2;
-    object_file *obj = calloc(1, sizeof(object_file));
-    size_t n_sections = decode_uint(&cur);
-    for (size_t i = 0; i < n_sections; i++)
-        decode_section(obj, &cur);
-    assert(cur == buffer + size);
-
-    return obj;
 }
 
 static bool
@@ -849,7 +851,7 @@ binexpr(byte_t op, value arg0, value arg1) {
 
 
 static value
-call(interpreter *interp, object_file *obj, function *fun) {
+call(interpreter *interp, module *mod, function *fun) {
     value *bp = interp->sp;
 
     /* type check of arguments */
@@ -913,19 +915,46 @@ call(interpreter *interp, object_file *obj, function *fun) {
                     ));
                 break;
             }
-            case I_LCALL:
+            case I_LCALL: {
                 interp->sp -= insn->n_args; /* allocate space for arguments */
                 for (int i = 0; i < insn->n_args; i++)
                     interp->sp[i] = operand_to_value(bp, &insn->args[i]);
-                function *f = &obj->funcs[insn->fun];
+                function *f = &mod->funcs[insn->fun];
                 if (f->ty->n_params != insn->n_args) {
                     fprintf(stderr, "wrong number of arguments\n");
                     exit(1);
                 }
-                value ret = call(interp, obj, f);
+                value ret = call(interp, mod, f);
                 move(bp, &insn->lhs, ret);
                 interp->sp += insn->n_args;
                 break;
+            }
+            case I_ECALL: {
+                interp->sp -= insn->n_args; /* allocate space for arguments */
+                for (int i = 0; i < insn->n_args; i++)
+                    interp->sp[i] = operand_to_value(bp, &insn->args[i]);
+                if (insn->mod >= mod->n_import) not_reachable();
+                module *m = mod->import_mods[insn->mod];
+                /* lookup the function */
+                function *f = NULL;
+                for (int i = 0; i < m->n_export; i++) {
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->fun]))
+                        f = &m->funcs[m->exports[i].def];
+                }
+                if (!f) {
+                    fprintf(stderr, "function %s is not found in module %s\n",
+                            mod->ids[insn->fun], m->name);
+                    exit(1);
+                }
+                if (f->ty->n_params != insn->n_args) {
+                    fprintf(stderr, "wrong number of arguments\n");
+                    exit(1);
+                }
+                value ret = call(interp, m, f);
+                move(bp, &insn->lhs, ret);
+                interp->sp += insn->n_args;
+                break;
+            }
             case I_TUPLE: {
                 value t;
                 t.tag = V_TUPLE;
@@ -944,14 +973,14 @@ call(interpreter *interp, object_file *obj, function *fun) {
                 break;
             }
             case I_LOAD:
-                assert(insn->load_idx < obj->n_var);
-                move(bp, &insn->lhs, obj->vars[insn->load_idx].v);
+                assert(insn->load_idx < mod->n_var);
+                move(bp, &insn->lhs, mod->vars[insn->load_idx].v);
                 break;
             case I_STORE:
-                assert(insn->store_idx < obj->n_var);
+                assert(insn->store_idx < mod->n_var);
                 value v = operand_to_value(bp, &insn->rhs);
-                CHECK_TYPE(obj->vars[insn->store_idx].ty, v);
-                obj->vars[insn->store_idx].v = v;
+                CHECK_TYPE(mod->vars[insn->store_idx].ty, v);
+                mod->vars[insn->store_idx].v = v;
                 break;
             case I_GOTO:
                 prev = block;
@@ -997,24 +1026,75 @@ call(interpreter *interp, object_file *obj, function *fun) {
     }
 }
 
-static int
-interpret(object_file *obj) {
+static module *
+load_module(interpreter *interp, const char *name, const char *path) {
+    FILE *fp = fopen(path, "rb");
+    fpos_t pos;
+    fseek(fp, 0, SEEK_END);
+    fgetpos(fp, &pos);
+    fseek(fp, 0, SEEK_SET);
+    size_t size = pos.__pos;
+    byte_t *buffer = calloc(1, size);
+    fread(buffer, 1, size, fp);
+    fclose(fp);
+
+    assert(buffer[0] == D_USER);
+    assert(buffer[1] == T_OBJ);
+
+    byte_t *cur = buffer + 2;
+    module *mod = calloc(1, sizeof(module));
+    mod->name = name;
+    size_t n_sections = decode_uint(&cur);
+    for (size_t i = 0; i < n_sections; i++)
+        decode_section(mod, &cur);
+    assert(cur == buffer + size);
+
+    /* Load the dependent modules */
+    char buf1[BUFSIZ], buf2[BUFSIZ];
+    for (int i = 0; i < mod->n_import; i++) {
+        strncpy(buf1, path, sizeof(buf1)-1);
+        snprintf(buf2, sizeof(buf2), "%s/%s.pko",
+                dirname(buf1), mod->ids[mod->import_ids[i]]);
+        mod->import_mods[i] =
+            load_module(interp, mod->ids[mod->import_ids[i]], buf2);
+    }
+
+    /* If the module has startup function, call it */
+    if (mod->startup >= 0) {
+        function *startup_fun = &mod->funcs[mod->startup];
+        call(interp, mod, startup_fun); /* todo type check */
+    }
+
+    /* Add the module to interpreter */
+    interp->modules = realloc(
+            interp->modules,
+            (interp->n_module + 1) * sizeof(interp->modules[0])
+            );
+    interp->modules[interp->n_module++] = mod;
+
+    return mod;
+}
+
+int
+main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <object file>\n", argv[0]);
+        return 1;
+    }
     interpreter interp;
     interp.stack = calloc(STACK_SIZE, sizeof(value));
     interp.sp = interp.stack + STACK_SIZE;
+    interp.n_module = 0;
+    interp.modules = NULL;
 
-    /* if the object file has startup function, call it */
-    if (obj->startup >= 0) {
-        function *startup_fun = &obj->funcs[obj->startup];
-        call(&interp, obj, startup_fun); /* todo type check */
-    }
+    module *mod = load_module(&interp, "main", argv[1]);
 
-    uint_t main_id = lookup_id(obj, "main");
+    uint_t main_id = lookup_id(mod, "main");
     function *main_fun = NULL;
-    for (int i = 0; i < obj->n_export; i++) {
-        if (obj->exports[i].id == main_id) {
-            assert(obj->exports[i].type == 'F');
-            main_fun = &obj->funcs[obj->exports[i].def];
+    for (int i = 0; i < mod->n_export; i++) {
+        if (mod->exports[i].id == main_id) {
+            assert(mod->exports[i].type == 'F');
+            main_fun = &mod->funcs[mod->exports[i].def];
             break;
         }
     }
@@ -1029,16 +1109,8 @@ interpret(object_file *obj) {
         exit(1);
     }
 
-    value ret = call(&interp, obj, main_fun);
-    return (int) ret.i;
-}
+    value ret = call(&interp, mod, main_fun);
+    CHECK_TYPE(main_fun->ty->ret, ret);
 
-int
-main(int argc, char *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <object file>\n", argv[0]);
-        return 1;
-    }
-    object_file *obj = load_object_file(argv[1]);
-    return interpret(obj);
+    return (int) ret.i;
 }

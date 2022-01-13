@@ -1,0 +1,8 @@
+import lib
+
+/// Test of importing other module
+export fun main: () -> i32 {
+root:
+    %0 = lib::f()
+    return %0
+}

@@ -27,7 +27,9 @@ TEST_OBJECTS=\
 	../tests/tuple.pko \
 	../tests/tuple2.pko \
 	../tests/tuple3.pko \
-	../tests/global-constant.pko
+	../tests/global-constant.pko \
+	../tests/lib.pko \
+	../tests/import.pko
 
 default: planck $(TEST_OBJECTS)
 
@@ -69,6 +71,7 @@ test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/tuple2.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/tuple3.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/global-constant.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/import.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs
