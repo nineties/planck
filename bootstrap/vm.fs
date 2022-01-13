@@ -9,12 +9,13 @@ include encoding.fs
 s" Type Error" exception constant TYPE-ERROR
 
 struct
-    cell% field obj>ids      ( vector of identifiers )
-    cell% field obj>funcs    ( vector of functions )
-    cell% field obj>vars     ( vector of variables (type, value) )
-    cell% field obj>exports  ( vector of exported items )
-    cell% field obj>startup  ( index of startup function. -1 for none )
-end-struct object-file%
+    cell% field obj>ids        ( vector of identifiers )
+    cell% field obj>funcs      ( vector of functions )
+    cell% field obj>vars       ( vector of variables (type, value) )
+    cell% field obj>exports    ( vector of exported items )
+    cell% field obj>import_ids ( vector of module ids )
+    cell% field obj>startup    ( index of startup function. -1 for none )
+end-struct module%
 
 struct
     cell% field block>index
@@ -39,7 +40,7 @@ struct
     cell% field interp>stack
     cell% field interp>sp
     cell% field interp>bp
-    cell% field interp>obj
+    cell% field interp>mod
 end-struct interpreter%
 
 1024 1024 * constant STACK-SIZE
@@ -53,12 +54,13 @@ end-struct interpreter%
     endcase
 ;
 
-: make-object-file ( -- obj )
-    object-file% %allocate throw
+: make-module ( -- mod )
+    module% %allocate throw
     0 make-array over obj>ids !
     0 make-array over obj>funcs !
     0 make-array over obj>vars !
     0 make-array over obj>exports !
+    0 make-array over obj>import_ids !
     -1 over obj>startup !
 ;
 
@@ -66,7 +68,7 @@ end-struct interpreter%
 \ use a arger buffer.
 $2000000 constant FILE_BUFFER_SIZE
 
-: decode-id-section ( obj buf -- obj new-buf )
+: decode-id-section ( mod buf -- mod new-buf )
     1+ decode-uint 0 ?do
         decode-str 2 pick obj>ids @ array-push
     loop
@@ -234,19 +236,19 @@ $2000000 constant FILE_BUFFER_SIZE
     r> swap r> swap
 ;
 
-: decode-function-section ( obj buf -- obj new-buf )
+: decode-function-section ( mod buf -- mod new-buf )
     1+ decode-uint 0 ?do
         function% %allocate throw swap
         0 2 pick fun>nlocals !
         decode-type 2 pick fun>ty !
         0 make-array -rot
-        ( obj arr fun buf )
+        ( mod arr fun buf )
         decode-uint 0 ?do
             decode-basicblock
             i over block>index !
             3 pick array-push
         loop
-        ( obj arr fun buf )
+        ( mod arr fun buf )
         >r \ save new-buf
         tuck fun>blocks !
         \ add new entry of function
@@ -260,7 +262,7 @@ $2000000 constant FILE_BUFFER_SIZE
     then
 ;
 
-: decode-variable-section ( obj buf -- obj new-buf )
+: decode-variable-section ( mod buf -- mod new-buf )
     1+ decode-uint 0 ?do
         2 cells allocate throw swap
         decode-type 2 pick tuple0 !
@@ -268,7 +270,7 @@ $2000000 constant FILE_BUFFER_SIZE
     loop
 ;
 
-: decode-export-section ( obj buf -- obj new-buf )
+: decode-export-section ( mod buf -- mod new-buf )
     1+ decode-uint 0 ?do
         decode-uint swap
         decode-uint swap
@@ -284,7 +286,13 @@ $2000000 constant FILE_BUFFER_SIZE
     loop
 ;
 
-: load-object-file ( file -- object )
+: decode-import-section ( mod buf -- mod new-buf )
+    1+ decode-uint 0 ?do
+        decode-uint 2 pick obj>import_ids @ array-push
+    loop
+;
+
+: load-module ( file -- object )
     \ Read file content
     R/O open-file throw
     FILE_BUFFER_SIZE allocate throw dup >r
@@ -298,7 +306,7 @@ $2000000 constant FILE_BUFFER_SIZE
     close-file throw
     r> ( buf )
 
-    make-object-file swap
+    make-module swap
 
     dup u8@ %11011111 <> if DECODE-ERROR throw then 1+
     dup u8@ %11111111 <> if DECODE-ERROR throw then 1+
@@ -308,6 +316,7 @@ $2000000 constant FILE_BUFFER_SIZE
         $01 of decode-function-section endof
         $02 of decode-variable-section endof
         $03 of decode-export-section endof
+        $04 of decode-import-section endof
         not-reachable
         endcase
     loop
@@ -316,7 +325,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
 : lookup-func ( interp c-addr -- function )
     \ lookup id of the name
-    over interp>obj @ obj>ids @
+    over interp>mod @ obj>ids @
     -1 over array-size 0 ?do
         ( c-addr arr -1 )
         i 2 pick array@ 3 pick streq if
@@ -332,14 +341,14 @@ $2000000 constant FILE_BUFFER_SIZE
 
     ( interp name name-id )
     \ lookup export table
-    2 pick interp>obj @ obj>exports @ 0
+    2 pick interp>mod @ obj>exports @ 0
     over array-size 0 ?do
         i 2 pick array@
         ( interp name name-id exports tup )
         dup expt>id @ 4 pick = if
             dup expt>type @ [char] F = unless DECODE-ERROR throw then
             expt>def @
-            5 pick interp>obj @ obj>funcs @ array@
+            5 pick interp>mod @ obj>funcs @ array@
             nip
             leave
         else
@@ -540,7 +549,7 @@ $2000000 constant FILE_BUFFER_SIZE
                     5 pick interp>sp @ i cells + !
                 loop
                 dup node>arg1 @ ( index of the function )
-                5 pick interp>obj @ obj>funcs @ array@
+                5 pick interp>mod @ obj>funcs @ array@
                 5 pick swap recurse \ call the function
                 ( interp fun prev cur node interp retval )
                 2 pick node>arg0 @ swap move \ assign retval to lhs
@@ -565,13 +574,13 @@ $2000000 constant FILE_BUFFER_SIZE
                 swap node>arg0 @ swap 5 pick -rot move
             endof
             Nload of
-                dup node>arg1 @ 5 pick interp>obj @ obj>vars @ array@ tuple1 @
+                dup node>arg1 @ 5 pick interp>mod @ obj>vars @ array@ tuple1 @
                 swap node>arg0 @ swap 5 pick -rot move
                 ( interp fun prev cur lhs value )
             endof
             Nstore of
                 4 pick over node>arg1 @ to-value swap node>arg0 @
-                5 pick interp>obj @ obj>vars @ array@
+                5 pick interp>mod @ obj>vars @ array@
                 tuck tuple0 @ over check-type unless TYPE-ERROR throw then
                 swap tuple1 !
             endof
@@ -613,15 +622,15 @@ $2000000 constant FILE_BUFFER_SIZE
     not-implemented
 ;
 
-: interpret ( obj -- exit-code )
+: interpret ( mod -- exit-code )
     interpreter% %allocate throw
     STACK-SIZE cells allocate throw over interp>stack !
     dup interp>stack STACK-SIZE cells + over interp>sp !
-    tuck interp>obj !
+    tuck interp>mod !
 
     \ run startup code if it exists
-    dup interp>obj @ obj>startup @ dup 0>= unless drop else
-        over interp>obj @ obj>funcs @ array@
+    dup interp>mod @ obj>startup @ dup 0>= unless drop else
+        over interp>mod @ obj>funcs @ array@
         call \ TODO: type check
         drop
     then
@@ -646,6 +655,6 @@ $2000000 constant FILE_BUFFER_SIZE
         bye
     then 
     1 cells argv @ + @ ( object file )
-    load-object-file
+    load-module
     interpret quit
 ; execute
