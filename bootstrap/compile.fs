@@ -164,6 +164,12 @@ create CODEPOS CODEBUF ,
         dup node>arg0 @ node>arg0 @ lookup-vardef
         over node>arg0 !
     endof
+    Neload of
+        not-implemented
+    endof
+    Nestore of
+        not-implemented
+    endof
         drop 0
     endcase
 ;
