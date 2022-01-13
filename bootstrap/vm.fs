@@ -471,7 +471,7 @@ $2000000 constant FILE_BUFFER_SIZE
     move
 ;
 
-: comp-branch ( interp fun prev cur node -- interp fun prev cur )
+: comp-branch ( fun prev cur node -- fun prev cur )
     dup node>arg0 @ to-value >r
     dup node>arg1 @ to-value r> swap
     2 pick node>tag @ case
@@ -486,7 +486,7 @@ $2000000 constant FILE_BUFFER_SIZE
     rot drop
 ;
 
-: call ( interp fun -- interp retvalue )
+: call ( fun -- retvalue )
     BP @ >r \ save base pointer
     SP @ BP !
 
@@ -498,7 +498,7 @@ $2000000 constant FILE_BUFFER_SIZE
     \ allocate space for local variables
     dup fun>nlocals @ cells SP -!
 
-    ( interp fun prev cur )
+    ( fun prev cur )
     0 0 2 pick fun>blocks @ array@
 
     \ entry block must not have phi
@@ -507,7 +507,7 @@ $2000000 constant FILE_BUFFER_SIZE
     begin
         dup block>phis @ array-size 0 ?do
             i over block>phis @ array@
-            ( interp fun prev cur phi tup )
+            ( fun prev cur phi tup )
             dup node>arg1 @ array-size 0 ?do
                 i over node>arg1 @ array@
                 3 pick block>index @ over tuple0 @ = if
@@ -523,7 +523,7 @@ $2000000 constant FILE_BUFFER_SIZE
             i over block>insns @ array@ ( insn )
             dup node>tag @ case
             Nmove of
-                ( interp fun prev cur node )
+                ( fun prev cur node )
                 dup node>arg1 @ to-value >r
                 node>arg0 @ r> move
             endof
@@ -549,9 +549,8 @@ $2000000 constant FILE_BUFFER_SIZE
                 loop
                 dup node>arg1 @ ( index of the function )
                 current-module obj>funcs @ array@
-                5 pick swap recurse \ call the function
-                ( interp fun prev cur node interp retval )
-                nip
+                recurse \ call the function
+                ( fun prev cur node retval )
                 over node>arg0 @ swap move \ assign retval to lhs
 
                 \ restore stack pointer
@@ -576,7 +575,7 @@ $2000000 constant FILE_BUFFER_SIZE
             Nload of
                 dup node>arg1 @ current-module obj>vars @ array@ tuple1 @
                 swap node>arg0 @ swap move
-                ( interp fun prev cur lhs value )
+                ( fun prev cur lhs value )
             endof
             Nstore of
                 dup node>arg1 @ to-value swap node>arg0 @
@@ -587,7 +586,7 @@ $2000000 constant FILE_BUFFER_SIZE
             Ngoto of
                 node>arg0 @ ( index of next block )
                 3 pick fun>blocks @ array@ ( next block )
-                rot drop ( interp fun prev cur next -> interp fun cur next )
+                rot drop ( fun prev cur next -> fun cur next )
             endof
             Nreturn of
                 node>arg0 @ to-value
@@ -607,7 +606,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 dup node>tag @ Nbool = unless not-reachable then
                 node>arg0 @ if node>arg1 @ else node>arg2 @ then
                 3 pick fun>blocks @ array@ ( next block )
-                rot drop ( interp fun prev cur next -> interp fun cur next )
+                rot drop ( fun prev cur next -> fun cur next )
             endof
             Nifeq of comp-branch endof
             Nifne of comp-branch endof
@@ -627,11 +626,8 @@ $2000000 constant FILE_BUFFER_SIZE
     then
 
     STACK-SIZE cells dup allocate throw + SP !
-    0 \ temp
 
     1 cells argv @ + @ load-module
-    ( interp mod )
-
     push-module
 
     \ run startup code if it exists
@@ -648,9 +644,7 @@ $2000000 constant FILE_BUFFER_SIZE
     dup node>arg0 @ i32-type = unless not-reachable then
     node>arg1 @ array-size 0= unless not-reachable then
 
-    ( interp main )
-    call
-    nip
+    call    \ call main
     dup node>tag @ Nint <> if not-reachable then
     node>arg0 @
 
