@@ -160,8 +160,8 @@ create CODEPOS CODEBUF ,
 
             dup node>arg2 >r
             dup node>arg1 @ node>arg0 @ split-longid
-            get-id swap lookup-import-index swap .s >r >r
-            node>arg0 @ r> r> r> .s Necall make-node4
+            get-id swap lookup-import-index swap >r >r
+            node>arg0 @ r> r> r> Necall make-node4
         then
     endof
         drop 0
