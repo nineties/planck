@@ -140,6 +140,33 @@ create CODEPOS CODEBUF ,
 
 : compile-insn ( insn -- insn )
     dup node>tag @ case
+    Nmove of
+        \ rewrite move to load/store
+        dup node>arg0 @ node>tag @ Nid = if
+            dup node>arg1 @ node>tag @ Nid = if SYNTAX-ERROR throw then
+            dup node>arg1 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
+            dup node>arg0 @ node>arg0 @ lookup-vardef
+            swap node>arg1 @
+            make-lstore
+        else dup node>arg1 @ node>tag @ Nid = if
+            dup node>arg0 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
+            dup node>arg0 @
+            swap node>arg1 @ node>arg0 @ lookup-vardef
+            make-lload
+        else dup node>arg0 @ node>tag @ Nlongid = if
+            dup node>arg1 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
+            dup node>arg0 @
+            swap node>arg1 @
+            not-implemented
+            make-estore
+        else dup node>arg1 @ node>tag @ Nlongid = if
+            dup node>arg0 @
+            swap node>arg1 @
+            not-implemented
+            make-eload
+        then then then then
+    endof
+
     Ncall of
         dup node>arg1 @ node>tag @ Nid = if
             dup node>arg1 @ node>arg0 @ lookup-fundef dup 0< if not-reachable then
@@ -155,20 +182,6 @@ create CODEPOS CODEBUF ,
             get-id swap lookup-import-index swap >r >r
             node>arg0 @ r> r> r> Necall make-node4
         then
-    endof
-    Nlload of
-        dup node>arg1 @ node>arg0 @ lookup-vardef
-        over node>arg1 !
-    endof
-    Nlstore of
-        dup node>arg0 @ node>arg0 @ lookup-vardef
-        over node>arg0 !
-    endof
-    Neload of
-        not-implemented
-    endof
-    Nestore of
-        not-implemented
     endof
         drop 0
     endcase
