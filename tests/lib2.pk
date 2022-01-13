@@ -1,0 +1,5 @@
+
+export fun f: () -> i32 {
+root:
+    return 123:i32
+}
