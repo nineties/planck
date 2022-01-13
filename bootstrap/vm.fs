@@ -449,8 +449,7 @@ $2000000 constant FILE_BUFFER_SIZE
     endcase
 ;
 
-: binexpr ( interp node -- )
-    swap drop
+: binexpr ( node -- )
     dup node>arg2 @ to-value >r
     dup node>arg1 @ to-value r>
     over node>tag @ over node>tag @ <> if TYPE-ERROR throw then
@@ -530,18 +529,18 @@ $2000000 constant FILE_BUFFER_SIZE
                 dup node>arg1 @ to-value >r
                 node>arg0 @ r> move
             endof
-            Nadd of 4 pick swap binexpr endof
-            Nsub of 4 pick swap binexpr endof
-            Nmul of 4 pick swap binexpr endof
-            Ndiv of 4 pick swap binexpr endof
-            Nmod of 4 pick swap binexpr endof
-            Nand of 4 pick swap binexpr endof
-            Nor  of 4 pick swap binexpr endof
-            Nxor of 4 pick swap binexpr endof
-            Neq  of 4 pick swap binexpr endof
-            Nne  of 4 pick swap binexpr endof
-            Nlt  of 4 pick swap binexpr endof
-            Nle  of 4 pick swap binexpr endof
+            Nadd of binexpr endof
+            Nsub of binexpr endof
+            Nmul of binexpr endof
+            Ndiv of binexpr endof
+            Nmod of binexpr endof
+            Nand of binexpr endof
+            Nor  of binexpr endof
+            Nxor of binexpr endof
+            Neq  of binexpr endof
+            Nne  of binexpr endof
+            Nlt  of binexpr endof
+            Nle  of binexpr endof
             Nlcall of
                 \ allocate space for arguments
                 dup node>arg2 @ array-size cells SP -!
