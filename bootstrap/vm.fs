@@ -9,12 +9,12 @@ include encoding.fs
 s" Type Error" exception constant TYPE-ERROR
 
 struct
-    cell% field obj>ids        ( vector of identifiers )
-    cell% field obj>funcs      ( vector of functions )
-    cell% field obj>vars       ( vector of variables (type, value) )
-    cell% field obj>exports    ( vector of exported items )
-    cell% field obj>import_ids ( vector of module ids )
-    cell% field obj>startup    ( index of startup function. -1 for none )
+    cell% field mod>ids        ( vector of identifiers )
+    cell% field mod>funcs      ( vector of functions )
+    cell% field mod>vars       ( vector of variables (type, value) )
+    cell% field mod>exports    ( vector of exported items )
+    cell% field mod>import_ids ( vector of module ids )
+    cell% field mod>startup    ( index of startup function. -1 for none )
 end-struct module%
 
 struct
@@ -61,12 +61,12 @@ variable BP
 
 : make-module ( -- mod )
     module% %allocate throw
-    0 make-array over obj>ids !
-    0 make-array over obj>funcs !
-    0 make-array over obj>vars !
-    0 make-array over obj>exports !
-    0 make-array over obj>import_ids !
-    -1 over obj>startup !
+    0 make-array over mod>ids !
+    0 make-array over mod>funcs !
+    0 make-array over mod>vars !
+    0 make-array over mod>exports !
+    0 make-array over mod>import_ids !
+    -1 over mod>startup !
 ;
 
 \ Since it is cumbersome to get the file size with PlanckForth's function,
@@ -75,7 +75,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
 : decode-id-section ( mod buf -- mod new-buf )
     1+ decode-uint 0 ?do
-        decode-str 2 pick obj>ids @ array-push
+        decode-str 2 pick mod>ids @ array-push
     loop
 ;
 
@@ -257,13 +257,13 @@ $2000000 constant FILE_BUFFER_SIZE
         >r \ save new-buf
         tuck fun>blocks !
         \ add new entry of function
-        over obj>funcs @ array-push
+        over mod>funcs @ array-push
         r>
     loop
     dup u8@ %11000000 = if
-        1+ -1 2 pick obj>startup !
+        1+ -1 2 pick mod>startup !
     else
-        decode-uint 2 pick obj>startup !
+        decode-uint 2 pick mod>startup !
     then
 ;
 
@@ -271,7 +271,7 @@ $2000000 constant FILE_BUFFER_SIZE
     1+ decode-uint 0 ?do
         2 cells allocate throw swap
         decode-type 2 pick tuple0 !
-        swap 2 pick obj>vars @ array-push
+        swap 2 pick mod>vars @ array-push
     loop
 ;
 
@@ -286,14 +286,14 @@ $2000000 constant FILE_BUFFER_SIZE
         tuck expt>def !
         tuck expt>id !
         tuck expt>type !
-        over obj>exports @ array-push
+        over mod>exports @ array-push
         r>
     loop
 ;
 
 : decode-import-section ( mod buf -- mod new-buf )
     1+ decode-uint 0 ?do
-        decode-uint 2 pick obj>import_ids @ array-push
+        decode-uint 2 pick mod>import_ids @ array-push
     loop
 ;
 
@@ -330,7 +330,7 @@ $2000000 constant FILE_BUFFER_SIZE
 
 : lookup-func ( c-addr -- function )
     \ lookup id of the name
-    current-module obj>ids @
+    current-module mod>ids @
     -1 over array-size 0 ?do
         ( c-addr arr -1 )
         i 2 pick array@ 3 pick streq if
@@ -346,14 +346,14 @@ $2000000 constant FILE_BUFFER_SIZE
 
     ( name name-id )
     \ lookup export table
-    current-module obj>exports @ 0
+    current-module mod>exports @ 0
     over array-size 0 ?do
         i 2 pick array@
         ( name name-id exports tup )
         dup expt>id @ 4 pick = if
             dup expt>type @ [char] F = unless DECODE-ERROR throw then
             expt>def @
-            current-module obj>funcs @ array@
+            current-module mod>funcs @ array@
             nip
             leave
         else
@@ -548,7 +548,7 @@ $2000000 constant FILE_BUFFER_SIZE
                     SP @ i cells + !
                 loop
                 dup node>arg1 @ ( index of the function )
-                current-module obj>funcs @ array@
+                current-module mod>funcs @ array@
                 recurse \ call the function
                 ( fun prev cur node retval )
                 over node>arg0 @ swap move \ assign retval to lhs
@@ -573,13 +573,13 @@ $2000000 constant FILE_BUFFER_SIZE
                 swap node>arg0 @ swap move
             endof
             Nload of
-                dup node>arg1 @ current-module obj>vars @ array@ tuple1 @
+                dup node>arg1 @ current-module mod>vars @ array@ tuple1 @
                 swap node>arg0 @ swap move
                 ( fun prev cur lhs value )
             endof
             Nstore of
                 dup node>arg1 @ to-value swap node>arg0 @
-                current-module obj>vars @ array@
+                current-module mod>vars @ array@
                 tuck tuple0 @ over check-type unless TYPE-ERROR throw then
                 swap tuple1 !
             endof
@@ -631,8 +631,8 @@ $2000000 constant FILE_BUFFER_SIZE
     push-module
 
     \ run startup code if it exists
-    current-module obj>startup @ dup 0>= unless drop else
-        current-module obj>funcs @ array@
+    current-module mod>startup @ dup 0>= unless drop else
+        current-module mod>funcs @ array@
         call \ TODO: type check
         drop
     then
