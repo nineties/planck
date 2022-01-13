@@ -622,7 +622,14 @@ $2000000 constant FILE_BUFFER_SIZE
     not-implemented
 ;
 
-: interpret ( mod -- exit-code )
+:noname
+    argc @ 2 <> if
+        ." Usage: ./planck < bootstrap.fs " argv @ @ type ."  <object file>" cr
+        bye
+    then
+    1 cells argv @ + @ ( object file )
+    load-module
+
     interpreter% %allocate throw
     STACK-SIZE cells allocate throw over interp>stack !
     dup interp>stack STACK-SIZE cells + over interp>sp !
@@ -647,14 +654,6 @@ $2000000 constant FILE_BUFFER_SIZE
     nip
     dup node>tag @ Nint <> if not-reachable then
     node>arg0 @
-;
 
-:noname
-    argc @ 2 <> if
-        ." Usage: ./planck < bootstrap.fs " argv @ @ type ."  <object file>" cr
-        bye
-    then 
-    1 cells argv @ + @ ( object file )
-    load-module
-    interpret quit
+    quit
 ; execute
