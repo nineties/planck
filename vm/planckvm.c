@@ -1049,13 +1049,6 @@ load_module(interpreter *interp, const char *name, const char *path) {
         decode_section(mod, &cur);
     assert(cur == buffer + size);
 
-    /* Add the module to interpreter */
-    interp->modules = realloc(
-            interp->modules,
-            (interp->n_module + 1) * sizeof(interp->modules[0])
-            );
-    interp->modules[interp->n_module++] = mod;
-
     /* Load the dependent modules */
     char buf1[BUFSIZ], buf2[BUFSIZ];
     for (int i = 0; i < mod->n_import; i++) {
@@ -1071,6 +1064,13 @@ load_module(interpreter *interp, const char *name, const char *path) {
         function *startup_fun = &mod->funcs[mod->startup];
         call(interp, mod, startup_fun); /* todo type check */
     }
+
+    /* Add the module to interpreter */
+    interp->modules = realloc(
+            interp->modules,
+            (interp->n_module + 1) * sizeof(interp->modules[0])
+            );
+    interp->modules[interp->n_module++] = mod;
 
     return mod;
 }
