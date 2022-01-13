@@ -9,12 +9,14 @@ include encoding.fs
 s" Type Error" exception constant TYPE-ERROR
 
 struct
-    cell% field mod>ids        ( vector of identifiers )
-    cell% field mod>funcs      ( vector of functions )
-    cell% field mod>vars       ( vector of variables (type, value) )
-    cell% field mod>exports    ( vector of exported items )
-    cell% field mod>import_ids ( vector of module ids )
-    cell% field mod>startup    ( index of startup function. -1 for none )
+    cell% field mod>name
+    cell% field mod>ids         ( vector of identifiers )
+    cell% field mod>funcs       ( vector of functions )
+    cell% field mod>vars        ( vector of variables (type, value) )
+    cell% field mod>exports     ( vector of exported items )
+    cell% field mod>import_ids  ( vector of module ids )
+    cell% field mod>import_mods ( vector of modules )
+    cell% field mod>startup     ( index of startup function. -1 for none )
 end-struct module%
 
 struct
@@ -41,6 +43,11 @@ variable SP
 variable BP
 
 0 make-array constant MODULES
+0 make-array constant SEARCH-PATHS
+
+: file-exists ( path -- bool )
+    R/O open-file success = if close-file throw true else drop false then
+;
 
 : current-module ( -- mod )
     MODULES array-size 1- MODULES array@
@@ -59,13 +66,15 @@ variable BP
     endcase
 ;
 
-: make-module ( -- mod )
+: make-module ( name -- mod )
     module% %allocate throw
+    tuck mod>name !
     0 make-array over mod>ids !
     0 make-array over mod>funcs !
     0 make-array over mod>vars !
     0 make-array over mod>exports !
     0 make-array over mod>import_ids !
+    0 make-array over mod>import_mods !
     -1 over mod>startup !
 ;
 
@@ -150,6 +159,17 @@ $2000000 constant FILE_BUFFER_SIZE
             decode-operand 3 pick array-push
         loop rot
         r> r> 3 reverse Nlcall make-node3
+    endof
+    %00100001 of
+        drop
+        decode-operand >r   ( lhs )
+        decode-uint >r      ( module name )
+        decode-uint >r      ( function name )
+        0 make-array -rot   ( array for args )
+        decode-uint 0 ?do
+            decode-operand 3 pick array-push
+        loop rot
+        r> r> r> 4 reverse Necall make-node4
     endof
     %00110000 %00111111 rangeof
         %00001111 and >r    ( R:len )
@@ -525,6 +545,41 @@ $2000000 constant FILE_BUFFER_SIZE
                 \ restore stack pointer
                 node>arg2 @ array-size cells SP +!
             endof
+            Necall of
+                \ allocate space for arguments
+                dup node>arg3 @ array-size cells SP -!
+                \ push arguments to the stack
+                dup node>arg3 @ array-size 0 ?do
+                    i over node>arg3 @ array@ to-value
+                    SP @ i cells + !
+                loop
+
+                dup node>arg1 @ ( module-index )
+                current-module mod>import_mods @ array@ ( module )
+                \ lookup the function
+                dup mod>exports @ 0 over array-size 0 ?do
+                    ( node module arr 0 )
+                    i 2 pick array@ expt>id @
+                    3 pick mod>ids @ array@ 
+                    ( node module arr 0 name1 )
+                    4 pick node>arg2 @ current-module mod>ids @ array@
+                    ( node module arr 0 name1 name2 )
+                    streq if
+                        i 2 pick array@ expt>def @
+                        3 pick mod>funcs @ array@ nip leave
+                    then
+                loop
+                ?dup unless not-reachable then
+                ( node module arr fun )
+                nip swap push-module
+                recurse \ call the function
+                pop-module
+                ( fun prev cur node retval )
+                over node>arg0 @ swap move \ assign retval to lhs
+
+                \ restore stack pointer
+                node>arg3 @ array-size cells SP +!
+            endof
             Nmaketuple of
                 0 make-array
                 over node>arg1 @ array-size 0 ?do
@@ -588,21 +643,36 @@ $2000000 constant FILE_BUFFER_SIZE
     not-implemented
 ;
 
-: load-module ( file -- module )
+\ foo/bar/baz to foo/bar/
+\ baz to ./
+: dirname ( c-addr -- c-addr )
+    make-string dup strlen 1-
+    begin ?dup while
+        ( s i )
+        2dup + c@ '/' = if
+            drop exit
+        else
+            2dup + 0 swap c!
+            1-
+        then
+    repeat drop
+    s" ./"
+;
+
+: load-module ( name path -- module )
     \ Read file content
     R/O open-file throw
     FILE_BUFFER_SIZE allocate throw dup >r
     FILE_BUFFER_SIZE
     2 pick read-file throw
-    dup FILE_BUFFER_SIZE >= if
+    FILE_BUFFER_SIZE >= if
         ." The size of file buffer is not enough" cr
         1 quit
     then
-    drop
     close-file throw
     r> ( buf )
 
-    make-module swap
+    swap make-module swap
 
     dup u8@ %11011111 <> if DECODE-ERROR throw then 1+
     dup u8@ %11111111 <> if DECODE-ERROR throw then 1+
@@ -615,8 +685,21 @@ $2000000 constant FILE_BUFFER_SIZE
         $04 of decode-import-section endof
         not-reachable
         endcase
-    loop
-    drop
+    loop drop
+
+    \ load dependent modules
+    dup mod>import_ids @ dup array-size 0 ?do
+        i over array@ 2 pick mod>ids @ array@ ( module ids name )
+        0
+        SEARCH-PATHS array-size 0 ?do
+            i SEARCH-PATHS array@ 2 pick concat-string s" .pko" concat-string
+            dup file-exists if nip leave else drop then
+        loop
+        ?dup unless not-reachable then
+        ( module ids )
+        recurse
+        2 pick mod>import_mods @ array-push
+    loop drop
 
     \ run startup code if it exists
     dup mod>startup @ dup 0>= unless drop else
@@ -637,7 +720,9 @@ $2000000 constant FILE_BUFFER_SIZE
 
     STACK-SIZE cells dup allocate throw + SP !
 
-    1 cells argv @ + @ load-module
+    1 cells argv @ + @ ( path )
+    dup dirname SEARCH-PATHS array-push
+    s" main" swap load-module
     push-module
 
     s" main" lookup-func

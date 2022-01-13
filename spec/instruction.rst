@@ -101,7 +101,7 @@ Function calls::
    * External function call
 
    Calling a function of other module.
-   lhs == <module name(m)>::f(arg0, arg1, ...)
+   lhs == <module(m)>::f(arg0, arg1, ...)
 
    +----------+~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+~~~~~~~~~~+
    | 00100001 | lhs | uint (m) | uint (f) | uint (n) | n x args |
