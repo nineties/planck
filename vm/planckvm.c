@@ -701,49 +701,6 @@ decode_section(module *mod, byte_t **cur) {
     not_reachable();
 }
 
-static module *
-load_module(interpreter *interp, const char *name, const char *path) {
-    FILE *fp = fopen(path, "rb");
-    fpos_t pos;
-    fseek(fp, 0, SEEK_END);
-    fgetpos(fp, &pos);
-    fseek(fp, 0, SEEK_SET);
-    size_t size = pos.__pos;
-    byte_t *buffer = calloc(1, size);
-    fread(buffer, 1, size, fp);
-    fclose(fp);
-
-    assert(buffer[0] == D_USER);
-    assert(buffer[1] == T_OBJ);
-
-    byte_t *cur = buffer + 2;
-    module *mod = calloc(1, sizeof(module));
-    mod->name = name;
-    size_t n_sections = decode_uint(&cur);
-    for (size_t i = 0; i < n_sections; i++)
-        decode_section(mod, &cur);
-    assert(cur == buffer + size);
-
-    /* Add the module to interpreter */
-    interp->modules = realloc(
-            interp->modules,
-            (interp->n_module + 1) * sizeof(interp->modules[0])
-            );
-    interp->modules[interp->n_module++] = mod;
-
-    /* Load the dependent modules */
-    char buf1[BUFSIZ], buf2[BUFSIZ];
-    for (int i = 0; i < mod->n_import; i++) {
-        strncpy(buf1, path, sizeof(buf1)-1);
-        snprintf(buf2, sizeof(buf2), "%s/%s.pko",
-                dirname(buf1), mod->ids[mod->import_ids[i]]);
-        mod->import_mods[i] =
-            load_module(interp, mod->ids[mod->import_ids[i]], buf2);
-    }
-
-    return mod;
-}
-
 static bool
 check_type(type *ty, value v) {
     switch (v.tag) {
@@ -1069,13 +1026,68 @@ call(interpreter *interp, module *mod, function *fun) {
     }
 }
 
-static int
-interpret(interpreter *interp, module *mod) {
-    /* if the object file has startup function, call it */
+static module *
+load_module(interpreter *interp, const char *name, const char *path) {
+    FILE *fp = fopen(path, "rb");
+    fpos_t pos;
+    fseek(fp, 0, SEEK_END);
+    fgetpos(fp, &pos);
+    fseek(fp, 0, SEEK_SET);
+    size_t size = pos.__pos;
+    byte_t *buffer = calloc(1, size);
+    fread(buffer, 1, size, fp);
+    fclose(fp);
+
+    assert(buffer[0] == D_USER);
+    assert(buffer[1] == T_OBJ);
+
+    byte_t *cur = buffer + 2;
+    module *mod = calloc(1, sizeof(module));
+    mod->name = name;
+    size_t n_sections = decode_uint(&cur);
+    for (size_t i = 0; i < n_sections; i++)
+        decode_section(mod, &cur);
+    assert(cur == buffer + size);
+
+    /* Add the module to interpreter */
+    interp->modules = realloc(
+            interp->modules,
+            (interp->n_module + 1) * sizeof(interp->modules[0])
+            );
+    interp->modules[interp->n_module++] = mod;
+
+    /* Load the dependent modules */
+    char buf1[BUFSIZ], buf2[BUFSIZ];
+    for (int i = 0; i < mod->n_import; i++) {
+        strncpy(buf1, path, sizeof(buf1)-1);
+        snprintf(buf2, sizeof(buf2), "%s/%s.pko",
+                dirname(buf1), mod->ids[mod->import_ids[i]]);
+        mod->import_mods[i] =
+            load_module(interp, mod->ids[mod->import_ids[i]], buf2);
+    }
+
+    /* If the module has startup function, call it */
     if (mod->startup >= 0) {
         function *startup_fun = &mod->funcs[mod->startup];
         call(interp, mod, startup_fun); /* todo type check */
     }
+
+    return mod;
+}
+
+int
+main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <object file>\n", argv[0]);
+        return 1;
+    }
+    interpreter interp;
+    interp.stack = calloc(STACK_SIZE, sizeof(value));
+    interp.sp = interp.stack + STACK_SIZE;
+    interp.n_module = 0;
+    interp.modules = NULL;
+
+    module *mod = load_module(&interp, "main", argv[1]);
 
     uint_t main_id = lookup_id(mod, "main");
     function *main_fun = NULL;
@@ -1097,22 +1109,8 @@ interpret(interpreter *interp, module *mod) {
         exit(1);
     }
 
-    value ret = call(interp, mod, main_fun);
+    value ret = call(&interp, mod, main_fun);
+    CHECK_TYPE(main_fun->ty->ret, ret);
+
     return (int) ret.i;
-}
-
-int
-main(int argc, char *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <object file>\n", argv[0]);
-        return 1;
-    }
-    interpreter interp;
-    interp.stack = calloc(STACK_SIZE, sizeof(value));
-    interp.sp = interp.stack + STACK_SIZE;
-    interp.n_module = 0;
-    interp.modules = NULL;
-
-    module *mod = load_module(&interp, "main", argv[1]);
-    return interpret(&interp, mod);
 }
