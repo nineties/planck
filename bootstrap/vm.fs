@@ -330,7 +330,7 @@ $2000000 constant FILE_BUFFER_SIZE
     drop
 ;
 
-: lookup-func ( interp c-addr -- function )
+: lookup-func ( c-addr -- function )
     \ lookup id of the name
     current-module obj>ids @
     -1 over array-size 0 ?do
@@ -340,18 +340,18 @@ $2000000 constant FILE_BUFFER_SIZE
         then
     loop
     nip
-    ( interp c-addr name-id )
+    ( c-addr name-id )
     dup -1 = if
         ." function \"" over type ." \" is missing" cr
         1 quit
     then
 
-    ( interp name name-id )
+    ( name name-id )
     \ lookup export table
     current-module obj>exports @ 0
     over array-size 0 ?do
         i 2 pick array@
-        ( interp name name-id exports tup )
+        ( name name-id exports tup )
         dup expt>id @ 4 pick = if
             dup expt>type @ [char] F = unless DECODE-ERROR throw then
             expt>def @
@@ -362,7 +362,7 @@ $2000000 constant FILE_BUFFER_SIZE
             drop
         then
     loop
-    nip nip nip nip
+    nip nip nip
 ;
 
 \ address of local variable
@@ -646,7 +646,7 @@ $2000000 constant FILE_BUFFER_SIZE
         drop
     then
 
-    dup s" main" lookup-func
+    s" main" lookup-func
 
     \ Check type of main
     dup fun>ty @ dup node>tag @ TyFunc = unless not-reachable then
