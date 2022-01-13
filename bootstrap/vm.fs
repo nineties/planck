@@ -297,9 +297,7 @@ $2000000 constant FILE_BUFFER_SIZE
     loop
 ;
 
-: load-module ( file interp -- module )
-    drop
-
+: load-module ( file -- module )
     \ Read file content
     R/O open-file throw
     FILE_BUFFER_SIZE allocate throw dup >r
@@ -631,9 +629,7 @@ $2000000 constant FILE_BUFFER_SIZE
     STACK-SIZE cells dup allocate throw + SP !
     0 \ temp
 
-    1 cells argv @ + @ ( object file )
-
-    over load-module
+    1 cells argv @ + @ load-module
     ( interp mod )
 
     push-module
