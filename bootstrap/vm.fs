@@ -555,7 +555,7 @@ $2000000 constant FILE_BUFFER_SIZE
                 \ push arguments to the stack
                 dup node>arg2 @ array-size 0 ?do
                     4 pick i 2 pick node>arg2 @ array@ to-value
-                    SP i cells + !
+                    SP @ i cells + !
                 loop
                 dup node>arg1 @ ( index of the function )
                 current-module obj>funcs @ array@
@@ -636,7 +636,7 @@ $2000000 constant FILE_BUFFER_SIZE
         bye
     then
 
-    STACK-SIZE cells allocate throw SP !
+    STACK-SIZE cells dup allocate throw + SP !
     0 \ temp
 
     1 cells argv @ + @ ( object file )
