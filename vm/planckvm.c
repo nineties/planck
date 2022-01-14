@@ -1019,8 +1019,28 @@ call(interpreter *interp, module *mod, function *fun) {
                 move(bp, &insn->lhs, *v);
                 break;
             }
-            case I_ESTORE:
+            case I_ESTORE: {
+                value v = operand_to_value(bp, &insn->rhs);
+
+                assert(insn->store_mod < mod->n_import);
+                module *m = mod->import_mods[insn->store_mod];
+                value *x = NULL;
+                type *ty = NULL;
+                for (int i = 0; i < m->n_export; i++) {
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->store_idx])) {
+                        x = &m->vars[m->exports[i].def].v;
+                        ty = m->vars[m->exports[i].def].ty;
+                    }
+                }
+                if (!x) {
+                    fprintf(stderr, "variable %s is not found in module %s\n",
+                            mod->ids[insn->store_idx], m->name);
+                    exit(1);
+                }
+                CHECK_TYPE(ty, v);
+                *x = v;
                 break;
+            }
             case I_GOTO:
                 prev = block;
                 block = &fun->blocks[insn->next];
