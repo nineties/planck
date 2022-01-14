@@ -252,7 +252,7 @@ typedef struct {
 } function;
 
 typedef struct {
-    byte_t type;
+    byte_t ty;
     uint_t id;
     uint_t def;
     char *comment;
@@ -704,7 +704,7 @@ decode_section(module *mod, byte_t **cur) {
         mod->n_export = decode_uint(cur);
         mod->exports = calloc(mod->n_export, sizeof(mod->exports[0]));
         for (int i = 0; i < mod->n_export; i++) {
-            mod->exports[i].type = decode_uint(cur);
+            mod->exports[i].ty = decode_uint(cur);
             mod->exports[i].id = decode_uint(cur);
             mod->exports[i].def = decode_uint(cur);
             mod->exports[i].comment = decode_str(cur);
@@ -958,7 +958,8 @@ call(interpreter *interp, module *mod, function *fun) {
                 /* lookup the function */
                 function *f = NULL;
                 for (int i = 0; i < m->n_export; i++) {
-                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->fun]))
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->fun]) &&
+                        m->exports[i].ty == 'F')
                         f = &m->funcs[m->exports[i].def];
                 }
                 if (!f) {
@@ -1008,7 +1009,8 @@ call(interpreter *interp, module *mod, function *fun) {
                 module *m = mod->import_mods[insn->load_mod];
                 value *v = NULL;
                 for (int i = 0; i < m->n_export; i++) {
-                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->load_idx]))
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->load_idx]) &&
+                        m->exports[i].ty == 'D')
                         v = &m->vars[m->exports[i].def].v;
                 }
                 if (!v) {
@@ -1027,7 +1029,8 @@ call(interpreter *interp, module *mod, function *fun) {
                 value *x = NULL;
                 type *ty = NULL;
                 for (int i = 0; i < m->n_export; i++) {
-                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->store_idx])) {
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->store_idx]) &&
+                        m->exports[i].ty == 'D') {
                         x = &m->vars[m->exports[i].def].v;
                         ty = m->vars[m->exports[i].def].ty;
                     }
@@ -1152,7 +1155,7 @@ main(int argc, char *argv[]) {
     function *main_fun = NULL;
     for (int i = 0; i < mod->n_export; i++) {
         if (mod->exports[i].id == main_id) {
-            assert(mod->exports[i].type == 'F');
+            assert(mod->exports[i].ty == 'F');
             main_fun = &mod->funcs[mod->exports[i].def];
             break;
         }
