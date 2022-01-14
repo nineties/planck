@@ -249,7 +249,11 @@ create CODEPOS CODEBUF ,
 ;
 
 : compile-import ( node -- )
-    node>arg0 @ node>arg0 @ join-longid get-id IMPORTS array-push
+    node>arg0 @ dup node>tag @ Nid = if
+        node>arg0 @ get-id IMPORTS array-push
+    else
+        node>arg0 @ join-longid get-id IMPORTS array-push
+    then
 ;
 
 

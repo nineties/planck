@@ -56,7 +56,11 @@ private{
 
 : parse-long-id ( lexer -- node )
     parse-long-id-impl ?dup unless 0 exit then
-    Nlongid make-node1
+    dup list-length 1 = if
+        car Nid make-node1
+    else
+        Nlongid make-node1
+    then
 ;
 
 : parse-register ( lexer -- node )
@@ -167,7 +171,7 @@ create parse-type-p 0 ,
 ' parse-type parse-type-p !
 
 : parse-place ( lexer -- node )
-    dup parse-label ?dup if nip exit then
+    dup parse-long-id ?dup if nip exit then
     dup parse-register ?dup if nip exit then
     dup '*' expect-sym unless drop 0 exit then
     dup lex
@@ -285,9 +289,6 @@ create parse-type-p 0 ,
         drop 0 swap make-move exit
     then
     dup parse-long-id ?dup unless SYNTAX-ERROR throw then
-    dup node>arg0 @ list-length 1 = if
-        node>arg0 @ car Nid make-node1
-    then
 
     swap
     dup '(' expect-sym if
