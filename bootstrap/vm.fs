@@ -213,6 +213,20 @@ $2000000 constant FILE_BUFFER_SIZE
         decode-uint >r
         decode-operand r> swap Nlstore make-node2
     endof
+    %01100010 of
+        drop
+        decode-operand >r
+        decode-uint >r
+        decode-uint r> r> ( idx mod lhs )
+        3 reverse Neload make-node3
+    endof
+    %01100011 of
+        drop
+        decode-uint >r
+        decode-uint >r
+        decode-operand r> r> ( rhs idx mod )
+        3 reverse Nestore make-node3
+    endof
     %10000000 of drop decode-uint make-goto endof
     %10000001 of drop decode-operand make-return endof
     %10000010 of
@@ -606,6 +620,30 @@ $2000000 constant FILE_BUFFER_SIZE
                 current-module mod>vars @ array@
                 tuck tuple0 @ over check-type unless TYPE-ERROR throw then
                 swap tuple1 !
+            endof
+            Neload of
+                dup node>arg1 @ ( module-index )
+                current-module mod>import_mods @ array@ ( module )
+                \ lookup the variable
+                dup mod>exports @ 0 over array-size 0 ?do
+                    ( node module arr 0 )
+                    i 2 pick array@ expt>id @
+                    3 pick mod>ids @ array@
+                    ( node module arr 0 name1 )
+                    4 pick node>arg2 @ current-module mod>ids @ array@
+                    ( node module arr 0 name1 name2 )
+                    streq if
+                        i 2 pick array@ expt>def @
+                        3 pick mod>vars @ array@ nip leave
+                    then
+                loop
+                ?dup unless not-reachable then
+                nip nip tuple1 @
+                ( fun prev cur node value )
+                swap node>arg0 @ swap move \ assign value to lhs
+            endof
+            Nestore of
+                not-implemented
             endof
             Ngoto of
                 node>arg0 @ ( index of next block )
