@@ -1090,6 +1090,7 @@ call(interpreter *interp, module *mod, function *fun) {
 
 static module *
 load_module(interpreter *interp, const char *name, const char *path) {
+    printf("import %s\n", path);
     FILE *fp = fopen(path, "rb");
     fpos_t pos;
     fseek(fp, 0, SEEK_END);
