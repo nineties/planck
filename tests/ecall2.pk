@@ -1,8 +1,8 @@
-import a::lib
+import a::c
 
 /// Test of importing other module
 export fun main: () -> i32 {
 root:
-    %0 = a::lib::f()
+    %0 = a::c::f()
     return %0
 }
