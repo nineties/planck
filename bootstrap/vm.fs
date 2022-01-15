@@ -643,7 +643,24 @@ $2000000 constant FILE_BUFFER_SIZE
                 swap node>arg0 @ swap move \ assign value to lhs
             endof
             Nestore of
-                not-implemented
+                dup node>arg2 @ to-value >r
+                dup node>arg0 @ ( module-index )
+                current-module mod>import_mods @ array@ ( module )
+                \ lookup the variable
+                dup mod>exports @ 0 over array-size 0 ?do
+                    ( node module arr 0 )
+                    i 2 pick array@ expt>id @
+                    3 pick mod>ids @ array@
+                    ( node module arr 0 name1 )
+                    4 pick node>arg1 @ current-module mod>ids @ array@
+                    ( node module arr 0 name1 name2 )
+                    streq if
+                        i 2 pick array@ expt>def @
+                        3 pick mod>vars @ array@ nip leave
+                    then
+                loop
+                ?dup unless not-reachable then
+                nip nip nip r> swap tuple1 !
             endof
             Ngoto of
                 node>arg0 @ ( index of next block )
