@@ -1,9 +1,9 @@
-import a::lib
+import a::c
 
 /// Test of loading variable defined in other module
 export fun main: () -> i32 {
 root:
-    a::lib::Variable = 123:i32
-    %0 = a::lib::Variable
+    a::c::Variable = 123:i32
+    %0 = a::c::Variable
     return %0
 }

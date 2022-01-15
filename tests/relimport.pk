@@ -1,6 +1,7 @@
 import a::b
 
-/// Test of local function call with no arguments
+/// Test of relative import.
+/// This module imports a::b and a::b imports lib in relative path.
 export fun main: () -> i32 {
 root:
     %0 = a::b::g()

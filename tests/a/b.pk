@@ -1,7 +1,7 @@
-import lib
+import c
 
 export fun g: () -> i32 {
 root:
-    %0 = lib::Constant
+    %0 = c::Constant
     return %0
 }

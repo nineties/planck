@@ -32,8 +32,8 @@ TEST_OBJECTS=\
 	../tests/ecall.pko \
 	../tests/eload.pko \
 	../tests/estore.pko \
-	../tests/a/lib.pko \
 	../tests/a/b.pko \
+	../tests/a/c.pko \
 	../tests/ecall2.pko \
 	../tests/eload2.pko \
 	../tests/estore2.pko \

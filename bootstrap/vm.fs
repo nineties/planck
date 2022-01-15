@@ -730,6 +730,7 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : load-module ( name path -- module )
+    dup dirname SEARCH-PATHS array-push
     \ Read file content
     R/O open-file throw
     FILE_BUFFER_SIZE allocate throw dup >r
@@ -763,10 +764,11 @@ $2000000 constant FILE_BUFFER_SIZE
         modname-to-path
 
         0
-        SEARCH-PATHS array-size 0 ?do
-            i SEARCH-PATHS array@ 2 pick concat-string s" .pko" concat-string
+        0 SEARCH-PATHS array-size ?do
+            i 1- SEARCH-PATHS array@ 2 pick concat-string s" .pko" concat-string
             dup file-exists if nip leave else drop then
-        loop
+            -1
+        +loop
         ?dup unless not-reachable then
         ( module ids )
         recurse
@@ -781,6 +783,8 @@ $2000000 constant FILE_BUFFER_SIZE
         pop-module
         drop
     then
+
+    SEARCH-PATHS array-pop drop
 ;
 
 
