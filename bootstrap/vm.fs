@@ -10,6 +10,7 @@ s" Type Error" exception constant TYPE-ERROR
 
 struct
     cell% field mod>name
+    cell% field mod>path
     cell% field mod>ids         ( vector of identifiers )
     cell% field mod>funcs       ( vector of functions )
     cell% field mod>vars        ( vector of variables (type, value) )
@@ -43,6 +44,7 @@ variable SP
 variable BP
 
 0 make-array constant MODULES
+0 make-array constant IMPORTED
 0 make-array constant SEARCH-PATHS
 
 : file-exists ( path -- bool )
@@ -66,8 +68,9 @@ variable BP
     endcase
 ;
 
-: make-module ( name -- mod )
+: make-module ( name path -- mod )
     module% %allocate throw
+    tuck mod>path !
     tuck mod>name !
     0 make-array over mod>ids !
     0 make-array over mod>funcs !
@@ -730,9 +733,17 @@ $2000000 constant FILE_BUFFER_SIZE
 ;
 
 : load-module ( name path -- module )
+    \ import guard
+    IMPORTED array-size 0 ?do
+        i IMPORTED array@ mod>path @ over streq if
+            2drop i IMPORTED array@ unloop exit
+        then
+    loop
+
     dup dirname SEARCH-PATHS array-push
+
     \ Read file content
-    R/O open-file throw
+    dup R/O open-file throw
     FILE_BUFFER_SIZE allocate throw dup >r
     FILE_BUFFER_SIZE
     2 pick read-file throw
@@ -741,10 +752,10 @@ $2000000 constant FILE_BUFFER_SIZE
         1 quit
     then
     close-file throw
-    r> ( buf )
+    make-module
+    dup IMPORTED array-push
 
-    swap make-module swap
-
+    r>
     dup u8@ %11011111 <> if DECODE-ERROR throw then 1+
     dup u8@ %11111111 <> if DECODE-ERROR throw then 1+
     decode-uint 0 ?do
