@@ -35,7 +35,8 @@ test-vm: planckvm
 	$(RUN_VM) ../tests/ecall2.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/eload2.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/estore2.pko; test $$? -eq 123
-	$(RUN_VM) ../tests/relimport.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/relative-import.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/import-guard.pko; test $$? -eq 123
 
 clean:
 	rm -f *.o planckvm

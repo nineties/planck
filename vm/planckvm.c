@@ -260,6 +260,7 @@ typedef struct {
 
 typedef struct module {
     const char *name;
+    const char *path;
     size_t n_ids;
     char **ids;
     size_t n_func;
@@ -1090,6 +1091,13 @@ call(interpreter *interp, module *mod, function *fun) {
 
 static module *
 load_module(interpreter *interp, const char *name, const char *path) {
+    /* import check */
+    for (int i = 0; i < interp->n_module; i++) {
+        if (!strcmp(interp->modules[i]->path, path)) {
+            /* already imported */
+            return interp->modules[i];
+        }
+    }
     FILE *fp = fopen(path, "rb");
     fpos_t pos;
     fseek(fp, 0, SEEK_END);
@@ -1106,6 +1114,7 @@ load_module(interpreter *interp, const char *name, const char *path) {
     byte_t *cur = buffer + 2;
     module *mod = calloc(1, sizeof(module));
     mod->name = name;
+    mod->path = path;
     size_t n_sections = decode_uint(&cur);
     for (size_t i = 0; i < n_sections; i++)
         decode_section(mod, &cur);
@@ -1131,8 +1140,8 @@ load_module(interpreter *interp, const char *name, const char *path) {
             }
         }
         strcpy(to, ".pko");
-        mod->import_mods[i] =
-            load_module(interp, mod->ids[mod->import_ids[i]], buf2);
+        mod->import_mods[i] = load_module(interp,
+                mod->ids[mod->import_ids[i]], strdup(buf2));
     }
 
     /* If the module has startup function, call it */
