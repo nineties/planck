@@ -714,6 +714,21 @@ $2000000 constant FILE_BUFFER_SIZE
     s" ./"
 ;
 
+\ foo::bar::baz to foo/bar/baz
+: modname-to-path ( c-addr -- c-addr )
+    make-string dup >r
+    dup ( from to )
+    begin over c@ while
+        over c@ ':' = if
+            swap 2 + swap '/' over c! 1+
+        else
+            over c@ over c!
+            1+ swap 1+ swap
+        then
+    repeat
+    0 over c!  2drop r>
+;
+
 : load-module ( name path -- module )
     \ Read file content
     R/O open-file throw
@@ -745,6 +760,8 @@ $2000000 constant FILE_BUFFER_SIZE
     \ load dependent modules
     dup mod>import_ids @ dup array-size 0 ?do
         i over array@ 2 pick mod>ids @ array@ ( module ids name )
+        modname-to-path
+
         0
         SEARCH-PATHS array-size 0 ?do
             i SEARCH-PATHS array@ 2 pick concat-string s" .pko" concat-string

@@ -31,7 +31,11 @@ TEST_OBJECTS=\
 	../tests/lib.pko \
 	../tests/ecall.pko \
 	../tests/eload.pko \
-	../tests/estore.pko
+	../tests/estore.pko \
+	../tests/a/lib.pko \
+	../tests/ecall2.pko \
+	../tests/eload2.pko \
+	../tests/estore2.pko
 
 default: planck $(TEST_OBJECTS)
 
@@ -76,6 +80,9 @@ test-vm: planck $(TEST_OBJECTS)
 	$(RUN_VM) ../tests/ecall.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/eload.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/estore.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/ecall2.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/eload2.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/estore2.pko; test $$? -eq 123
 
 clean:
 	rm -rf planck lib bootstrap.fs

@@ -1114,9 +1114,23 @@ load_module(interpreter *interp, const char *name, const char *path) {
     /* Load the dependent modules */
     char buf1[BUFSIZ], buf2[BUFSIZ];
     for (int i = 0; i < mod->n_import; i++) {
+        char *from, *to;
+        /* copy path because dirname() may overwrite given string */
         strncpy(buf1, path, sizeof(buf1)-1);
-        snprintf(buf2, sizeof(buf2), "%s/%s.pko",
-                dirname(buf1), mod->ids[mod->import_ids[i]]);
+        to = buf2 + snprintf(buf2, sizeof(buf2), "%s/", dirname(buf1));
+
+        /* convert module path foo::bar::baz to file path foo/bar/baz */
+        from = mod->ids[mod->import_ids[i]];
+        while (*from && (to < buf2 + sizeof(buf2) - 5)) { /* -5 for ".pko\0" */
+            if (*from == ':') {
+                assert(*(from+1) == ':');
+                from += 2;
+                *to++ = '/';
+            } else  {
+                *to++ = *from++;
+            }
+        }
+        strcpy(to, ".pko");
         mod->import_mods[i] =
             load_module(interp, mod->ids[mod->import_ids[i]], buf2);
     }
