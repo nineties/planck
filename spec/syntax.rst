@@ -98,6 +98,8 @@ Instruction::
 
    instruction : "nop"
                | place "=" expression
+               | place "=" long_id
+               | long_id "=" operand
 
    phi_instruction : place "=" "phi" "(" phi_args ")"
    phi_args : phi_arg ( "," phi_arg )*

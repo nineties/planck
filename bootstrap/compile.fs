@@ -134,20 +134,38 @@ create CODEPOS CODEBUF ,
     Nifne of 2 replace-label-impl 3 replace-label-impl drop endof
     Niflt of 2 replace-label-impl 3 replace-label-impl drop endof
     Nifle of 2 replace-label-impl 3 replace-label-impl drop endof
-    Nload of
-        dup node>arg1 @ node>arg0 @ lookup-vardef
-        swap node>arg1 !
-    endof
-    Nstore of
-        dup node>arg0 @ node>arg0 @ lookup-vardef
-        swap node>arg0 !
-    endof
     drop
     endcase
 ;
 
 : compile-insn ( insn -- insn )
     dup node>tag @ case
+    Nmove of
+        \ rewrite move to load/store
+        dup node>arg0 @ node>tag @ Nid = if
+            dup node>arg1 @ node>tag @ Nid = if SYNTAX-ERROR throw then
+            dup node>arg1 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
+            dup node>arg0 @ node>arg0 @ lookup-vardef
+            swap node>arg1 @
+            make-lstore
+        else dup node>arg1 @ node>tag @ Nid = if
+            dup node>arg0 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
+            dup node>arg0 @
+            swap node>arg1 @ node>arg0 @ lookup-vardef
+            make-lload
+        else dup node>arg0 @ node>tag @ Nlongid = if
+            dup node>arg1 @ node>tag @ Nlongid = if SYNTAX-ERROR throw then
+            dup node>arg0 @ node>arg0 @ split-longid
+            get-id swap lookup-import-index swap
+            rot node>arg1 @ Nestore make-node3
+        else dup node>arg1 @ node>tag @ Nlongid = if
+            dup node>arg0 @
+            swap node>arg1 @ node>arg0 @ split-longid
+            get-id swap lookup-import-index swap
+            Neload make-node3
+        then then then then
+    endof
+
     Ncall of
         dup node>arg1 @ node>tag @ Nid = if
             dup node>arg1 @ node>arg0 @ lookup-fundef dup 0< if not-reachable then
@@ -160,8 +178,8 @@ create CODEPOS CODEBUF ,
 
             dup node>arg2 >r
             dup node>arg1 @ node>arg0 @ split-longid
-            get-id swap lookup-import-index swap .s >r >r
-            node>arg0 @ r> r> r> .s Necall make-node4
+            get-id swap lookup-import-index swap >r >r
+            node>arg0 @ r> r> r> Necall make-node4
         then
     endof
         drop 0
@@ -231,7 +249,11 @@ create CODEPOS CODEBUF ,
 ;
 
 : compile-import ( node -- )
-    node>arg0 @ node>arg0 @ join-longid get-id IMPORTS array-push
+    node>arg0 @ dup node>tag @ Nid = if
+        node>arg0 @ get-id IMPORTS array-push
+    else
+        node>arg0 @ join-longid get-id IMPORTS array-push
+    then
 ;
 
 

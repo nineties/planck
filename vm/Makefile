@@ -29,7 +29,9 @@ test-vm: planckvm
 	$(RUN_VM) ../tests/tuple2.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/tuple3.pko; test $$? -eq 123
 	$(RUN_VM) ../tests/global-constant.pko; test $$? -eq 123
-	$(RUN_VM) ../tests/import.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/ecall.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/eload.pko; test $$? -eq 123
+	$(RUN_VM) ../tests/estore.pko; test $$? -eq 123
 
 clean:
 	rm -f *.o planckvm

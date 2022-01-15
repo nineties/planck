@@ -96,8 +96,10 @@ typedef int64_t sint_t;
 #define I_ECALL     0x21
 #define I_TUPLE     0x50
 #define I_TUPLEAT   0x51
-#define I_LOAD      0x60
-#define I_STORE     0x61
+#define I_LLOAD     0x60
+#define I_LSTORE    0x61
+#define I_ELOAD     0x62
+#define I_ESTORE    0x63
 #define I_GOTO      0x80
 #define I_RETURN    0x81
 #define I_IFTRUE    0x82
@@ -204,11 +206,17 @@ typedef struct {
         struct {
             union {
                 operand lhs;
-                uint_t store_idx;
+                struct {
+                    uint_t store_mod;
+                    uint_t store_idx;
+                };
             };
             union {
                 operand rhs;    // lhs = rhs
-                uint_t load_idx;
+                struct {
+                    uint_t load_mod;
+                    uint_t load_idx;
+                };
                 struct {        // binary expression
                     operand arg0;
                     operand arg1;
@@ -244,7 +252,7 @@ typedef struct {
 } function;
 
 typedef struct {
-    byte_t type;
+    byte_t ty;
     uint_t id;
     uint_t def;
     char *comment;
@@ -564,13 +572,25 @@ decode_instruction(function *fun, instruction *insn, byte_t **cur) {
         decode_operand(fun, &insn->arg, cur);
         insn->index = *(*cur)++;
         return;
-    case I_LOAD:
-        insn->tag = I_LOAD;
+    case I_LLOAD:
+        insn->tag = I_LLOAD;
         decode_operand(fun, &insn->lhs, cur);
         insn->load_idx = decode_uint(cur);
         return;
-    case I_STORE:
-        insn->tag = I_STORE;
+    case I_LSTORE:
+        insn->tag = I_LSTORE;
+        insn->store_idx = decode_uint(cur);
+        decode_operand(fun, &insn->rhs, cur);
+        return;
+    case I_ELOAD:
+        insn->tag = I_ELOAD;
+        decode_operand(fun, &insn->lhs, cur);
+        insn->load_mod = decode_uint(cur);
+        insn->load_idx = decode_uint(cur);
+        return;
+    case I_ESTORE:
+        insn->tag = I_ESTORE;
+        insn->store_mod = decode_uint(cur);
         insn->store_idx = decode_uint(cur);
         decode_operand(fun, &insn->rhs, cur);
         return;
@@ -684,7 +704,7 @@ decode_section(module *mod, byte_t **cur) {
         mod->n_export = decode_uint(cur);
         mod->exports = calloc(mod->n_export, sizeof(mod->exports[0]));
         for (int i = 0; i < mod->n_export; i++) {
-            mod->exports[i].type = decode_uint(cur);
+            mod->exports[i].ty = decode_uint(cur);
             mod->exports[i].id = decode_uint(cur);
             mod->exports[i].def = decode_uint(cur);
             mod->exports[i].comment = decode_str(cur);
@@ -933,12 +953,13 @@ call(interpreter *interp, module *mod, function *fun) {
                 interp->sp -= insn->n_args; /* allocate space for arguments */
                 for (int i = 0; i < insn->n_args; i++)
                     interp->sp[i] = operand_to_value(bp, &insn->args[i]);
-                if (insn->mod >= mod->n_import) not_reachable();
+                assert(insn->mod < mod->n_import);
                 module *m = mod->import_mods[insn->mod];
                 /* lookup the function */
                 function *f = NULL;
                 for (int i = 0; i < m->n_export; i++) {
-                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->fun]))
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->fun]) &&
+                        m->exports[i].ty == 'F')
                         f = &m->funcs[m->exports[i].def];
                 }
                 if (!f) {
@@ -972,16 +993,57 @@ call(interpreter *interp, module *mod, function *fun) {
                 move(bp, &insn->lhs, v.values[insn->index]);
                 break;
             }
-            case I_LOAD:
+            case I_LLOAD:
                 assert(insn->load_idx < mod->n_var);
                 move(bp, &insn->lhs, mod->vars[insn->load_idx].v);
                 break;
-            case I_STORE:
+            case I_LSTORE: {
                 assert(insn->store_idx < mod->n_var);
                 value v = operand_to_value(bp, &insn->rhs);
                 CHECK_TYPE(mod->vars[insn->store_idx].ty, v);
                 mod->vars[insn->store_idx].v = v;
                 break;
+            }
+            case I_ELOAD: {
+                assert(insn->load_mod < mod->n_import);
+                module *m = mod->import_mods[insn->load_mod];
+                value *v = NULL;
+                for (int i = 0; i < m->n_export; i++) {
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->load_idx]) &&
+                        m->exports[i].ty == 'D')
+                        v = &m->vars[m->exports[i].def].v;
+                }
+                if (!v) {
+                    fprintf(stderr, "variable %s is not found in module %s\n",
+                            mod->ids[insn->load_idx], m->name);
+                    exit(1);
+                }
+                move(bp, &insn->lhs, *v);
+                break;
+            }
+            case I_ESTORE: {
+                value v = operand_to_value(bp, &insn->rhs);
+
+                assert(insn->store_mod < mod->n_import);
+                module *m = mod->import_mods[insn->store_mod];
+                value *x = NULL;
+                type *ty = NULL;
+                for (int i = 0; i < m->n_export; i++) {
+                    if (!strcmp(m->ids[m->exports[i].id], mod->ids[insn->store_idx]) &&
+                        m->exports[i].ty == 'D') {
+                        x = &m->vars[m->exports[i].def].v;
+                        ty = m->vars[m->exports[i].def].ty;
+                    }
+                }
+                if (!x) {
+                    fprintf(stderr, "variable %s is not found in module %s\n",
+                            mod->ids[insn->store_idx], m->name);
+                    exit(1);
+                }
+                CHECK_TYPE(ty, v);
+                *x = v;
+                break;
+            }
             case I_GOTO:
                 prev = block;
                 block = &fun->blocks[insn->next];
@@ -1093,7 +1155,7 @@ main(int argc, char *argv[]) {
     function *main_fun = NULL;
     for (int i = 0; i < mod->n_export; i++) {
         if (mod->exports[i].id == main_id) {
-            assert(mod->exports[i].type == 'F');
+            assert(mod->exports[i].ty == 'F');
             main_fun = &mod->funcs[mod->exports[i].def];
             break;
         }

@@ -1,3 +1,14 @@
+/// Global constant
+export Constant: i32
+export Variable: i32
+
+fun startup: () -> () {
+root:
+    Constant = 123:i32
+    Variable = 0:i32
+    return ()
+}
+
 export fun f: () -> i32 {
 root:
     return 123:i32
