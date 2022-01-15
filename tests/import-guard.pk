@@ -1,0 +1,9 @@
+import a::b
+import a::b
+
+/// Test of local function call with no arguments
+export fun main: () -> i32 {
+root:
+    %0 = a::b::g()
+    return %0
+}
