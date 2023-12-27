@@ -1,21 +1,13 @@
 Planck Compiler Infrastructure Project
 ======================================
 
-This project aims to develop a **Compiler Infrastructure** which have advanced
-**memory safety** and **concurrency** features.
+This project aims to develop a **Compiler Infrastructure** with advanced **memory safety** and **concurrency** features.
 
-This project started with the idea of what would happen if we combined
-`Rust <https://www.rust-lang.org/>`_'s type system with `LLVM <https://llvm.org>`_'s concepts.
-The challenge is to create a language and tools for a low level virtual machine with a modern
-static type system which enables memory safety and advanced optimization features with zero runtime cost.
-If I dare to write down the concerns of this project, difficulty of developing a language processor
-that uses Planck as a backend may increase because of the strong type system.
-I would like to evaluate that in this project.
+This project began with the concept of merging `Rust <https://www.rust-lang.org/>`_'s type system with `LLVM <https://llvm.org>`_'s concepts.
+The challenge lies in creating a language and tools for a low-level virtual machine, incorporating a modern static type system. This system should enable memory safety and advanced optimization features without incurring any runtime costs.
+A potential concern is the increased difficulty in developing a language processor that uses Planck as a backend, due to the stringent requirements of a strong type system. This project seeks to evaluate this aspect.
 
-This project is originally the continuation of `PlanckForth <https://github.com/nineties/planckforth>`_,
-which aims to bootstrap a high-level language processor starting from hand-written machine language
-without relying on any existing programming languages or libraries.
-But the specification of VM and IR are designed to be independent of PlanckForth.
-So this system can be implemented in other languages and bytecodes have a portable format.
+Originally, this project is a continuation of `PlanckForth <https://github.com/nineties/planckforth>`_, which focused on bootstrapping a high-level language processor from hand-written machine language, independent of any existing programming languages or libraries.
+However, the VM and IR specifications are designed to be separate from PlanckForth, allowing the system to be implemented in various languages. Additionally, the bytecode format is made to be portable.
 
 - `Specification <spec/index.rst>`_
