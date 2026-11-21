@@ -30,7 +30,7 @@ Def{type, expr_type}
 Def{strlen, str_len}
 Def{ord, str_ord}
 Def{substr, str_sub}
-Def{hash, str_hash}
+Def{hash, expr_hash}
 Def{intern, sym_intern}
 Def{symname, sym_name}
 Def{array, array_new}
