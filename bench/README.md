@@ -1,20 +1,27 @@
 # Planck benchmarks
 
-A benchmark set that covers the features of Planck, and a record of the results across releases.
+A benchmark set that covers the features of Planck, and a record of the results across releases. The benchmarks, the measurement and the tables are Planck programs that run on `planck0`.
 
-## How a benchmark runs
+## How a measurement runs
 
-`bench/cases/NAME.pk` is run as `planck0 bench/cases/NAME.pk` from the root of a Planck checkout, the same way as the files under `planck/tests`. `bench/cases/NAME.out` is the expected standard output. A run whose output differs is a failure and is not recorded.
+`bench/run.pk` runs every benchmark once in one `planck0` process, from the root of a Planck checkout:
 
-`planck0` is the binary of the latest release of `nineties/hex-to-compiler`. Planck itself is read from the checkout that is being measured, so only the Planck side changes between two measurements.
+```
+planck0 bench/run.pk SAMPLES [UPTIME]
+```
+
+* `bench/cases/NAME.pk` is a benchmark and `bench/cases/NAME.out` is its expected standard output. `run.pk` loads each case with `load`, collects what it prints by replacing `put`, and stops with an error if the text differs from the `.out` file.
+* For every case, `run.pk` takes the elapsed time (`time_ns`), the bytes allocated (`heap_allocated`) and the number of garbage collections (`gc_count`), and appends one `sample("NAME", ns, bytes, gcs)` line to the file `SAMPLES`.
+* `UPTIME` is the time since boot in seconds, as in the first field of `/proc/uptime`. When it is given, `run.pk` also records `startup`: the time from that moment to the first line of `run.pk`, which is the time `planck0` takes to read `init.pk`, `peg.pk` and `syntax.pk` and to start the program.
+* The first case, `use_libs`, loads every library file with `use`. The later cases do not pay for loading a library again, so `use_libs` is the benchmark of loading libraries and the others measure the use of them. `syntax_extension` is the last case because it extends the grammar of the process.
+
+A case is a plain Planck program that prints its result. It can be run alone with `planck0 bench/cases/NAME.pk`.
+
+The measuring program needs the builtins `time_ns`, `heap_allocated` and `gc_count` of `planck0`, which are in the releases of `planck0` after v0.1.0.
 
 ## Start-up is a benchmark of its own
 
-`planck0` reads `planck/init.pk`, `planck/peg.pk` and `planck/syntax.pk` before it runs a program. An empty program (`startup`) takes about 27 s with `planck0` v0.1.0, so the body of a benchmark is a small part of one run. For that reason:
-
-* `startup` is one benchmark. Its time and its peak memory are recorded for every release, in rows of their own.
-* For every other benchmark, the job also measures `startup` and records `net_s = time_s - startup_s`. The tables compare `net_s`.
-* Each benchmark body is sized to take a few seconds on top of the start-up time.
+`planck0` reads `planck/init.pk`, `planck/peg.pk` and `planck/syntax.pk` before it runs a program, which takes about 27 s. A process runs all the cases, so this cost is paid once per process instead of once per benchmark. `startup` is recorded for every release in rows of its own.
 
 ## Coverage
 
@@ -43,23 +50,19 @@ A benchmark set that covers the features of Planck, and a record of the results 
 
 ## Files
 
-* `run-one.sh TREE PLANCK0 NAME` runs one benchmark once, checks the output, and prints the elapsed seconds and the maximum resident set size in KiB (`/usr/bin/time`).
-* `measure.sh CUR_TREE PREV_TREE PLANCK0 NAME [ROUNDS]` runs `startup` and the benchmark in the order previous, current, current, previous, `ROUNDS` times (default 3), takes the median of each, and prints one JSON line. `PREV_TREE` may be `-`. It reads `CUR_REF`, `CUR_COMMIT`, `PREV_REF`, `PREV_COMMIT` and `PLANCK0_VERSION` from the environment.
-* `report.sh [FILE...]` prints the comparison tables in Markdown from JSON lines (default `results.jsonl`).
-* `results.jsonl` is the record, one line per benchmark and release. `results.md` is the tables made from it.
+* `run.pk SAMPLES [UPTIME]` measures every case once and appends the samples to `SAMPLES`.
+* `record.pk OUT CUR_SAMPLES PREV_SAMPLES META` takes the median of the samples of each case, the ratio to the previous version, and appends one `result(...)` line per case to `OUT`. `PREV_SAMPLES` may be `-`. `META` is a file of `key=value` lines: `ref`, `commit`, `prev_ref`, `prev_commit`, `planck0`, `nproc`, `cpu`, `date`, `rounds`.
+* `report.pk RESULTS OUT` writes the tables in Markdown from a file of `result(...)` lines.
+* `results.pk` is the record, one line per benchmark and release. `results.md` is the tables made from it.
 
-Fields of a line: `case`, `ref` (tag), `commit`, `prev_ref`, `prev_commit`, `planck0`, `nproc`, `cpu`, `date`, `rounds`, `time_s`, `startup_s`, `net_s`, `prev_time_s`, `prev_startup_s`, `prev_net_s`, `ratio` (`net_s / prev_net_s`; for `startup`, `time_s / prev_time_s`), `max_rss_kb`.
+Fields of a `result` line: case, ref (tag), commit, prev_ref, prev_commit, planck0, nproc, cpu, date, rounds, time in ns (median), previous time in ns, ratio (current / previous, in thousandths), bytes allocated, garbage collections.
+
+Memory is recorded as the bytes allocated and the garbage collections of each case. These two values do not depend on the speed of the machine.
 
 ## Recording
 
-The workflow `.github/workflows/bench.yml` runs on GitHub Actions. Shared runners differ in speed from one run to the next, so the workflow never compares numbers from different jobs. Inside one job, the previous release and the measured version run alternately (previous, current, current, previous), and the ratio of the medians is recorded together with the CPU name of the runner. Compare ratios between releases; absolute seconds are only comparable between rows that share a CPU name.
+The workflow `.github/workflows/bench.yml` runs on GitHub Actions. Shared runners differ in speed from one run to the next, so the workflow never compares numbers from different jobs. Inside one job, the previous release and the measured version run alternately (previous, current, current, previous) for the number of rounds, and the ratio of the medians is recorded together with the CPU name of the runner. Compare ratios between releases; absolute seconds are only comparable between rows that share a CPU name.
 
-* A push of a tag `v*` measures that tag against the release before it and opens a pull request that adds the lines to `results.jsonl` and regenerates `results.md`. Merging the pull request is a human decision.
+* A push of a tag `v*` measures that tag against the release before it and opens a pull request that adds the lines to `results.pk` and regenerates `results.md`. Merging the pull request is a human decision.
 * A manual run (`workflow_dispatch`) takes the version to measure (branch, tag or commit), the version to compare with (empty means the release before the measured one), the number of rounds, and whether to open the pull request (default: no). The tables always appear in the summary of the run.
 * The repository setting "Allow GitHub Actions to create and approve pull requests" has to be on for the pull request.
-
-To measure an older release later, run the workflow by hand with its tag as the version to measure and `pr` on.
-
-## Adding a benchmark
-
-Put `NAME.pk` and its expected output `NAME.out` in `cases/`, and add a row to the coverage table. Check on a quiet machine that the body takes a few seconds on top of `startup`.

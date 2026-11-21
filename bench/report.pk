@@ -1,0 +1,70 @@
+# Copyright (C) 2026 nineties
+
+use("list")
+use("string")
+use("table")
+
+args := argv()
+in_path := args[1]
+out_path := args[2]
+
+rows := table.new()
+case_names := []
+ref_names := []
+ref_rows := table.new()
+
+result(name, ref, commit, prev_ref, prev_commit, planck0, nproc, cpu, date, rounds, t, prev_t, ratio, heap, gcs) := {
+    key := f"{name}/{ref}"
+    if (not list.member(name, case_names)) case_names = list.append(case_names, [name])
+    if (not list.member(ref, ref_names)) {
+        ref_names = list.append(ref_names, [ref])
+        table.set(ref_rows, ref, (commit, date, planck0, cpu))
+    }
+    table.set(rows, key, (t, ratio, heap, gcs))
+}
+
+load(in_path)
+
+pad3(n) := if (n < 10) f"00{n}" else if (n < 100) f"0{n}" else f"{n}"
+milli(x) := f"{x // 1000}.{pad3(x % 1000)}"
+seconds(ns) := milli((ns + 500000) // 1000000)
+mebibytes(bytes) := milli(bytes * 1000 // 1048576)
+
+cell(name, ref, k, show) := {
+    row := table.get(rows, f"{name}/{ref}", none)
+    if (row == none) "-"
+    else {
+        v := arg(row, k)
+        if (v == none) "-" else show(v)
+    }
+}
+
+table_lines(title, k, show, only_cases) := {
+    head := string.join(" | ", ref_names)
+    sep := string.join("|", list.map(r -> "---:", ref_names))
+    body := list.map(name -> f"| {name} | {string.join(" | ", list.map(ref -> cell(name, ref, k, show), ref_names))} |", only_cases)
+    header := [f"## {title}\n", f"| benchmark | {head} |", f"|---|{sep}|"]
+    string.join("\n", list.append(list.append(header, body), [""]))
+}
+
+cases_without_startup := list.filter(name -> name != "startup", case_names)
+
+run_line(ref) := {
+    r := table.get(ref_rows, ref, none)
+    f"| {ref} | {substr(arg(r, 0), 0, 7)} | {substr(arg(r, 1), 0, 10)} | {arg(r, 2)} | {arg(r, 3)} |"
+}
+
+runs := list.map(run_line, ref_names)
+
+text := string.join("\n", [
+    table_lines("Time per benchmark (seconds, median)", 0, seconds, case_names),
+    table_lines("Ratio to the previous release in the same job (current / previous, below 1 is faster)", 1, milli, case_names),
+    table_lines("Allocated memory per benchmark (MiB)", 2, mebibytes, cases_without_startup),
+    table_lines("Garbage collections per benchmark", 3, n -> f"{n}", cases_without_startup),
+    "## Runs\n",
+    "| ref | commit | date | planck0 | CPU |",
+    "|---|---|---|---|---|",
+    string.join("\n", runs),
+    ""
+])
+write_file(out_path, text)

@@ -1,0 +1,62 @@
+# Copyright (C) 2026 nineties
+
+bench_first := time_ns()
+
+bench_cases := ["use_libs", "recursion", "match", "partial_fusion", "list_lib", "vector_table", "strings", "bigint", "bytes_bitset", "effects_nondet", "effects_state", "exceptions", "macro", "gc_alloc", "pretty_error", "modules_records", "loops_closures", "getopt", "syntax_extension"]
+
+bench_args := argv()
+
+bench_dirname(path) := {
+    i := strlen(path) - 1
+    while (i >= 0 and ord(path, i) != 47) i = i - 1
+    if (i < 0) "." else substr(path, 0, i)
+}
+
+bench_dir := bench_dirname(bench_args[0])
+bench_out := ""
+bench_lines := ""
+bench_put_saved := put
+
+bench_put(s) := {
+    bench_out = _strcat(bench_out, s)
+}
+
+bench_restore() := {
+    put = bench_put_saved
+    write_text = bench_put_saved
+}
+
+bench_run(name) := {
+    bench_out = ""
+    put = bench_put
+    write_text = bench_put
+    a0 := heap_allocated()
+    g0 := gc_count()
+    t0 := time_ns()
+    load(f"{bench_dir}/cases/{name}.pk")
+    t1 := time_ns()
+    a1 := heap_allocated()
+    g1 := gc_count()
+    bench_restore()
+    if (bench_out != read_file(f"{bench_dir}/cases/{name}.out")) {
+        print(f"{name}: output differs from the expected output")
+        exit(1)
+    }
+    bench_lines = _strcat(bench_lines, f"sample(\"{name}\", {t1 - t0}, {a1 - a0}, {g1 - g0})\n")
+}
+
+for (name in bench_cases) bench_run(name)
+
+bench_uptime_ns(text) := {
+    parts := string.split(text, ".")
+    string.string_to_int(list.nth(parts, 0)) * 1000000000 + string.string_to_int(list.nth(parts, 1)) * 10000000
+}
+
+if (array_len(bench_args) > 2) {
+    startup := bench_first - bench_uptime_ns(bench_args[2])
+    bench_lines = _strcat(bench_lines, f"sample(\"startup\", {startup}, 0, 0)\n")
+}
+
+bench_path := bench_args[1]
+bench_old := try_read_file(bench_path)
+write_file(bench_path, _strcat(if (bench_old == none) "" else bench_old, bench_lines))
