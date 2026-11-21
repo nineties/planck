@@ -10,7 +10,7 @@ A benchmark set that covers the features of Planck, and a record of the results 
 
 ## Start-up is a benchmark of its own
 
-`planck0` reads `planck/init.pk`, `planck/peg.pk` and `planck/syntax.pk` before it runs a program. An empty program (`startup`) takes about 27 s on the GCP node (2 cores) with `planck0` v0.1.0, so the body of a benchmark is a small part of one run. For that reason:
+`planck0` reads `planck/init.pk`, `planck/peg.pk` and `planck/syntax.pk` before it runs a program. An empty program (`startup`) takes about 27 s with `planck0` v0.1.0, so the body of a benchmark is a small part of one run. For that reason:
 
 * `startup` is one benchmark. Its time and its peak memory are recorded for every release, in rows of their own.
 * For every other benchmark, the job also measures `startup` and records `net_s = time_s - startup_s`. The tables compare `net_s`.
