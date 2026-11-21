@@ -1,0 +1,56 @@
+# Copyright (C) 2026 nineties
+
+use("base")
+use("string")
+
+module error {
+    export line_col(src, pos) := {
+        line := 1
+        col := 1
+        i := 0
+        while (i < pos and i < strlen(src)) {
+            if (ord(src, i) == 10) {
+                line = line + 1
+                col = 1
+            } else col = col + 1
+            i = i + 1
+        }
+        Tuple{line, col}
+    }
+
+    export line_text(src, line) := {
+        i := 0
+        l := 1
+        while (l < line and i < strlen(src)) {
+            if (ord(src, i) == 10) l = l + 1
+            i = i + 1
+        }
+        j := i
+        while (j < strlen(src) and ord(src, j) != 10) j = j + 1
+        substr(src, i, j)
+    }
+
+    export loc_at(file, src, pos) := {
+        lc := line_col(src, pos)
+        Loc{file, arg(lc, 0), arg(lc, 1)}
+    }
+
+    export show_loc := (Loc{file, line, col}) -> f"{file}:{line}:{col}"
+
+    export at(loc, msg) := perform Error{loc, msg}
+
+    export catch(f) := handle Ok{f()} with (Error{loc, msg}, k) -> Error{loc, msg}
+
+    export show(src, loc, msg) := {
+        b := strbuf.new()
+        strbuf.add(b, show_loc(loc))
+        strbuf.add(b, ": ")
+        strbuf.add(b, msg)
+        strbuf.add(b, "\n  ")
+        strbuf.add(b, line_text(src, arg(loc, 1)))
+        strbuf.add(b, "\n  ")
+        strbuf.add(b, string.string_repeat(" ", arg(loc, 2) - 1))
+        strbuf.add(b, "^")
+        strbuf.string(b)
+    }
+}

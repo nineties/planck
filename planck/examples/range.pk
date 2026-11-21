@@ -1,0 +1,18 @@
+use("list")
+
+r := 1..4
+print(r)
+print(arg(r, 0) + arg(r, 1))
+
+total := 0
+for (i in 1..10) total = total + i
+print(total)
+
+n := 3
+for (i in n - 1..n + 1) { print(f"i = {i}") }
+
+for (i in 5..4) print("never")
+
+nums := []
+for (i in 0..5) nums = i :: nums
+print(reverse(nums))

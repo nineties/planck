@@ -1,0 +1,108 @@
+# Copyright (C) 2026 nineties
+
+passed := 0
+failed := 0
+
+check(actual, expected) := if (actual == expected) {
+    passed = passed + 1
+} else {
+    failed = failed + 1
+    print(f"Test failed: expected {expected} but got {actual}")
+}
+
+fib4(0) := 0
+fib4(1) := 1
+fib4(n) := fib4(n - 1) + fib4(n - 2)
+check(Tuple{fib4(0), fib4(1), fib4(20)}, Tuple{0, 1, 6765})
+dh_def(0) := 10
+dh_def(n) = n
+dh_def(n) := 20
+check(Tuple{dh_def(0), dh_def(3)}, Tuple{10, 3})
+dh_first(x) := x + 1
+dh_first_g := dh_first
+dh_first(0) := 5
+check(Tuple{dh_first(0), dh_first_g(0), dh_first_g == dh_first}, Tuple{1, 1, false})
+dh_fun(x) := "old"
+dh_fun_g := () -> dh_fun(0)
+fun dh_fun
+dh_fun(0) := "new"
+check(Tuple{dh_fun(0), dh_fun_g()}, Tuple{"new", "old"})
+dh_fn(n) := {
+    g(0) := "zero"
+    g(k) := "many"
+    g(n)
+}
+check(Tuple{dh_fn(0), dh_fn(3)}, Tuple{"zero", "many"})
+dh_fib(n) := {
+    fib(0) := 0
+    fib(1) := 1
+    fib(m) := fib(m - 1) + fib(m - 2)
+    fib(n)
+}
+check(dh_fib(15), 610)
+dh_param(k) := {
+    k(0) := "added"
+    Tuple{k(0), k(1)}
+}
+check(dh_param((1) -> "param"), Tuple{"added", "param"})
+check(dh_param((x) -> "param"), Tuple{"param", "param"})
+check({ dh_blk(0) := 0; dh_blk(n) := n + dh_blk(n - 1); dh_blk(4) }, 10)
+dh_if(c) := if (c) {
+    h(0) := 1
+    h(n) := 2
+    Tuple{h(0), h(5)}
+} else none
+check(dh_if(true), Tuple{1, 2})
+dh_while() := {
+    r := []
+    i := 0
+    while (i < 2) {
+        w(0) := "zero"
+        w(n) := "many"
+        r = w(i) :: r
+        i = i + 1
+    }
+    r
+}
+check(dh_while(), ["many", "zero"])
+dh_out(x) := "outer"
+dh_in() := {
+    dh_out(0) := "inner"
+    dh_out(0)
+}
+check(Tuple{dh_in(), dh_out(0), dh_out(1)}, Tuple{"inner", "outer", "outer"})
+dh_nest() := {
+    k(x) := "outer"
+    inner() := {
+        k(0) := "inner"
+        k(0)
+    }
+    Tuple{inner(), k(0)}
+}
+check(dh_nest(), Tuple{"inner", "outer"})
+check(if (true) {
+    dh_out(0) := "block"
+    dh_out(0)
+}, "block")
+check(dh_out(0), "outer")
+dl_f(x) := "program"
+dl_old := dl_f
+load("planck/tests/define_load.pk")
+check(Tuple{dl_f(0), dl_f(1), dl_old(0)}, Tuple{"loaded zero", "loaded", "program"})
+dl_f(2) := "again"
+dl_f(n) := "again n"
+check(Tuple{dl_f(2), dl_f(0)}, Tuple{"again", "again n"})
+use("list")
+reverse(xs) := "mine"
+check(reverse([1, 2]), "mine")
+strlen(s) := 7
+strlen(0) := 0
+check(Tuple{strlen("ab"), strlen(0)}, Tuple{7, 7})
+dl_g(2) = "ext two"
+dl_g(n) = "ext n"
+check(Tuple{dl_g(0), dl_g(2), dl_g(5)}, Tuple{"loaded g zero", "loaded g two", "ext n"})
+foldl(f, acc, Tuple{a, b}) = f(f(acc, a), b)
+check(Tuple{foldl(_add, 0, [1, 2, 3]), foldl(_add, 0, Tuple{4, 5})}, Tuple{6, 9})
+
+print(f"Tests passed {passed}/{passed + failed}")
+if (failed > 0) exit(1)

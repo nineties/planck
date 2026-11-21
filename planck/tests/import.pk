@@ -1,0 +1,49 @@
+# Copyright (C) 2026 nineties
+
+passed := 0
+failed := 0
+
+check(actual, expected) := if (actual == expected) {
+    passed = passed + 1
+} else {
+    failed = failed + 1
+    print(f"Test failed: expected {expected} but got {actual}")
+}
+
+import bitset
+b := bitset.new(40)
+bitset.add(b, 3)
+check(bitset.has(b, 3), true)
+check(bitset.has(b, 4), false)
+
+import bitset as bs
+check(bs.has(b, 3), true)
+
+import bitset as bs2 (has, count)
+check(has(b, 3), true)
+check(count(b), 1)
+check(bs2.count(b), 1)
+
+f(s) := {
+    import bitset (to_list)
+    to_list(s)
+}
+check(f(b), [3])
+
+import table as c
+check(type(c), Module)
+
+import bitset hiding (new, add, del, copy, union, minus, equal, each, to_list)
+check(Tuple{has(b, 3), count(b)}, Tuple{true, 1})
+
+import bitset
+(1 + 2)
+check(1, 1)
+
+import bitset (*)
+b2 := new(40)
+add(b2, 5)
+check(to_list(b2), [5])
+
+print(f"Tests passed {passed}/{passed + failed}")
+if (failed > 0) exit(1)

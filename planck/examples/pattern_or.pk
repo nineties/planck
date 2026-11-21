@@ -1,0 +1,23 @@
+size(0 or 1) := "small"
+size(_) := "big"
+
+kind(F{1 or 2, x}) := "F with a small first"
+kind(_) := "other"
+
+sign(x) if x > 0 := "positive"
+sign(0) := "zero"
+sign(_) := "negative"
+
+same(a, a) := "same"
+same(_, _) := "differ"
+
+origin((x, 0) or (0, x)) := x
+origin(_) := "none"
+
+for (n in [0, 1, 2]) print(size(n))
+print(kind(F{2, 0}))
+print(kind(F{3, 0}))
+for (n in [5, 0, -5]) print(sign(n))
+print(same([1], [1]))
+print(same([1], [2]))
+for (v in [(3, 0), (0, 4), (1, 2)]) print(origin(v))

@@ -1,0 +1,34 @@
+macro Twice{x} := `(!x + !x)
+print(Twice{21})
+
+macro unless(c, e) := `if (not !c) !e
+unless(1 > 2, print("shown"))
+unless(1 < 2, print("not shown"))
+
+macro Square{x} := `(!x * !x)
+macro Fourth{x} := `Square{Square{!x}}
+print(Fourth{3})
+
+f(n) := Twice{n} + 1
+print(f(5))
+
+print('(Twice{1}))
+
+print(`(Twice{1} + !Twice{2}))
+
+g(Twice{x}) := x
+print(g('Twice{7}))
+
+macro Twice{x} := `(!x + !x + !x)
+print(Twice{10})
+
+print(eval('(Twice{4})))
+
+module shapes {
+    macro Inside{x} := `(!x + 100)
+    export macro Double{x} := `(!x * 2)
+    export f() := Inside{1}
+}
+print(shapes.f())
+print(Double{21})
+print('(Inside{1}))

@@ -1,0 +1,89 @@
+# Copyright (C) 2026 nineties
+
+use("base")
+use("list")
+
+module vector {
+    export record Vector(a) = make_vector
+
+    export new() := {
+        v := array(2)
+        array_set(v, 0, array(4))
+        array_set(v, 1, 0)
+        make_vector(v)
+    }
+
+    export len(vector @ Vector) := array_get(vector.a, 1)
+
+    export push(vector @ Vector, x) := {
+        v := vector.a
+        n := array_get(v, 1)
+        d := array_get(v, 0)
+        if (n == array_len(d)) {
+            nd := array(n * 2)
+            i := 0
+            while (i < n) {
+                array_set(nd, i, array_get(d, i))
+                i = i + 1
+            }
+            array_set(v, 0, nd)
+            d = nd
+        }
+        array_set(d, n, x)
+        array_set(v, 1, n + 1)
+        x
+    }
+
+    export get(vector @ Vector, i) := {
+        v := vector.a
+        if (i < 0 or i >= array_get(v, 1)) panic("vector.get: index out of range")
+        array_get(array_get(v, 0), i)
+    }
+
+    export set(vector @ Vector, i, x) := {
+        v := vector.a
+        if (i < 0 or i >= array_get(v, 1)) panic("vector.set: index out of range")
+        array_set(array_get(v, 0), i, x)
+    }
+
+    export pop(vector @ Vector) := {
+        v := vector.a
+        n := array_get(v, 1)
+        if (n == 0) panic("vector.pop: empty vector")
+        d := array_get(v, 0)
+        x := array_get(d, n - 1)
+        array_set(d, n - 1, none)
+        array_set(v, 1, n - 1)
+        x
+    }
+
+    export to_list(vector @ Vector) := {
+        v := vector.a
+        r := []
+        i := array_get(v, 1) - 1
+        d := array_get(v, 0)
+        while (i >= 0) {
+            r = array_get(d, i) :: r
+            i = i - 1
+        }
+        r
+    }
+
+    export from_list(xs) := {
+        v := new()
+        each(x -> push(v, x), xs)
+        v
+    }
+
+    _iter = (vector @ Vector) -> {
+        v := vector.a
+        i := 0
+        (end) -> if (i < array_get(v, 1)) {
+            i += 1
+            array_get(array_get(v, 0), i - 1)
+        } else end
+    } | _iter
+
+    _index_get = (vector @ Vector, i @ Int) -> get(vector, i) | _index_get
+    _index_set = (vector @ Vector, i @ Int, x) -> set(vector, i, x) | _index_set
+}

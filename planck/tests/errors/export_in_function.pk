@@ -1,0 +1,4 @@
+print("run")
+f(x) := {
+    export g(y) := y
+}

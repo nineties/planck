@@ -1,0 +1,2 @@
+print("run")
+export v := 1

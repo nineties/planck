@@ -1,0 +1,41 @@
+fun walk
+walk = (Leaf{}) -> none
+     | (Node{l, v, r}) -> {
+    walk(l)
+    perform Yield{v}
+    walk(r)
+}
+
+leaf(v) := Node{Leaf{}, v, Leaf{}}
+t1 := Node{Node{leaf(1), 2, leaf(3)}, 4, leaf(5)}
+t2 := Node{leaf(1), 2, Node{leaf(3), 4, leaf(5)}}
+t3 := Node{leaf(1), 2, Node{leaf(3), 4, leaf(6)}}
+
+handle walk(t1) with (Yield{v}, k) -> {
+    print(f"yield {v}")
+    k(none)
+}
+
+to_list(t) := handle { walk(t); [] } with (Yield{v}, k) -> v :: k(none)
+print(to_list(t1))
+
+take(n, t) := {
+    count := 0
+    handle { walk(t); [] } with (Yield{v}, k) ->
+        if (count < n) {
+            count = count + 1
+            v :: k(none)
+        } else []
+}
+print(take(2, t1))
+
+iter(t) := handle { walk(t); Done{} } with (Yield{v}, k) -> Next{v, k}
+
+fun same_iter
+same_iter = (Done{}, Done{}) -> true
+          | (Next{a, k1}, Next{b, k2}) -> if (a == b) same_iter(k1(none), k2(none)) else false
+          | (_, _) -> false
+same_fringe(a, b) := same_iter(iter(a), iter(b))
+
+print(f"same_fringe(t1, t2) = {same_fringe(t1, t2)}")
+print(f"same_fringe(t1, t3) = {same_fringe(t1, t3)}")

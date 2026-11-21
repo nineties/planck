@@ -1,0 +1,3 @@
+print("run")
+x += 1
+print(x)

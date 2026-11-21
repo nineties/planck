@@ -1,0 +1,2 @@
+Cons{Tuple{1, "a"}, Cons{Tuple{1, "b"}, Cons{Tuple{1, "c"}, Cons{Tuple{2, "a"}, Cons{Tuple{2, "b"}, Cons{Tuple{2, "c"}, Nil{}}}}}}}
+Cons{Triple{3, 4, 5}, Cons{Triple{5, 12, 13}, Cons{Triple{6, 8, 10}, Cons{Triple{9, 12, 15}, Nil{}}}}}

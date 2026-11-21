@@ -1,0 +1,15 @@
+record Point(x, y) = point
+record Circle(center, radius) = circle
+
+p := point(1, 2)
+q := p with { y = 5 }
+print(p)
+print(q)
+
+print(p with { x = 10, y = 20 })
+print(p with { x = 7 } with { y = 8 })
+
+c := circle(p, 3)
+d := c with { center = c.center with { x = c.radius } }
+print(d)
+print(c)

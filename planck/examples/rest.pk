@@ -1,0 +1,32 @@
+sum_tuple(t) := {
+    s := 0
+    i := 0
+    while (i < arity(t)) {
+        s = s + arg(t, i)
+        i = i + 1
+    }
+    s
+}
+
+total(xs...) := sum_tuple(xs)
+print(total())
+print(total(1, 2, 3))
+
+scale(k, xs...) := k * sum_tuple(xs)
+print(scale(10, 1, 2, 3))
+
+count := (first, others...) -> 1 + arity(others)
+print(count(7, 8, 9))
+
+describe(a) := "one"
+describe(a, b) := "two"
+describe(a, b, c...) := "three or more"
+print(describe(1))
+print(describe(1, 2))
+print(describe(1, 2, 3, 4))
+
+args_of(Call{f, rest...}) := rest
+print(args_of(Call{1, 2, 3}))
+print(args_of(Call{1}))
+
+print(match Call{1, 2, 3} { Call{x, ys...} -> ys })

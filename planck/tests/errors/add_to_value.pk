@@ -1,0 +1,3 @@
+x := 1
+print("run")
+x(n) := n

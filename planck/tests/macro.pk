@@ -1,0 +1,114 @@
+# Copyright (C) 2026 nineties
+
+passed := 0
+failed := 0
+
+check(actual, expected) := if (actual == expected) {
+    passed = passed + 1
+} else {
+    failed = failed + 1
+    print(f"Test failed: expected {expected} but got {actual}")
+}
+
+tree(s) := arg(peg_parse('toplevel, s), 0)
+
+check(tree("macro Foo{x} := x") == 'Macro{Lambda{Tuple{Foo{x}}, x}}, true)
+check(tree("module m { export macro Foo{x} := x }") != none, true)
+
+check(expand_macro('Foo{1, x}, 0), 'Foo{1, x})
+check(expand_macro(5, 0), 5)
+
+macro Twice{x} := `(!x + !x)
+check(Twice{4}, 8)
+check(expand_macro('Twice{a}, 0), '(a + a))
+
+macro swap(a, b) := `Pair{!b, !a}
+check(swap(1, 2), Pair{2, 1})
+macro a - 0 := a
+check(5 - 0, 5)
+check(expand_macro('(x - 0), 0), 'x)
+check(expand_macro('(x - 1), 0), '(x - 1))
+
+n := 0
+macro skip(e) := `none
+skip((n = 1))
+check(n, 0)
+
+macro Square{x} := `(!x * !x)
+macro Fourth{x} := `Square{Square{!x}}
+check(Fourth{2}, 16)
+check(expand_macro('Fourth{a}, 0), '(((a * a)) * (a * a)))
+
+macro Wrap{x} := `Box{!x}
+macro Box{x} := `Twice{!x}
+check(Wrap{3}, 6)
+check(expand_macro('F{Twice{a}, G{Twice{b}}}, 0), 'F{(a + a), G{(b + b)}})
+
+f(x) := Twice{x} + 1
+check(f(5), 11)
+check(if (true) Twice{1} else Twice{2}, 2)
+
+check('Twice{1}, 'Twice{1})
+check(expand_macro('Quote{Twice{1}}, 0), 'Quote{Twice{1}})
+check(expand_macro('Twice{Quote{Twice{1}}}, 0), '(Quote{Twice{1}} + Quote{Twice{1}}))
+
+check(expand_macro('QuasiQuote{Twice{a}}, 0), 'QuasiQuote{Twice{a}})
+check(expand_macro('QuasiQuote{F{Twice{a}, UnQuote{Twice{b}}}}, 0),
+      'QuasiQuote{F{Twice{a}, UnQuote{(b + b)}}})
+check(expand_macro('QuasiQuote{QuasiQuote{UnQuote{UnQuote{Twice{b}}}}}, 0),
+      'QuasiQuote{QuasiQuote{UnQuote{UnQuote{(b + b)}}}})
+check(expand_macro('QuasiQuote{QuasiQuote{UnQuote{Twice{b}}}}, 0),
+      'QuasiQuote{QuasiQuote{UnQuote{Twice{b}}}})
+check(`(Twice{1} + !Twice{2}), '(Twice{1} + 4))
+check(expand_macro('QuasiQuote{Quote{UnQuote{Twice{a}}}}, 0), 'QuasiQuote{Quote{UnQuote{(a + a)}}})
+
+g(Twice{x}) := x
+check(g('Twice{7}), 7)
+check(expand_macro('Lambda{Tuple{Twice{x}}, Twice{x}}, 0), 'Lambda{Tuple{Twice{x}}, (x + x)})
+check(expand_macro('Def{Twice, Twice{1}}, 0), 'Def{Twice, (1 + 1)})
+check(expand_macro('Set{Twice, Twice{1}}, 0), 'Set{Twice, (1 + 1)})
+check(expand_macro('Declare{Twice}, 0), 'Declare{Twice})
+
+macro Twice{x} := `(!x + !x + !x)
+check(Twice{10}, 30)
+
+check(eval('Twice{4}), 12)
+
+scoped() := {
+    macro Local{x} := `Done{!x}
+    Local{1}
+}
+check(scoped(), Done{1})
+check(expand_macro('Local{1}, 0), 'Local{1})
+
+module m {
+    macro Inner{x} := `(!x + 100)
+    export get() := Inner{1}
+    export inside(t) := expand_macro(t, 0)
+}
+check(m.get(), 101)
+check(m.inside('Inner{5}), 'Inner{5})
+check(expand_macro('Inner{5}, 0), 'Inner{5})
+
+check(expand_macro('Outer{5}, 0), 'Outer{5})
+module n {
+    export macro Outer{x} := `(!x * 1000)
+    macro Hidden{x} := `none
+    export get() := Outer{2}
+}
+check(n.get(), 2000)
+check(expand_macro('Outer{5}, 0), '(5 * 1000))
+check(expand_macro('Hidden{5}, 0), 'Hidden{5})
+check(Outer{3}, 3000)
+
+module p {
+    module q {
+        export macro Deep{x} := `(!x - 1)
+    }
+    export get() := Deep{10}
+}
+check(p.get(), 9)
+check(expand_macro('Deep{1}, 0), 'Deep{1})
+
+print(f"passed {passed}, failed {failed}")
+if (failed > 0) exit(1)

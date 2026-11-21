@@ -1,0 +1,7 @@
+Range{1, 4}
+5
+55
+i = 2
+i = 3
+i = 4
+Cons{0, Cons{1, Cons{2, Cons{3, Cons{4, Cons{5, Nil{}}}}}}}

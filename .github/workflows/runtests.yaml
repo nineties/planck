@@ -1,0 +1,33 @@
+name: runtests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  runtests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download latest planck0
+        run: |
+          gh release download --repo nineties/hex-to-compiler --pattern "planck0*"
+          sha256sum -c planck0.sha256
+          chmod +x planck0
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Run tests
+        run: |
+          ./planck0 planck/tests/core.pk
+          ./planck0 planck/tests/syntax.pk
+          ./planck0 planck/tests/macro.pk
+          ./planck0 planck/tests/define.pk
+          ./planck0 planck/tests/module.pk
+          ./planck0 planck/tests/import.pk
+          ./planck0 planck/tests/builtins.pk one "two words"
+          ./planck0 planck/tests/bigint.pk
+          for f in planck/tests/errors/*.pk; do
+            ./planck0 $f > tmp-error.out 2> tmp-error.err && { echo "$f: should stop"; exit 1; }
+            diff -u ${f%.pk}.out tmp-error.out || exit 1
+            diff -u ${f%.pk}.err tmp-error.err || exit 1
+            echo "$f: stops"
+          done

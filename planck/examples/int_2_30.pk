@@ -1,0 +1,14 @@
+hi := 1073741823
+lo := -1073741824
+print(hi)
+print(lo)
+print(hi + lo)
+print(lo + hi + 1)
+print(32767 * 32767)
+print(-32768 * 32768)
+print(bit_shl(1, 29))
+print(lo / 2)
+print(0 - hi)
+print(hi + 1)
+print(lo - 1)
+print(hi * hi)

@@ -1,0 +1,10 @@
+fun fib
+fib = (0) -> 0
+    | (1) -> 1
+    | (n) -> fib(n - 1) + fib(n - 2)
+
+i := 0
+while (i <= 20) {
+    print(f"fib({i}) = {fib(i)}")
+    i = i + 1
+}

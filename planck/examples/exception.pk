@@ -1,0 +1,18 @@
+safe_div(a, b) := if (b == 0) perform Raise{"division by zero"} else a / b
+
+try(f) := handle Ok{f()} with (Raise{msg}, k) -> Error{msg}
+
+print(try(() -> safe_div(10, 2)))
+print(try(() -> safe_div(10, 0)))
+
+print(try(() -> {
+    print("before")
+    safe_div(1, 0)
+    print("after")
+}))
+
+with_default(v, f) := handle f() with (Raise{_}, k) -> k(v)
+print(with_default(0, () -> safe_div(10, 0) + safe_div(10, 5)))
+
+print(try(() ->
+    handle (perform Ask{}) + safe_div(1, 0) with (Ask{}, k) -> k(1)))

@@ -1,0 +1,35 @@
+run_state(f, init) := {
+    g := handle {
+        r := f()
+        s -> (r, s)
+    } with (Get{}, k) -> (s -> k(s)(s))
+         | (Put{v}, k) -> (s -> k(none)(v))
+    g(init)
+}
+
+get() := perform Get{}
+put_state(v) := perform Put{v}
+
+tick() := {
+    n := get()
+    put_state(n + 1)
+    n
+}
+
+print(run_state(() -> {
+    tick()
+    tick()
+    tick()
+    get() * 10
+}, 0))
+
+fun label
+label = (Leaf{}) -> Leaf{}
+      | (Node{l, v, r}) -> {
+    l2 := label(l)
+    i := tick()
+    Node{l2, (i, v), label(r)}
+}
+
+tree := Node{Node{Leaf{}, "a", Leaf{}}, "b", Node{Node{Leaf{}, "c", Leaf{}}, "d", Leaf{}}}
+print(run_state(() -> label(tree), 100))

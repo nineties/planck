@@ -1,0 +1,39 @@
+use("list")
+use("table")
+use("getopt")
+use("string")
+use("pretty")
+
+say(s) := { print(s) }
+
+spec := [Opt{"n", "times", true}, Opt{"s", "shout", false}, Opt{"h", "help", false}]
+
+greet(options, name) := {
+    text := _strcat(_strcat("Hello, ", name), if (table.has(options, "shout")) "!!" else ".")
+    i := 0
+    while (i < string.string_to_int(table.get(options, "times", "1"))) {
+        say(text)
+        i = i + 1
+    }
+}
+
+main(args) := {
+    r := getopt.parse(spec, args, 1)
+    if (head(r) == 'Parsed) {
+        options := arg(r, 0)
+        names := arg(r, 1)
+        if (table.has(options, "help")) say("usage: greet [-s] [-n times] name ...")
+        else {
+            i := 0
+            while (i < array_len(names)) {
+                greet(options, array_get(names, i))
+                i = i + 1
+            }
+        }
+    } else {
+        say(_strcat("error: ", pretty.show(r)))
+        exit(2)
+    }
+}
+
+main(if (array_len(argv()) > 1) argv() else list.list_to_array(["greet.pk", "-sn", "2", "Ann", "--", "-Bob"]))

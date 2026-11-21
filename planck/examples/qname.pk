@@ -1,0 +1,12 @@
+empty?(xs) := arity(xs) == 0
+inc!(x) := x + 1
+positive? := true
+
+print(empty?(Tuple{}))
+print(empty?(Tuple{1, 2}))
+print(inc!(41))
+print(if (positive?) "yes" else "no")
+
+a := 3
+b := 4
+print(a!=b)

@@ -1,0 +1,15 @@
+use("pretty")
+
+s := "a\0b"
+print(strlen(s))
+print(ord(s, 1))
+print(s)
+print(s == "a\0b")
+print(s == "a")
+print(pretty.quote_string(s))
+
+x := 5
+print(+3)
+print(+x * 2)
+print(x - +2)
+print(-+x)

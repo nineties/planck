@@ -1,0 +1,4 @@
+fun f
+print("run")
+f()
+f() = 1
