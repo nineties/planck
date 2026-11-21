@@ -1,0 +1,25 @@
+fun build
+build = (0) -> []
+      | (n) -> (n, n * 2, [n]) :: build(n - 1)
+
+fun count
+count = (Nil{}) -> 0
+      | (_ :: xs) -> 1 + count(xs)
+
+i := 0
+total := 0
+while (i < 16) {
+    total = total + count(build(1000))
+    i = i + 1
+}
+print(total)
+
+arrs := 0
+i = 0
+while (i < 300) {
+    a := array(100)
+    a[0] = i
+    arrs = arrs + a[0]
+    i = i + 1
+}
+print(arrs)

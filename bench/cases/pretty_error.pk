@@ -1,0 +1,14 @@
+use("pretty")
+use("error")
+
+tree(0) := Leaf{}
+tree(n) := Node{tree(n - 1), n, [n, f"s{n}", (n, 'sym)]}
+
+i := 0
+t := 0
+while (i < 20) {
+    t = t + strlen(pretty.text(tree(12), 60))
+    i = i + 1
+}
+print(t)
+print(pretty.quote_string("a\"b\nc"))

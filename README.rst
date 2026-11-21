@@ -8,3 +8,5 @@ Planck is a programming language for symbolic processing and language processing
 * It continues the `hex-to-compiler <https://github.com/nineties/hex-to-compiler>`_
   project. It starts from hand-written machine code and is built without any
   other language implementation.
+
+Benchmarks and their results for each release are in ``bench/``.

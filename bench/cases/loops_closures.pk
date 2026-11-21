@@ -1,0 +1,14 @@
+mk_counter() := {
+    n := 0
+    () -> { n = n + 1; n }
+}
+c := mk_counter()
+i := 0
+s := 0
+while (i < 1500000) {
+    s = s + c() % 10
+    i = i + 1
+}
+print(s)
+for (j in 1..400000) { s = s + j }
+print(s)

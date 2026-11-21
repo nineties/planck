@@ -1,0 +1,16 @@
+use("getopt")
+use("table")
+use("list")
+
+spec := [Opt{"a", "", false}, Opt{"b", "bold", false}, Opt{"o", "output", true}, Opt{"", "level", true}]
+args := list.list_to_array(["prog", "-ab", "--output=x", "-o", "y", "--level", "3", "f1", "--", "-f2"])
+
+i := 0
+n := 0
+while (i < 300) {
+    r := getopt.parse(spec, args, 1)
+    n = n + array_len(arg(r, 1))
+    i = i + 1
+}
+print(n)
+print(table.get(arg(getopt.parse(spec, args, 1), 0), "level", none))

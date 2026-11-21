@@ -1,0 +1,159 @@
+name: bench
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Version to measure (branch, tag or commit)
+        required: true
+        default: main
+      prev_ref:
+        description: Version to compare with (empty means the release before the measured one)
+        required: false
+        default: ''
+      rounds:
+        description: Rounds of previous, current, current, previous runs per benchmark
+        required: false
+        default: '3'
+      pr:
+        description: Open a pull request that records the result in bench/results.md
+        type: boolean
+        required: false
+        default: false
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.refs.outputs.ref }}
+      commit: ${{ steps.refs.outputs.commit }}
+      prev_ref: ${{ steps.refs.outputs.prev_ref }}
+      prev_commit: ${{ steps.refs.outputs.prev_commit }}
+      cases: ${{ steps.refs.outputs.cases }}
+      rounds: ${{ steps.refs.outputs.rounds }}
+      record: ${{ steps.refs.outputs.record }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve the versions
+        id: refs
+        env:
+          INPUT_REF: ${{ inputs.ref }}
+          INPUT_PREV: ${{ inputs.prev_ref }}
+          INPUT_ROUNDS: ${{ inputs.rounds }}
+          INPUT_PR: ${{ inputs.pr }}
+        run: |
+          ref=${INPUT_REF:-$GITHUB_REF_NAME}
+          commit=$(git rev-parse "$ref^{commit}" 2>/dev/null || git rev-parse "origin/$ref^{commit}")
+          prev=$INPUT_PREV
+          if [ -z "$prev" ]; then
+            prev=$(git tag --merged "$commit" --sort=-v:refname | grep -vx "$ref" | head -1 || true)
+          fi
+          prev_commit=
+          if [ -n "$prev" ]; then
+            prev_commit=$(git rev-parse "$prev^{commit}" 2>/dev/null || git rev-parse "origin/$prev^{commit}")
+          fi
+          if [ "$prev_commit" = "$commit" ]; then
+            prev=
+            prev_commit=
+          fi
+          if [ "$GITHUB_EVENT_NAME" = push ] || [ "$INPUT_PR" = true ]; then record=true; else record=false; fi
+          git show "$commit:bench/cases/startup.pk" > /dev/null
+          cases=$(git ls-tree --name-only "$commit" bench/cases/ | sed -n 's|^bench/cases/\(.*\)\.pk$|"\1"|p' | paste -sd, -)
+          {
+            echo "ref=$ref"
+            echo "commit=$commit"
+            echo "prev_ref=$prev"
+            echo "prev_commit=$prev_commit"
+            echo "cases=[$cases]"
+            echo "rounds=${INPUT_ROUNDS:-3}"
+            echo "record=$record"
+          } >> "$GITHUB_OUTPUT"
+  measure:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        case: ${{ fromJSON(needs.prepare.outputs.cases) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          path: cur
+      - uses: actions/checkout@v4
+        if: needs.prepare.outputs.prev_commit != ''
+        with:
+          ref: ${{ needs.prepare.outputs.prev_commit }}
+          path: prev
+      - name: Download the latest planck0
+        run: |
+          gh release download --repo nineties/hex-to-compiler --pattern "planck0*"
+          sha256sum -c planck0.sha256
+          chmod +x planck0
+          gh release view --repo nineties/hex-to-compiler --json tagName --jq .tagName > planck0.version
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Measure
+        env:
+          CUR_REF: ${{ needs.prepare.outputs.ref }}
+          CUR_COMMIT: ${{ needs.prepare.outputs.commit }}
+          PREV_REF: ${{ needs.prepare.outputs.prev_ref }}
+          PREV_COMMIT: ${{ needs.prepare.outputs.prev_commit }}
+        run: |
+          export PLANCK0_VERSION=$(cat planck0.version)
+          prev=-
+          if [ -d prev ]; then prev=$PWD/prev; fi
+          cur/bench/measure.sh "$PWD/cur" "$prev" "$PWD/planck0" "${{ matrix.case }}" "${{ needs.prepare.outputs.rounds }}" > result.jsonl
+          cat result.jsonl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.case }}
+          path: result.jsonl
+  collect:
+    needs: [prepare, measure]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          path: cur
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: result-*
+          merge-multiple: false
+          path: results
+      - name: Table in the run summary
+        run: |
+          cat results/*/result.jsonl | sort > this-run.jsonl
+          {
+            echo "# Benchmark ${{ needs.prepare.outputs.ref }} against ${{ needs.prepare.outputs.prev_ref }}"
+            echo
+            cur/bench/report.sh this-run.jsonl
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/checkout@v4
+        if: needs.prepare.outputs.record == 'true'
+        with:
+          ref: main
+          path: main
+      - name: Open a pull request that records the result
+        if: needs.prepare.outputs.record == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF: ${{ needs.prepare.outputs.ref }}
+        run: |
+          cd main
+          branch=bench-result-$(echo "$REF" | tr -c 'A-Za-z0-9.\n' '-')-$GITHUB_RUN_ID
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          cat ../this-run.jsonl >> bench/results.jsonl
+          bench/report.sh bench/results.jsonl > bench/results.md
+          git add bench/results.jsonl bench/results.md
+          git commit -m "bench: record the result of $REF"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "bench: record the result of $REF" --body "Result of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

@@ -1,0 +1,14 @@
+fun risky
+risky = (n) -> if (n % 3 == 0) perform Raise{n} else n
+
+safe_sum(n) := handle {
+    s := 0
+    i := 0
+    while (i < n) {
+        s = s + risky(i)
+        i = i + 1
+    }
+    s
+} with (Raise{v}, k) -> k(0)
+
+print(safe_sum(400000))

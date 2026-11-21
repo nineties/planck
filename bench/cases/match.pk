@@ -1,0 +1,27 @@
+fun eval_expr
+eval_expr = (Num{n}) -> n
+          | (Add{a, b}) -> eval_expr(a) + eval_expr(b)
+          | (Mul{a, b}) -> eval_expr(a) * eval_expr(b)
+          | (Neg{a}) -> 0 - eval_expr(a)
+
+build(0) := Num{3}
+build(n) := Add{Mul{build(n - 1), Num{2}}, Neg{Num{n}}}
+
+classify(x) := match x {
+    0 -> "zero"
+  | n @ Int if n < 0 -> "neg"
+  | (a, b) -> "pair"
+  | P{x, y} -> "point"
+  | _ -> "other"
+}
+
+total := 0
+i := 0
+while (i < 9000) {
+    total = total + eval_expr(build(8)) % 1000
+    r := classify(i % 4 - 1)
+    t := classify((i, i))
+    i = i + 1
+}
+print(total)
+print(classify(P{1, 2}))

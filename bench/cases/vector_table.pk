@@ -1,0 +1,32 @@
+use("vector")
+use("table")
+
+v := vector.new()
+i := 0
+while (i < 3000) {
+    vector.push(v, i * i % 997)
+    i = i + 1
+}
+s := 0
+i = 0
+while (i < vector.len(v)) {
+    s = s + vector.get(v, i)
+    i = i + 1
+}
+print(s)
+
+t := table.new()
+i = 0
+while (i < 2000) {
+    table.set(t, f"key{i}", i)
+    i = i + 1
+}
+hits := 0
+i = 0
+while (i < 4000) {
+    if (table.has(t, f"key{i}")) hits = hits + 1
+    i = i + 1
+}
+print(hits)
+print(table.len(t))
+print(table.get(t, "key1999", none))
