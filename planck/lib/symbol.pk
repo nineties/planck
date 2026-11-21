@@ -7,7 +7,7 @@ module symbol {
 
     export gensym(prefix) := {
         gensym_count = gensym_count + 1
-        intern(_strcat(prefix, string.int_to_string(gensym_count)))
+        intern(str_cat(prefix, string.int_to_string(gensym_count)))
     }
 
     export reset() := gensym_count = 0

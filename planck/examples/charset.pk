@@ -4,7 +4,7 @@ join(cs) := {
     r := ""
     i := 0
     while (i < arity(cs)) {
-        r = _strcat(r, arg(cs, i))
+        r = str_cat(r, arg(cs, i))
         i = i + 1
     }
     r

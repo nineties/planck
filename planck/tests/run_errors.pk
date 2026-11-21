@@ -1,0 +1,38 @@
+# Copyright (C) 2026 nineties
+
+errors_args := argv()
+errors_planck0 := errors_args[1]
+errors_dir := "planck/tests/errors"
+errors_names := list_dir(errors_dir)
+errors_failed := 0
+
+errors_check(name) := {
+    n := strlen(name)
+    if (n > 3 and substr(name, n - 3, n) == ".pk") {
+        base := f"{errors_dir}/{substr(name, 0, n - 3)}"
+        program := array(1)
+        program[0] = f"{base}.pk"
+        r := run_program(errors_planck0, program, "", "")
+        if (r[0] == 0) {
+            print(f"{base}.pk: should stop")
+            errors_failed = errors_failed + 1
+        } else if (r[1] != read_file(f"{base}.out")) {
+            print(f"{base}.pk: the output differs from {base}.out")
+            print(r[1])
+            errors_failed = errors_failed + 1
+        } else if (r[2] != read_file(f"{base}.err")) {
+            print(f"{base}.pk: the error message differs from {base}.err")
+            print(r[2])
+            errors_failed = errors_failed + 1
+        } else {
+            print(f"{base}.pk: stops")
+        }
+    }
+}
+
+i := 0
+while (i < array_len(errors_names)) {
+    errors_check(errors_names[i])
+    i = i + 1
+}
+if (errors_failed > 0) exit(1)

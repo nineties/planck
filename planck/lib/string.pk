@@ -21,7 +21,7 @@ module strbuf {
                 i = 0
                 j := 0
                 while (i + 1 < m) {
-                    array_set(a, j, _strcat(array_get(a, i), array_get(a, i + 1)))
+                    array_set(a, j, str_cat(array_get(a, i), array_get(a, i + 1)))
                     i = i + 2
                     j = j + 1
                 }
@@ -69,7 +69,7 @@ module string {
     export string_repeat(s, n) := {
         r := ""
         while (n > 0) {
-            r = _strcat(r, s)
+            r = str_cat(r, s)
             n = n - 1
         }
         r
@@ -96,9 +96,9 @@ module string {
         substr(s, i, j)
     }
 
-    export int_to_string(n) := if (n < 0) _strcat("-", int_to_string(0 - n))
+    export int_to_string(n) := if (n < 0) str_cat("-", int_to_string(0 - n))
                      else if (n < 10) substr("0123456789", n, n + 1)
-                     else _strcat(int_to_string(n / 10), int_to_string(n % 10))
+                     else str_cat(int_to_string(n / 10), int_to_string(n % 10))
 
     export string_to_int(s) := {
         n := strlen(s)

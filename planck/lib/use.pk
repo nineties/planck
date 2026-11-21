@@ -49,9 +49,9 @@ use(name) := if (table_get(used_libs, name, false)) none else {
         trees := read_preprocessed(f"planck/lib/{name}.pkm", state, text)
         if (trees == none) load(path)
         else {
-            prev := _set_file(path)
+            prev := os_set_file(path)
             for (e in trees) eval(e)
-            _set_file(prev)
+            os_set_file(prev)
         }
     }
     if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"

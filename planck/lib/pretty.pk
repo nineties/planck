@@ -44,9 +44,9 @@ module pretty {
         else if (t == Symbol) symname(x)
         else if (t == Expr) {
             if (x == []) "[]"
-            else if (head(x) == 'Cons and is_list(x)) _strcat(_strcat("[", join(", ", map(show, list_elems(x)))), "]")
-            else if (head(x) == 'Tuple) _strcat(_strcat("(", join(", ", map(show, args_of(x)))), ")")
-            else _strcat(_strcat(_strcat(symname(head(x)), "{"), join(", ", map(show, args_of(x)))), "}")
+            else if (head(x) == 'Cons and is_list(x)) str_cat(str_cat("[", join(", ", map(show, list_elems(x)))), "]")
+            else if (head(x) == 'Tuple) str_cat(str_cat("(", join(", ", map(show, args_of(x)))), ")")
+            else str_cat(str_cat(str_cat(symname(head(x)), "{"), join(", ", map(show, args_of(x)))), "}")
         }
         else if (t == Array) "<array>"
         else "<function>"
@@ -56,11 +56,11 @@ module pretty {
     fun repr_show
     repr_show(x) = {
         t := type(x)
-        if (t == Symbol) _strcat("'", symname(x))
+        if (t == Symbol) str_cat("'", symname(x))
         else if (t == Expr) {
             if (x == []) "[]"
-            else if (head(x) == 'Cons and is_list(x)) _strcat(_strcat("[", join(", ", map(repr_show, list_elems(x)))), "]")
-            else _strcat(_strcat(_strcat(symname(head(x)), "{"), join(", ", map(repr_show, args_of(x)))), "}")
+            else if (head(x) == 'Cons and is_list(x)) str_cat(str_cat("[", join(", ", map(repr_show, list_elems(x)))), "]")
+            else str_cat(str_cat(str_cat(symname(head(x)), "{"), join(", ", map(repr_show, args_of(x)))), "}")
         }
         else show(x)
     }
@@ -70,11 +70,11 @@ module pretty {
         flat := show(x)
         if (indent + strlen(flat) <= width or type(x) != Expr or x == []) flat
         else {
-            open := if (head(x) == 'Cons and is_list(x)) "[" else if (head(x) == 'Tuple) "(" else _strcat(symname(head(x)), "{")
+            open := if (head(x) == 'Cons and is_list(x)) "[" else if (head(x) == 'Tuple) "(" else str_cat(symname(head(x)), "{")
             close := if (head(x) == 'Cons and is_list(x)) "]" else if (head(x) == 'Tuple) ")" else "}"
             pad := string.string_repeat(" ", indent + 2)
-            parts := map(e -> _strcat(pad, pp(e, indent + 2, width)), elements(x))
-            _strcat(_strcat(_strcat(_strcat(open, "\n"), join(",\n", parts)), _strcat("\n", string.string_repeat(" ", indent))), close)
+            parts := map(e -> str_cat(pad, pp(e, indent + 2, width)), elements(x))
+            str_cat(str_cat(str_cat(str_cat(open, "\n"), join(",\n", parts)), str_cat("\n", string.string_repeat(" ", indent))), close)
         }
     }
 

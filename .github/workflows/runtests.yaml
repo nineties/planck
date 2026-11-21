@@ -25,9 +25,4 @@ jobs:
           ./planck0 planck/tests/import.pk
           ./planck0 planck/tests/builtins.pk one "two words"
           ./planck0 planck/tests/bigint.pk
-          for f in planck/tests/errors/*.pk; do
-            ./planck0 $f > tmp-error.out 2> tmp-error.err && { echo "$f: should stop"; exit 1; }
-            diff -u ${f%.pk}.out tmp-error.out || exit 1
-            diff -u ${f%.pk}.err tmp-error.err || exit 1
-            echo "$f: stops"
-          done
+          ./planck0 planck/tests/run_errors.pk ./planck0

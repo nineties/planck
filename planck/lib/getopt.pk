@@ -37,7 +37,7 @@ module getopt {
                 eq := string.index_of_string(a, "=", 2)
                 name := if (eq >= 0) substr(a, 2, eq) else substr(a, 2, strlen(a))
                 o := if (name == "") none else by_long(name)
-                shown := _strcat("--", name)
+                shown := str_cat("--", name)
                 if (o == none) error = Unknown{shown}
                 else if (eq >= 0 and not arg(o, 2)) error = NoValue{shown}
                 else take(o, shown, if (eq >= 0) substr(a, eq + 1, strlen(a)) else none)
@@ -46,7 +46,7 @@ module getopt {
                 while (j < strlen(a) and error == none) {
                     c := substr(a, j, j + 1)
                     j = j + 1
-                    shown := _strcat("-", c)
+                    shown := str_cat("-", c)
                     o := by_short(c)
                     if (c == "" or o == none) error = Unknown{shown}
                     else if (arg(o, 2) and j < strlen(a)) {
