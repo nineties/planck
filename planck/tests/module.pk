@@ -1,0 +1,154 @@
+# Copyright (C) 2026 nineties
+
+passed := 0
+failed := 0
+
+check(actual, expected) := if (actual == expected) {
+    passed = passed + 1
+} else {
+    failed = failed + 1
+    print(f"Test failed: expected {expected} but got {actual}")
+}
+
+module bitset {
+    export new(n) := array(n)
+    helper(i) := i + 1
+    export next(i) := helper(i)
+    export size := 3
+}
+check(bitset.next(1), 2)
+check(bitset.size, 3)
+
+helper := 10
+check(helper, 10)
+check(bitset.next(helper), 11)
+
+module counter {
+    n := 0
+    export start := n
+    export next() := {
+        n = n + 1
+        n
+    }
+    export current() := n
+}
+counter.next()
+counter.next()
+check(counter.start, 0)
+check(counter.current(), 2)
+
+module outer {
+    module hidden {
+        export f(x) := x + 1
+    }
+    export module inner {
+        export g(x) := hidden.f(x) * 2
+    }
+    export h(x) := inner.g(x) + 1
+}
+check(outer.inner.g(3), 8)
+check(outer.h(3), 9)
+
+module order {
+    fun later
+    export first(x) := later(x) + 1
+    later(x) = x * 2
+    export fact(0) := 1
+    fact(n) := n * fact(n - 1)
+}
+check(order.first(5), 11)
+check(order.fact(5), 120)
+
+module many {
+    export a0() := 0
+    a1 := 1
+    a2 := 2
+    a3 := 3
+    a4 := 4
+    a5 := 5
+    a6 := 6
+    a7 := 7
+    a8 := 8
+    a9 := 9
+    a10 := 10
+    a11 := 11
+    a12 := 12
+    a13 := 13
+    a14 := 14
+    a15 := 15
+    a16 := 16
+    a17 := 17
+    a18 := 18
+    a19 := 19
+    a20 := 20
+    a21 := 21
+    a22 := 22
+    a23 := 23
+    a24 := 24
+    a25 := 25
+    a26 := 26
+    a27 := 27
+    a28 := 28
+    a29 := 29
+    a30 := 30
+    a31 := 31
+    a32 := 32
+    a33 := 33
+    a34 := 34
+    a35 := 35
+    a36 := 36
+    a37 := 37
+    a38 := 38
+    a39 := 39
+    a40 := 40
+    a41 := 41
+    a42 := 42
+    a43 := 43
+    a44 := 44
+    a45 := 45
+    a46 := 46
+    a47 := 47
+    a48 := 48
+    a49 := 49
+    a50 := 50
+    a51 := 51
+    a52 := 52
+    a53 := 53
+    a54 := 54
+    a55 := 55
+    a56 := 56
+    a57 := 57
+    a58 := 58
+    a59 := 59
+    a60 := 60
+    a61 := 61
+    a62 := 62
+    a63 := 63
+    a64 := 64
+    a65 := 65
+    a0(n) = n + a65
+    export total := a1 + a64
+}
+check(many.a0(1), 66)
+check(many.total, 65)
+
+module again {
+    export v := 1
+}
+old_again := again
+module again {
+    export v := 2
+}
+check(Tuple{old_again.v, again.v}, Tuple{1, 2})
+
+module probe {
+    export v := 1
+    test {
+        check(1, 2)
+    }
+}
+check(type(probe), Module)
+check(_testing, false)
+
+print(f"Tests passed {passed}/{passed + failed}")
+if (failed > 0) exit(1)

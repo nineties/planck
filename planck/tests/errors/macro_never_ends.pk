@@ -1,0 +1,3 @@
+macro Loop{x} := `Loop{!x + 1}
+print("run")
+Loop{1}

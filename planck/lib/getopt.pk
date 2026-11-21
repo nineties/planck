@@ -1,0 +1,65 @@
+# Copyright (C) 2026 nineties
+
+use("base")
+use("list")
+use("string")
+use("table")
+
+module getopt {
+    export parse(options, args, from) := {
+        n := array_len(args)
+        given := table.new()
+        rest := []
+        error := none
+        only_rest := false
+        i := from
+        by_short(c) := find(o -> arg(o, 0) == c, options)
+        by_long(s) := find(o -> arg(o, 1) == s, options)
+        name_of(o) := if (arg(o, 1) != "") arg(o, 1) else arg(o, 0)
+        next_value(shown) := if (i < n) {
+            v := array_get(args, i)
+            i = i + 1
+            v
+        } else {
+            error = Missing{shown}
+            none
+        }
+        take(o, shown, attached) := if (arg(o, 2)) {
+            v := if (attached != none) attached else next_value(shown)
+            if (error == none) table.set(given, name_of(o), v)
+        } else table.set(given, name_of(o), true)
+        while (i < n and error == none) {
+            a := array_get(args, i)
+            i = i + 1
+            if (only_rest or a == "-" or not string.starts_with(a, "-")) rest = a :: rest
+            else if (a == "--") only_rest = true
+            else if (string.starts_with(a, "--")) {
+                eq := string.index_of_string(a, "=", 2)
+                name := if (eq >= 0) substr(a, 2, eq) else substr(a, 2, strlen(a))
+                o := if (name == "") none else by_long(name)
+                shown := _strcat("--", name)
+                if (o == none) error = Unknown{shown}
+                else if (eq >= 0 and not arg(o, 2)) error = NoValue{shown}
+                else take(o, shown, if (eq >= 0) substr(a, eq + 1, strlen(a)) else none)
+            } else {
+                j := 1
+                while (j < strlen(a) and error == none) {
+                    c := substr(a, j, j + 1)
+                    j = j + 1
+                    shown := _strcat("-", c)
+                    o := by_short(c)
+                    if (c == "" or o == none) error = Unknown{shown}
+                    else if (arg(o, 2) and j < strlen(a)) {
+                        v := substr(a, j, strlen(a))
+                        j = strlen(a)
+                        take(o, shown, v)
+                    } else take(o, shown, none)
+                }
+            }
+        }
+        if (error != none) error
+        else {
+            Parsed{given, list.list_to_array(reverse(rest))}
+        }
+    }
+}

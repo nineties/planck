@@ -1,0 +1,24 @@
+use("string")
+
+join(cs) := {
+    r := ""
+    i := 0
+    while (i < arity(cs)) {
+        r = _strcat(r, arg(cs, i))
+        i = i + 1
+    }
+    r
+}
+
+word ::= cs:[a-z_]+ { join(cs) }
+number ::= cs:[0-9]+ { string.string_to_int(join(cs)) }
+quoted ::= "\"" cs:[^"]* "\"" { join(cs) }
+pair ::= k:word "=" v:(number | quoted) { Tuple{k, v} }
+pairs ::= xs:delimited(pair, ",") { xs }
+first ::= c:. { c }
+
+r := peg_parse('pairs, "a=12, name=\"koichi\", b_2=7")
+print(arg(r, 0))
+print(arg(peg_parse('first, "  xyz"), 0))
+print(head(arg(peg_parse('pair, "a=?"), 0)))
+print(head(arg(peg_parse('first, "   "), 0)))

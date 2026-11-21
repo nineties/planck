@@ -1,0 +1,98 @@
+# Copyright (C) 2026 nineties
+
+use("list")
+use("string")
+
+write_text := put
+
+module pretty {
+    export quote_string(s) := {
+        b := strbuf.new()
+        strbuf.add(b, "\"")
+        i := 0
+        while (i < strlen(s)) {
+            c := ord(s, i)
+            strbuf.add(b, if (c == 34) "\\\"" else if (c == 92) "\\\\" else if (c == 0) "\\0" else if (c == 10) "\\n" else if (c == 9) "\\t" else string.char(c))
+            i = i + 1
+        }
+        strbuf.add(b, "\"")
+        strbuf.string(b)
+    }
+
+    fun is_list
+    is_list = (Nil{}) -> true | (_ :: xs) -> is_list(xs) | (_) -> false
+
+    fun list_elems
+    list_elems = (Nil{}) -> [] | (x :: xs) -> x :: list_elems(xs)
+
+    export args_of(x) := {
+        r := []
+        i := arity(x) - 1
+        while (i >= 0) {
+            r = arg(x, i) :: r
+            i = i - 1
+        }
+        r
+    }
+
+    elements(x) := if (head(x) == 'Cons and is_list(x)) list_elems(x) else args_of(x)
+
+    show(x) = {
+        t := type(x)
+        if (t == Int) string.int_to_string(x)
+        else if (t == String) quote_string(x)
+        else if (t == Symbol) symname(x)
+        else if (t == Expr) {
+            if (x == []) "[]"
+            else if (head(x) == 'Cons and is_list(x)) _strcat(_strcat("[", join(", ", map(show, list_elems(x)))), "]")
+            else if (head(x) == 'Tuple) _strcat(_strcat("(", join(", ", map(show, args_of(x)))), ")")
+            else _strcat(_strcat(_strcat(symname(head(x)), "{"), join(", ", map(show, args_of(x)))), "}")
+        }
+        else if (t == Array) "<array>"
+        else "<function>"
+    }
+    export show := show
+
+    fun repr_show
+    repr_show(x) = {
+        t := type(x)
+        if (t == Symbol) _strcat("'", symname(x))
+        else if (t == Expr) {
+            if (x == []) "[]"
+            else if (head(x) == 'Cons and is_list(x)) _strcat(_strcat("[", join(", ", map(repr_show, list_elems(x)))), "]")
+            else _strcat(_strcat(_strcat(symname(head(x)), "{"), join(", ", map(repr_show, args_of(x)))), "}")
+        }
+        else show(x)
+    }
+    export repr_show := repr_show
+
+    pp(x, indent, width) := {
+        flat := show(x)
+        if (indent + strlen(flat) <= width or type(x) != Expr or x == []) flat
+        else {
+            open := if (head(x) == 'Cons and is_list(x)) "[" else if (head(x) == 'Tuple) "(" else _strcat(symname(head(x)), "{")
+            close := if (head(x) == 'Cons and is_list(x)) "]" else if (head(x) == 'Tuple) ")" else "}"
+            pad := string.string_repeat(" ", indent + 2)
+            parts := map(e -> _strcat(pad, pp(e, indent + 2, width)), elements(x))
+            _strcat(_strcat(_strcat(_strcat(open, "\n"), join(",\n", parts)), _strcat("\n", string.string_repeat(" ", indent))), close)
+        }
+    }
+
+    export text(x, width) := pp(x, 0, width)
+
+    export print(x, pretty = true, end = "\n") := {
+        t := type(x)
+        if (t == String) write_text(x)
+        else if (t == Int or t == Symbol or t == Expr) write_text(if (pretty) text(x, 60) else show(x))
+        else _print_value(x)
+        write_text(end)
+    }
+}
+repr = (x) -> pretty.repr_show(x)
+
+_print_repr(x) := {
+    t := type(x)
+    if (t == Int or t == String or t == Symbol or t == Expr) print(repr(x)) else print(x)
+}
+
+print = pretty.print

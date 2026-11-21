@@ -1,0 +1,9 @@
+yield 1
+yield 2
+yield 3
+yield 4
+yield 5
+Cons{1, Cons{2, Cons{3, Cons{4, Cons{5, Nil{}}}}}}
+Cons{1, Cons{2, Nil{}}}
+same_fringe(t1, t2) = true
+same_fringe(t1, t3) = false

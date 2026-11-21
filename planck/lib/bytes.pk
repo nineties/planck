@@ -1,0 +1,77 @@
+# Copyright (C) 2026 nineties
+
+use("base")
+use("list")
+use("vector")
+
+module bytes {
+    export new() := vector.new()
+    export len(b) := vector.len(b)
+
+    export u8(b, n) := vector.push(b, bit_and(n, 255))
+
+    export u16(b, n) := {
+        u8(b, n)
+        u8(b, bit_sar(n, 8))
+    }
+
+    export u32(b, n) := {
+        u8(b, n)
+        u8(b, bit_sar(n, 8))
+        u8(b, bit_sar(n, 16))
+        u8(b, bit_sar(n, 24))
+    }
+
+    export u64(b, n) := {
+        u32(b, n)
+        u32(b, if (n < 0) -1 else 0)
+    }
+
+    export string(b, s) := {
+        i := 0
+        while (i < strlen(s)) {
+            u8(b, ord(s, i))
+            i = i + 1
+        }
+    }
+
+    export zeros(b, n) := {
+        while (n > 0) {
+            u8(b, 0)
+            n = n - 1
+        }
+    }
+
+    export align(b, a) := {
+        while (len(b) % a != 0) u8(b, 0)
+    }
+
+    export append(b, c) := {
+        i := 0
+        while (i < len(c)) {
+            u8(b, vector.get(c, i))
+            i = i + 1
+        }
+    }
+
+    export get(b, i) := vector.get(b, i)
+    export set(b, i, n) := vector.set(b, i, bit_and(n, 255))
+
+    export set_u32(b, at, n) := {
+        set(b, at, n)
+        set(b, at + 1, bit_sar(n, 8))
+        set(b, at + 2, bit_sar(n, 16))
+        set(b, at + 3, bit_sar(n, 24))
+    }
+
+    export to_u8(b) := {
+        n := len(b)
+        a := u8_array(n)
+        i := 0
+        while (i < n) {
+            a[i] = vector.get(b, i)
+            i = i + 1
+        }
+        a
+    }
+}

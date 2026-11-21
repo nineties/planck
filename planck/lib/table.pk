@@ -1,0 +1,44 @@
+# Copyright (C) 2026 nineties
+
+use("list")
+
+module table {
+    export new := table_new
+    export get := table_get
+    export set := table_set
+
+    export len(tb @ Table) := array_get(arg(tb, 0), 1)
+
+    export has(tb @ Table, k) := table_find(arg(tb, 0), k, hash(k)) != none
+
+    export items(tb @ Table) := {
+        r := []
+        b := array_get(arg(tb, 0), 0)
+        i := 0
+        while (i < array_len(b)) {
+            e := array_get(b, i)
+            while (e != none) {
+                r = Tuple{array_get(e, 0), array_get(e, 1)} :: r
+                e = array_get(e, 2)
+            }
+            i = i + 1
+        }
+        r
+    }
+
+    export keys(t) := map((kv) -> arg(kv, 0), items(t))
+    export values(t) := map((kv) -> arg(kv, 1), items(t))
+}
+
+module set {
+    export new() := table.new()
+    export add(s, x) := table.set(s, x, true)
+    export has(s, x) := table.has(s, x)
+    export len(s) := table.len(s)
+    export to_list(s) := table.keys(s)
+    export from_list(xs) := {
+        s := new()
+        each(x -> add(s, x), xs)
+        s
+    }
+}

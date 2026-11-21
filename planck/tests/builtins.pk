@@ -1,0 +1,161 @@
+# Copyright (C) 2026 nineties
+
+passed := 0
+failed := 0
+
+check(actual, expected) := if (actual == expected) {
+    passed = passed + 1
+} else {
+    failed = failed + 1
+    print(f"Test failed: expected {expected} but got {actual}")
+}
+
+s := "hello"
+check(s[0], "h")
+check(s[4], "o")
+check(s[1] == "e", true)
+check(type(s[2]), String)
+check(strlen(s[0]), 1)
+check(ord(s[3], 0), 108)
+check(substr(s, 1, 3), "el")
+check(ord(s, 9), -1)
+
+check(type(1), Int)
+check(type("a"), String)
+check(type('a), Symbol)
+check(type(F{}), Expr)
+check(type(x -> x), Function)
+check(type(array(1)), Array)
+check(type(u8_array(1)), Plain)
+check(match 1 { x @ Int -> true | _ -> false }, true)
+check(match "a" { x @ Int -> true | _ -> false }, false)
+
+b := u8_array(4)
+check(type(b), Plain)
+check(plain_kind(b), 'u8)
+check(plain_len(b), 4)
+check(b[0], 0)
+b[1] = 255
+b[3] = 7
+check(b[1], 255)
+check(b[3], 7)
+check(plain_get(b, 3), 7)
+check(plain_set(b, 2, 9), none)
+check(b[2], 9)
+
+h := u16_array(3)
+check(plain_kind(h), 'u16)
+h[0] = 65535
+h[1] = 258
+check(h[0], 65535)
+check(h[1], 258)
+check(h[2], 0)
+
+w := i32_array(3)
+check(plain_kind(w), 'i32)
+w[0] = -5
+w[1] = 1073741823
+w[2] = -1073741824
+check(w[0], -5)
+check(w[1], 1073741823)
+check(w[2], -1073741824)
+check(plain_len(i32_array(0)), 0)
+
+sum := 0
+i := 0
+while (i < 4) {
+    sum = sum + b[i]
+    i = i + 1
+}
+check(sum, 271)
+
+c := u8_array(6)
+plain_copy(c, 1, b, 0, 4)
+check(c[0], 0)
+check(c[1], 0)
+check(c[2], 255)
+check(c[3], 9)
+check(c[4], 7)
+check(c[5], 0)
+plain_copy(c, 0, c, 2, 3)
+check(c[0], 255)
+check(c[1], 9)
+check(c[2], 7)
+plain_copy(c, 2, c, 0, 3)
+check(c[2], 255)
+check(c[3], 9)
+check(c[4], 7)
+
+check(b == b, true)
+check(b == u8_array(4), false)
+
+data := u8_array(5)
+data[0] = 0
+data[1] = 65
+data[2] = 0
+data[3] = 255
+data[4] = 10
+write_file("tmp-builtins.bin", data)
+back := read_bytes("tmp-builtins.bin")
+check(plain_len(back), 5)
+check(back[0], 0)
+check(back[1], 65)
+check(back[2], 0)
+check(back[3], 255)
+check(back[4], 10)
+text := read_file("tmp-builtins.bin")
+check(strlen(text), 5)
+check(ord(text, 0), 0)
+check(ord(text, 3), 255)
+check(text[1], "A")
+
+write_file("tmp-builtins.bin", _strcat(_strcat("a", substr(read_file("tmp-builtins.bin"), 0, 1)), "z"))
+back = read_bytes("tmp-builtins.bin")
+check(plain_len(back), 3)
+check(back[0], 97)
+check(back[1], 0)
+check(back[2], 122)
+
+write_file("tmp-builtins.bin", "")
+check(plain_len(read_bytes("tmp-builtins.bin")), 0)
+check(read_file("tmp-builtins.bin"), "")
+chmod("tmp-builtins.bin", 493)
+
+check(bit_and(12, 10), 8)
+check(bit_or(12, 10), 14)
+check(bit_xor(12, 10), 6)
+check(bit_and(-1, 255), 255)
+check(bit_and(-2, 7), 6)
+check(bit_or(-8, 3), -5)
+check(bit_xor(-1, 5), -6)
+check(bit_xor(5, 5), 0)
+check(bit_not(0), -1)
+check(bit_not(5), -6)
+check(bit_not(-1), 0)
+check(bit_shl(1, 0), 1)
+check(bit_shl(1, 10), 1024)
+check(bit_shl(1, 29), 536870912)
+check(bit_shl(-1, 30), -1073741824)
+check(bit_shl(-1, 4), -16)
+check(bit_shr(1024, 10), 1)
+check(bit_shr(-1, 1), 1073741823)
+check(bit_shr(-1, 30), 1)
+check(bit_shr(-1, 31), 0)
+check(bit_shr(-1, 0), -1)
+check(bit_shr(5, 1), 2)
+check(bit_sar(-16, 2), -4)
+check(bit_sar(-1, 30), -1)
+check(bit_sar(-1, 31), -1)
+check(bit_sar(1024, 3), 128)
+check(bit_sar(-1073741824, 30), -1)
+check(bit_and(bit_shr(0x2345678, 8), 255), 0x56)
+
+args := argv()
+check(type(args), Array)
+check(array_len(args), 3)
+check(args[0], "planck/tests/builtins.pk")
+check(args[1], "one")
+check(args[2], "two words")
+
+print(f"Tests passed {passed}/{passed + failed}")
+if (failed > 0) exit(1)

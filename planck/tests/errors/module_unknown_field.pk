@@ -1,0 +1,5 @@
+print("run")
+module m {
+    export a := 1
+}
+m.helper

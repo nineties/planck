@@ -1,0 +1,14 @@
+# Copyright (C) 2026 nineties
+
+use("string")
+
+module symbol {
+    gensym_count := 0
+
+    export gensym(prefix) := {
+        gensym_count = gensym_count + 1
+        intern(_strcat(prefix, string.int_to_string(gensym_count)))
+    }
+
+    export reset() := gensym_count = 0
+}

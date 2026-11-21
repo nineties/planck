@@ -1,0 +1,3 @@
+print("not run")
+print(later)
+later := 2

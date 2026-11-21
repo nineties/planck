@@ -1,0 +1,66 @@
+--- planck/examples/calc.txt
+let x = 3 + 4 * 2
+let y = (x - 1) * 2
+y / 3 + x
+-x + y
+tokens: 32
+syntax tree:
+Let{
+  "x",
+  Bin{"+", Num{3}, Bin{"*", Num{4}, Num{2}, 14}, 10},
+  4
+}
+Let{
+  "y",
+  Bin{"*", Bin{"-", Var{"x", 27}, Num{1}, 29}, Num{2}, 34},
+  22
+}
+Expr{
+  Bin{
+    "+",
+    Bin{"/", Var{"y", 38}, Num{3}, 40},
+    Var{"x", 46},
+    44
+  }
+}
+Expr{Bin{"+", Neg{Var{"x", 49}}, Var{"y", 53}, 51}}
+code:
+  %t1 = 4 * 2
+  %t2 = 3 + %t1
+  x = %t2
+  %t3 = x - 1
+  %t4 = %t3 * 2
+  y = %t4
+  %t5 = y / 3
+  %t6 = %t5 + x
+  print %t6
+  %t7 = 0 - x
+  %t8 = %t7 + y
+  print %t8
+run:
+= 17
+= 9
+--- "1 + $"
+error: input:1:5: unexpected character "$"
+  1 + $
+      ^
+--- "(1 + 2"
+error: input:1:7: expected ")"
+  (1 + 2
+        ^
+--- "let a = 1\na + b"
+error: input:2:5: undefined variable b
+  a + b
+      ^
+--- "10 / (5 - 5)"
+error: input:1:4: division by zero
+  10 / (5 - 5)
+     ^
+--- "let = 3"
+error: input:1:5: expected a variable name
+  let = 3
+      ^
+--- "2 3"
+error: input:1:3: expected the end of the line
+  2 3
+    ^

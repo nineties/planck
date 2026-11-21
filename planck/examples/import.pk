@@ -1,0 +1,12 @@
+import bitset as bs
+s := bs.new(100)
+bs.add(s, 3)
+bs.add(s, 42)
+print(bs.to_list(s))
+
+import bitset (has, count)
+print(has(s, 42))
+print(count(s))
+
+import bitset hiding (new, add)
+print(to_list(s))

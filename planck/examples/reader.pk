@@ -1,0 +1,23 @@
+old_parse := parse
+fun expand
+expand = Unless{c, a, b} -> `(if (!c) !b else !a)
+       | (f)(x) -> `(!f)(!expand(x))
+       | x -> x
+parse = s -> {
+    r := old_parse(s)
+    (expand(arg(r, 0)), arg(r, 1))
+}
+
+print(Unless{1 < 2, "no", "yes"})
+print(Unless{1 > 2, "no", "yes"})
+
+old_eval := eval
+eval = e -> {
+    v := old_eval(e)
+    print(f"=> {v}")
+    v
+}
+
+1 + 2
+6 * 7
+Unless{false, "unless", "if"}

@@ -1,0 +1,26 @@
+range(a, b) := if (a >= b) [] else a :: range(a + 1, b)
+
+fun append
+append = (Nil{}, ys) -> ys
+       | (x :: xs, ys) -> x :: append(xs, ys)
+
+fun concat_map
+concat_map = (f, Nil{}) -> []
+           | (f, x :: xs) -> append(f(x), concat_map(f, xs))
+
+choose(xs) := perform Choose{xs}
+fail() := perform Fail{}
+
+all_results(f) := handle [f()] with
+      (Fail{}, k) -> []
+    | (Choose{xs}, k) -> concat_map(x -> k(x), xs)
+
+print(all_results(() -> (choose([1, 2]), choose(["a", "b", "c"]))))
+
+sq(x) := x * x
+print(all_results(() -> {
+    a := choose(range(1, 16))
+    b := choose(range(a, 16))
+    c := choose(range(b, 16))
+    if (sq(a) + sq(b) == sq(c)) Triple{a, b, c} else fail()
+}))

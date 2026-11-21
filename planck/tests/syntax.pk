@@ -1,0 +1,1474 @@
+# Copyright (C) 2026 nineties
+
+passed := 0
+failed := 0
+
+check(actual, expected) := if (actual == expected) {
+    passed = passed + 1
+} else {
+    failed = failed + 1
+    print(f"Test failed: expected {expected} but got {actual}")
+}
+
+tree(s) := arg(peg_parse('toplevel, s), 0)
+tree_at(s, loc) := arg(parse_at(s, loc), 0)
+at(l, c, e) := mexpr('At, Tuple{Loc{"f.pk", l, c}, e})
+rest(s) := arg(peg_parse('toplevel, s), 1)
+
+check(tree_at("f(x)", Loc{"f.pk", 1, 1}), at(1, 1, 'Apply{f, Tuple{x}}))
+check(tree_at("  f(x)", Loc{"f.pk", 3, 5}), at(3, 7, 'Apply{f, Tuple{x}}))
+check(tree_at("g(1,\n  f(2))", Loc{"f.pk", 7, 10}), at(7, 10, mexpr('Apply, Tuple{'g, mexpr('Tuple, Tuple{1, at(8, 3, 'Apply{f, Tuple{2}})})})))
+check(tree_at("f(x)(y)", Loc{"f.pk", 1, 1}), at(1, 1, mexpr('Apply, Tuple{at(1, 1, 'Apply{f, Tuple{x}}), 'Tuple{y}})))
+check(tree_at("a + b", Loc{"f.pk", 1, 1}), 'Apply{_add, Tuple{a, b}})
+check(tree_at("a.b", Loc{"f.pk", 1, 1}), 'Apply{_record_get, Tuple{a, Quote{b}}})
+check(tree_at("a[1]", Loc{"f.pk", 1, 1}), 'Apply{_index_get, Tuple{a, 1}})
+check(tree_at("'f(x)", Loc{"f.pk", 1, 1}), 'Quote{Apply{f, Tuple{x}}})
+check(tree_at("`f(x, !g(y))", Loc{"f.pk", 1, 1}), mexpr('QuasiQuote, Tuple{mexpr('Apply, Tuple{'f, mexpr('Tuple, Tuple{'x, mexpr('UnQuote, Tuple{at(1, 8, 'Apply{g, Tuple{y}})})})})}))
+check(tree_at("(f(p)) -> p", Loc{"f.pk", 1, 1}), 'Lambda{Tuple{Apply{Quote{f}, Tuple{p}}}, p})
+check(arg(parse_at("f(x)\ng(y)", Loc{"f.pk", 1, 1}), 1), "g(y)")
+check(tree("g(1, f(2))"), 'Apply{g, Tuple{1, Apply{f, Tuple{2}}}})
+check(arg(parse("f(x)"), 0), 'Apply{f, Tuple{x}})
+
+check(tree("x"), 'x)
+check(tree("42"), 42)
+check(tree("-3"), -3)
+check(tree("0x1f"), 31)
+check(tree("0b101"), 5)
+check(tree("0o17"), 15)
+check(tree("010"), 10)
+check(tree("1.5"), 'Apply{_float, Tuple{"1.5"}})
+check(tree("0.25"), 'Apply{_float, Tuple{"0.25"}})
+check(tree("-1.5"), 'Apply{_float, Tuple{"-1.5"}})
+check(tree("1.5e-3"), 'Apply{_float, Tuple{"1.5e-3"}})
+check(tree("1.5E3"), 'Apply{_float, Tuple{"1.5E3"}})
+check(tree("2.0e10"), 'Apply{_float, Tuple{"2.0e10"}})
+check(tree("1.5 + 2"), 'Apply{_add, Tuple{Apply{_float, Tuple{"1.5"}}, 2}})
+check(tree("f(1.5, x)"), 'Apply{f, Tuple{Apply{_float, Tuple{"1.5"}}, x}})
+check(rest("1.5 x"), "x")
+check(head(tree("1.5e x")), 'SyntaxError)
+check(head(tree("1. 5")), 'SyntaxError)
+check(tree("1073741823"), 1073741823)
+check(tree("-1073741824"), -1073741824)
+check(tree("0x3fffffff"), 1073741823)
+check(tree("-0"), 0)
+check(tree("1073741824"), 'Apply{_bigint, Tuple{"1073741824"}})
+check(tree("-1073741825"), 'Apply{_bigint, Tuple{"-1073741825"}})
+check(tree("123456789012345678901234567890"), 'Apply{_bigint, Tuple{"123456789012345678901234567890"}})
+check(tree("0xCBF29CE484222325"), 'Apply{_bigint, Tuple{"0xCBF29CE484222325"}})
+check(tree("0b1000000000000000000000000000000"), 'Apply{_bigint, Tuple{"0b1000000000000000000000000000000"}})
+check(tree("2 * 123456789012345678901234567890"), 'Apply{_mul, Tuple{2, Apply{_bigint, Tuple{"123456789012345678901234567890"}}}})
+check(rest("123456789012345678901234567890 x"), "x")
+check(tree("\"a\\tb\\n\""), "a\tb\n")
+check(strlen(tree("\"a\\0b\"")), 3)
+check(ord(tree("\"a\\0b\""), 1), 0)
+check(tree("\"\\0\""), substr("a\0b", 1, 2))
+check(tree("f\"a\\0b\""), tree("\"a\\0b\""))
+check(tree("\"\\\"q\\\"\""), "\"q\"")
+check(tree("F{1, x}"), 'F{1, x})
+check(tree("()"), 'Tuple{})
+check(tree("(1)"), 1)
+check(tree("(1, x)"), 'Tuple{1, x})
+check(tree("[1, 2]"), 'Cons{1, Cons{2, Nil{}}})
+check(tree("[]"), 'Nil{})
+
+check(tree("1 + 2 * 3"), 'Apply{_add, Tuple{1, Apply{_mul, Tuple{2, 3}}}})
+check(tree("(1 + 2) * 3"), 'Apply{_mul, Tuple{Apply{_add, Tuple{1, 2}}, 3}})
+check(tree("1 - 2 - 3"), 'Apply{_sub, Tuple{Apply{_sub, Tuple{1, 2}}, 3}})
+check(tree("8 / 4 % 3"), 'Apply{_mod, Tuple{Apply{_div, Tuple{8, 4}}, 3}})
+check(tree("8 // 4 % 3"), 'Apply{_mod, Tuple{Apply{_quo, Tuple{8, 4}}, 3}})
+check(tree("8 / 4 // 2"), 'Apply{_quo, Tuple{Apply{_div, Tuple{8, 4}}, 2}})
+check(tree("1 + 7 // 2"), 'Apply{_add, Tuple{1, Apply{_quo, Tuple{7, 2}}}})
+check(tree("a + 1 < b"), 'Apply{_lt, Tuple{Apply{_add, Tuple{a, 1}}, b}})
+check(tree("a <= b"), 'Apply{_le, Tuple{a, b}})
+check(tree("a >= b"), 'Apply{_ge, Tuple{a, b}})
+check(tree("a > b"), 'Apply{_gt, Tuple{a, b}})
+check(tree("a == b"), 'Apply{_eq, Tuple{a, b}})
+check(tree("a != b"), 'Apply{_ne, Tuple{a, b}})
+check(tree("not a == b"), 'Apply{_not, Tuple{Apply{_eq, Tuple{a, b}}}})
+check(tree("a and b or c"), 'If{If{a, b, false}, true, c})
+check(tree("a or b and c"), 'If{a, true, If{b, c, false}})
+check(tree("-x"), 'Apply{_sub, Tuple{0, x}})
+check(tree("+3"), 3)
+check(tree("+x"), 'x)
+check(tree("+-x"), 'Apply{_sub, Tuple{0, x}})
+check(tree("-+x"), 'Apply{_sub, Tuple{0, x}})
+check(tree("a + +b"), 'Apply{_add, Tuple{a, b}})
+check(tree("a - +b"), 'Apply{_sub, Tuple{a, b}})
+check(tree("+f(x)"), 'Apply{f, Tuple{x}})
+check(tree("a - -1"), 'Apply{_sub, Tuple{a, -1}})
+
+check(tree("f(x, 1)"), 'Apply{f, Tuple{x, 1}})
+check(tree("f()(x)"), 'Apply{Apply{f, Tuple{}}, Tuple{x}})
+check(tree("x -> x + 1"), 'Lambda{Tuple{x}, Apply{_add, Tuple{x, 1}}})
+check(tree("(x, y) -> x"), 'Lambda{Tuple{x, y}, x})
+check(tree("() -> 1"), 'Lambda{Tuple{}, 1})
+check(tree("x -> y -> x"), 'Lambda{Tuple{x}, Lambda{Tuple{y}, x}})
+check(tree("(0) -> 1 | (n) -> n"), 'Fusion{Lambda{Tuple{0}, 1}, Lambda{Tuple{n}, n}})
+check(tree("(F{a}, 'none) -> a"), 'Lambda{Tuple{F{a}, Quote{none}}, a})
+check(tree("(x @ Int) -> x"), 'Lambda{Tuple{_TypeOf{x, Int}}, x})
+check(tree("x := 1"), 'Def{x, 1})
+check(tree("f(x) := x"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
+check(tree("x = y"), 'Set{x, y})
+
+check(tree("'a"), 'Quote{a})
+check(tree("'(a + 1)"), 'Quote{Apply{_add, Tuple{a, 1}}})
+check(tree("`F{!x}"), 'QuasiQuote{F{UnQuote{x}}})
+check(tree("`{ !i := 1; !i = !i + 1 }"), 'QuasiQuote{Do{Def{UnQuote{i}, 1}, Set{UnQuote{i}, Apply{_add, Tuple{UnQuote{i}, 1}}}}})
+check(tree("`(if (c) !i = 1 else !i := 2)"), 'QuasiQuote{If{c, Set{UnQuote{i}, 1}, Def{UnQuote{i}, 2}}})
+
+check(tree("{ a; b }"), 'Do{a, b})
+check(tree("{\n a\n b\n}"), 'Do{a, b})
+check(tree("{}"), 'Do{})
+check(tree("if (a) { b }"), 'If{a, Do{b}, none})
+check(tree("if (a) { b } else { c }"), 'If{a, Do{b}, Do{c}})
+check(tree("if (a) { b }\nelse if (c) { d }"), 'If{a, Do{b}, If{c, Do{d}, none}})
+check(tree("while (a) { b }"), 'While{a, Do{b}})
+check(tree("handle { a } with (E{}, k) -> k(1)"), 'Handle{Do{a}, Lambda{Tuple{E{}, k}, Apply{k, Tuple{1}}}})
+check(tree("if (a) b"), 'If{a, b, none})
+check(tree("if (a) b else c"), 'If{a, b, c})
+check(tree("if (a) x = 1 else x = 2"), 'If{a, Set{x, 1}, Set{x, 2}})
+check(tree("if (a) b else if (c) d else e"), 'If{a, b, If{c, d, e}})
+check(tree("if (a) if (b) c else d"), 'If{a, If{b, c, d}, none})
+check(tree("if (a) if (b) c else d else e"), 'If{a, If{b, c, d}, e})
+check(tree("if (a) { if (b) c } else d"), 'If{a, Do{If{b, c, none}}, d})
+check(tree("if (a)\n  b\nelse\n  c"), 'If{a, b, c})
+check(tree("if (a) b else c + 1"), 'If{a, b, Apply{_add, Tuple{c, 1}}})
+check(tree("while (a) b"), 'While{a, b})
+check(tree("while (a) if (b) c else d"), 'While{a, If{b, c, d}})
+check(tree("{ if (a) b; c }"), 'Do{If{a, b, none}, c})
+check(tree("{ if (a) b\n c }"), 'Do{If{a, b, none}, c})
+check(tree("{ while (a) b\n c }"), 'Do{While{a, b}, c})
+check(tree("y = if (a) 1 else 2"), 'Set{y, If{a, 1, 2}})
+check(head(tree("if a { b }")), 'SyntaxError)
+check(head(tree("while a { b }")), 'SyntaxError)
+check(tree("perform E{x}"), 'Perform{E{x}})
+
+check(tree("x :: xs"), 'Cons{x, xs})
+check(tree("1 :: 2 :: []"), 'Cons{1, Cons{2, Nil{}}})
+check(tree("a + 1 :: b * 2"), 'Cons{Apply{_add, Tuple{a, 1}}, Apply{_mul, Tuple{b, 2}}})
+check(tree("a :: b == c :: d"), 'Apply{_eq, Tuple{Cons{a, b}, Cons{c, d}}})
+check(tree("a :: b - 1"), 'Cons{a, Apply{_sub, Tuple{b, 1}}})
+check(tree("(a :: b) :: c"), 'Cons{Cons{a, b}, c})
+
+check(tree("0..3"), 'Range{0, 3})
+check(tree("a .. b"), 'Range{a, b})
+check(tree("a + 1..b * 2"), 'Range{Apply{_add, Tuple{a, 1}}, Apply{_mul, Tuple{b, 2}}})
+check(tree("a..b == c..d"), 'Apply{_eq, Tuple{Range{a, b}, Range{c, d}}})
+check(tree("x :: 1..2"), 'Cons{x, Range{1, 2}})
+check(tree("f(0..n, 1)"), 'Apply{f, Tuple{Range{0, n}, 1}})
+check(tree("for (i in 0..3) f(i)"), 'Apply{peg_for, Tuple{Range{0, 3}, Lambda{Tuple{i}, Apply{f, Tuple{i}}}}})
+check(tree("s[1..2]"), 'Apply{_index_get, Tuple{s, Range{1, 2}}})
+check(tree("f(a :: b, c)"), 'Apply{f, Tuple{Cons{a, b}, c}})
+check(tree("[a :: b]"), 'Cons{Cons{a, b}, Nil{}})
+check(tree("(x :: xs) -> x"), 'Lambda{Tuple{Cons{x, xs}}, x})
+check(tree("x :: xs -> x"), 'Lambda{Tuple{Cons{x, xs}}, x})
+check(tree("(x :: y :: r, n) -> x"), 'Lambda{Tuple{Cons{x, Cons{y, r}}, n}, x})
+check(tree("(x :: Nil{}) -> x | (x :: xs) -> xs"), 'Fusion{Lambda{Tuple{Cons{x, Nil{}}}, x}, Lambda{Tuple{Cons{x, xs}}, xs}})
+check(tree("f(x :: xs) := x"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}}})
+check(tree("xs ::= ident"), 'Apply{_define_rule, Tuple{Quote{xs}, Quote{ident}}})
+
+check(tree("a\n-1"), 'a)
+check(rest("a\n-1"), "-1")
+check(tree("a -\n1"), 'Apply{_sub, Tuple{a, 1}})
+check(tree("a # comment\n+ 1"), 'Apply{_add, Tuple{a, 1}})
+check(tree("f\n(x)"), 'f)
+check(rest("x := 1; y"), "y")
+check(tree(" \n# only a comment\n"), 'Eof{})
+check(head(tree("1 +")), 'SyntaxError)
+check(rest("1 2"), "2")
+check(head(tree("x := (1")), 'SyntaxError)
+check(head(tree("x := )")), 'SyntaxError)
+check(head(tree(")")), 'SyntaxError)
+check(head(tree("\"abc")), 'SyntaxError)
+
+fun fib
+fib(0) = 0
+fib(1) = 1
+fib(n) = fib(n - 1) + fib(n - 2)
+check(fib(15), 610)
+check({ a := 2; b := 3; a * b }, 6)
+check(if (1 < 2) { "y" } else { "n" }, "y")
+check(if (1 > 2) { "y" }, none)
+n := 0
+i := 0
+while (i < 5) { i = i + 1; n = n + i }
+check(n, 15)
+fun last
+last = (x :: Nil{}) -> x | (x :: xs) -> last(xs)
+check(last(1 :: 2 :: 3 :: []), 3)
+check(1 :: 2 :: [], [1, 2])
+fun sum
+sum = (Nil{}) -> 0 | (x :: xs) -> x + sum(xs)
+check(sum(1 :: 2 :: 3 :: []), 6)
+count := 0
+if (count == 0) count = 10 else count = 20
+check(count, 10)
+if (count == 0) count = 1 else if (count == 10) count = 2 else count = 3
+check(count, 2)
+dangle(a, b) := if (a) if (b) "ab" else "a-nb"
+check(dangle(true, true), "ab")
+check(dangle(true, false), "a-nb")
+check(dangle(false, true), none)
+check(dangle(false, false), none)
+dangle2(a, b) := if (a) { if (b) "ab" } else "na"
+check(dangle2(false, true), "na")
+check(dangle2(true, false), none)
+k := 0
+total := 0
+while (k < 4) { k = k + 1; total = total + k }
+check(total, 10)
+while (k > 0) if (k % 2 == 0) k = k - 1 else k = k - 1
+check(k, 0)
+check(handle { 1 + perform Ask{} } with (Ask{}, k) -> k(41), 42)
+check((x -> y -> x - y)(10)(3), 7)
+check(not 1 == 2, true)
+check(1 == 1 and 2 == 3, false)
+check(false or 3 > 2, true)
+add3(a, b, c) := a + b + c
+check(add3(1, 2, 3), 6)
+fun len
+len = (Nil{}) -> 0 | (Cons{_, xs}) -> 1 + len(xs)
+check(len([1, 2, 3]), 3)
+x := 5
+check(`F{!x, x}, 'F{5, x})
+w := 'name
+check(`{ !w := 1; !w = 2 }, 'Do{Def{name, 1}, Set{name, 2}})
+check(Apply{_add, Tuple{1, 2}}, 3)
+
+check(tree("match x { A{a} -> a\n| B{} -> 0 }"), 'Apply{Fusion{Lambda{Tuple{A{a}}, a}, Lambda{Tuple{B{}}, 0}}, Tuple{x}})
+check(tree("match x { 1 -> 2 }"), 'Apply{Lambda{Tuple{1}, 2}, Tuple{x}})
+check(tree("match f(x) + 1 { y -> y | _ -> 0 }"), 'Apply{Fusion{Lambda{Tuple{y}, y}, Lambda{Tuple{_}, 0}}, Tuple{Apply{_add, Tuple{Apply{f, Tuple{x}}, 1}}}})
+check(tree("match l {\n  x :: xs -> x\n| Nil{} -> 0\n}"), 'Apply{Fusion{Lambda{Tuple{Cons{x, xs}}, x}, Lambda{Tuple{Nil{}}, 0}}, Tuple{l}})
+check(tree("match x {\n  -1 -> 1\n| ((a, b)) -> a\n}"), 'Apply{Fusion{Lambda{Tuple{-1}, 1}, Lambda{Tuple{Tuple{a, b}}, a}}, Tuple{x}})
+check(head(tree("match x { }")), 'SyntaxError)
+check(head(tree("match x A{} -> 1")), 'SyntaxError)
+check(head(tree("match x { a b }")), 'SyntaxError)
+
+shape(n) := match n {
+    n if n < 0 -> "neg"
+  | 0 -> "zero"
+  | n if n < 10 and n % 2 == 1 -> "small odd"
+  | n if n < 10 -> "small even"
+  | _ -> "big"
+}
+check(shape(-5), "neg")
+check(shape(0), "zero")
+check(shape(7), "small odd")
+check(shape(8), "small even")
+check(shape(70), "big")
+check(match 5 { n if n > 10 -> "a" | n if n > 3 -> "b" | _ -> "c" }, "b")
+check(match 5 { 5 if false -> "a" | 5 -> "b" }, "b")
+fun tree_eval
+tree_eval = (e) -> match e {
+    Num{n} -> n
+  | Neg{e} -> 0 - tree_eval(e)
+  | Add{a, b} -> tree_eval(a) + tree_eval(b)
+  | Mul{a, b} -> tree_eval(a) * tree_eval(b)
+}
+check(tree_eval(Add{Num{2}, Mul{Num{3}, Neg{Num{4}}}}), -10)
+check(match [1, 2] { x :: xs -> x | Nil{} -> 0 }, 1)
+check(match 'a { 'a -> 1 | 'b -> 2 }, 1)
+k := 3
+check(match k { 3 -> match k + 1 { n if n > 3 -> "inner" | _ -> "no" } | _ -> "outer" }, "inner")
+nest(a, b) := match a { x if x > 0 -> match b { y if y > 0 -> x + y | _ -> x } | _ -> 0 }
+check(nest(1, 2), 3)
+check(nest(1, -2), 1)
+check(nest(-1, 2), 0)
+calls := 0
+once() := { calls = calls + 1; 5 }
+check(match once() { n if n > 9 -> 1 | n if n > 4 -> 2 | _ -> 3 }, 2)
+check(calls, 1)
+acc := 0
+match 4 { n if n > 3 -> { acc = acc + n } | _ -> { acc = 100 } }
+check(acc, 4)
+check(tree("match x { 1 -> a | 2 -> b | _ -> c }"), 'Apply{Fusion{Lambda{Tuple{1}, a}, Fusion{Lambda{Tuple{2}, b}, Lambda{Tuple{_}, c}}}, Tuple{x}})
+check(tree("match x { f }"), 'Apply{f, Tuple{x}})
+inc := (x) -> x + 1
+check(match 4 { inc }, 5)
+check(match 4 { inc | _ -> 0 }, 5)
+check(head(tree("match x { 1 -> a; 2 -> b }")), 'SyntaxError)
+check(tree("match x {\n    1 -> a   # one\n  | 2 -> b\n}"), tree("match x { 1 -> a | 2 -> b }"))
+check(tree("match x {\n    1 -> a\n    | 2 -> b\n}"), tree("match x { 1 -> a | 2 -> b }"))
+check(tree("match x { 0 -> if (c) 1 else 2 | n -> n }"), 'Apply{Fusion{Lambda{Tuple{0}, If{c, 1, 2}}, Lambda{Tuple{n}, n}}, Tuple{x}})
+check(tree("match x { 0 -> if (c) 1 | n -> n }"), 'Apply{Fusion{Lambda{Tuple{0}, If{c, 1, none}}, Lambda{Tuple{n}, n}}, Tuple{x}})
+check(tree("if (c) x = 1 else y := 2"), 'If{c, Set{x, 1}, Def{y, 2}})
+check(tree("if (c) (f | g) else h"), 'If{c, Fusion{f, g}, h})
+lev(n) := match n {
+    0 -> if (n == 0) "zero" else "?"
+  | n if n < 0 -> if (n < -9) "low" else "neg"
+  | _ -> "pos"
+}
+check(lev(0), "zero")
+check(lev(-3), "neg")
+check(lev(-30), "low")
+check(lev(4), "pos")
+first_pos(xs) := {
+    for (x in xs) match x { n if n > 0 -> return n | _ -> none }
+    0
+}
+check(first_pos([-1, 0, 7, 8]), 7)
+check(first_pos([-1]), 0)
+kind(a, b) := match a {
+    0 -> match b {
+        0 -> "both"
+      | _ -> "a"
+    }
+  | x if x > 0 -> match b { 0 -> "b" | _ -> "none" }
+  | _ -> "neg"
+}
+check(kind(0, 0), "both")
+check(kind(0, 1), "a")
+check(kind(1, 0), "b")
+check(kind(1, 1), "none")
+check(kind(-1, 0), "neg")
+check(match (1, 2) { ((a, b)) -> a + b | _ -> 0 }, 3)
+check(match (1, 2) { (a, b) -> a + b | _ -> 0 }, 0)
+check(match '(x * x) { a * b if a == b -> a | _ -> 0 }, 'x)
+check(match '(x * y) { a * b if a == b -> a | a * b -> b | _ -> 0 }, 'y)
+check(match '(1 + 2) { a @ Int + b @ Int if a < b -> b - a | _ -> 0 }, 1)
+sgn := n if n > 0 -> 1 | n if n < 0 -> -1 | _ -> 0
+check(sgn(5), 1)
+check(sgn(-3), -1)
+check(sgn(0), 0)
+bigger := (a, b) if a > b -> a | (a, b) -> b
+check(bigger(3, 1), 3)
+check(bigger(1, 3), 3)
+ar := (a, b) if a > 0 -> "two" | (a) -> "one"
+check(ar(1, 1), "two")
+check(ar(1), "one")
+pos := n if n > 0 -> n
+check(pos(2), 2)
+pg := (n if n > 0 -> "pos") | (_ -> "other")
+check(pg(-1), "other")
+pg2 := (n if n > 0 -> "pos" | n if n < -5 -> "low") | _ -> "other"
+check(pg2(-1), "other")
+check(pg2(-9), "low")
+check(tree("(n if c -> 1) | g"), tree("n if c -> 1 | g"))
+pg3 := (0 -> "zero" | n if n > 0 -> "pos") | _ -> "other"
+check(pg3(0), "zero")
+check(pg3(-1), "other")
+lim := 10
+under := n if n < lim -> n + lim | n -> n
+check(under(3), 13)
+check(under(30), 30)
+
+check(tree("f\"a{x}b\""), 'Apply{_strcat, Tuple{Apply{_strcat, Tuple{"a", Apply{_to_text, Tuple{x}}}}, "b"}})
+check(tree("f\"{x}\""), 'Apply{_to_text, Tuple{x}})
+check(tree("f\"{x}{y}\""), 'Apply{_strcat, Tuple{Apply{_to_text, Tuple{x}}, Apply{_to_text, Tuple{y}}}})
+check(tree("f\"{1 + 2}\""), 'Apply{_to_text, Tuple{Apply{_add, Tuple{1, 2}}}})
+check(tree("f\"a{f(\"q\")}\""), 'Apply{_strcat, Tuple{"a", Apply{_to_text, Tuple{Apply{f, Tuple{"q"}}}}}})
+check(tree("f\"{ x }\""), 'Apply{_to_text, Tuple{x}})
+check(tree("f\"a\\tb\""), "a\tb")
+check(tree("f\"\""), "")
+check(tree("f\"abc\""), "abc")
+check(tree("f\"{{x}}\""), "{x}")
+check(tree("f\"{{{x}}}\""), 'Apply{_strcat, Tuple{Apply{_strcat, Tuple{"{", Apply{_to_text, Tuple{x}}}}, "}"}})
+check(tree("f\"\\\"{x}\""), 'Apply{_strcat, Tuple{"\"", Apply{_to_text, Tuple{x}}}})
+check(tree("\"{x}\""), "{x}")
+check(tree("\"a { b } {{\""), "a { b } {{")
+check(head(tree("\"\\(x)\"")), 'SyntaxError)
+check(head(tree("f\"a{x\"")), 'SyntaxError)
+check(head(tree("f\"a{\"")), 'SyntaxError)
+check(head(tree("f\"a{x}")), 'SyntaxError)
+check(head(tree("f\"a}b\"")), 'SyntaxError)
+check(head(tree("f\"a{}b\"")), 'SyntaxError)
+check(rest("f\"{x}\" y"), "y")
+check(tree("f(x)"), 'Apply{f, Tuple{x}})
+check(tree("f"), 'f)
+check(tree("f + 1"), 'Apply{_add, Tuple{f, 1}})
+check(tree("f \"s\""), 'f)
+check(rest("f \"s\""), "\"s\"")
+check(tree("fx"), 'fx)
+check(tree("foo\"s\""), 'foo)
+check(rest("foo\"s\""), "\"s\"")
+
+n := 7
+word := "w"
+check(f"n={n}", "n=7")
+check(f"{n}", "7")
+check(f"{n}:{n + 1}:{word}", "7:8:w")
+check(f"[{word}] {word}{word}", "[w] ww")
+check(f"neg {0 - 5}!", "neg -5!")
+check(f"zero {0}", "zero 0")
+check(f"tab\there {n}\n", "tab\there 7\n")
+check(f"{{n}} is {n}", "{n} is 7")
+check(f"{{{n}}}", "{7}")
+check(f"}}{{", "}{")
+check(f"", "")
+check(f"plain", "plain")
+check("{n} {{", "{n} {{")
+check("a}b", "a}b")
+wrap(s) := f"<{s}>"
+check(f"a{wrap("x")}b", "a<x>b")
+check(f"nest {wrap(f"in {n}")}", "nest <in 7>")
+check(f"{wrap(wrap("x"))}", "<<x>>")
+check(f"{if (n > 3) "big" else "small"}", "big")
+f := x -> x + 1
+check(f(2), 3)
+check(f(n) + 1, 9)
+check(f"{f(n)}", "8")
+use("pretty")
+check(f"list {[1, 2]}", "list [1, 2]")
+check(f"sym {'a} tree {F{1, "s"}}", "sym a tree F{1, \"s\"}")
+
+check(head(tree("record Tok(kind, value, pos) = tok")), 'Do)
+check(arity(tree("record Tok(kind, value, pos) = tok")), 5)
+check(head(tree("record R() = r")), 'Do)
+check(tree("t.kind"), 'Apply{_record_get, Tuple{t, Quote{kind}}})
+check(tree("t.a.b"), 'Apply{_record_get, Tuple{Apply{_record_get, Tuple{t, Quote{a}}}, Quote{b}}})
+check(tree("f(x).y"), 'Apply{_record_get, Tuple{Apply{f, Tuple{x}}, Quote{y}}})
+check(tree("t.f(1)"), 'Apply{Apply{_record_get, Tuple{t, Quote{f}}}, Tuple{1}})
+check(tree("a.b + c.d * 2"), 'Apply{_add, Tuple{Apply{_record_get, Tuple{a, Quote{b}}}, Apply{_mul, Tuple{Apply{_record_get, Tuple{c, Quote{d}}}, 2}}}})
+check(tree("a.b == 'x"), 'Apply{_eq, Tuple{Apply{_record_get, Tuple{a, Quote{b}}}, Quote{x}}})
+check(tree("x := t.v"), 'Def{x, Apply{_record_get, Tuple{t, Quote{v}}}})
+check(tree("F{a.b}"), 'F{Apply{_record_get, Tuple{a, Quote{b}}}})
+check(head(tree("t.")), 'SyntaxError)
+check(head(tree("t.1")), 'SyntaxError)
+check(head(tree("record Tok")), 'SyntaxError)
+check(head(tree("record Tok(1) = tok")), 'SyntaxError)
+check(head(tree("record Tok(kind)")), 'SyntaxError)
+check(head(tree("record Tok(kind) = 1")), 'SyntaxError)
+check(tree("x @ a.B"), '_TypeOf{x, Apply{_record_get, Tuple{a, Quote{B}}}})
+
+record Token(kind, value, pos) = token
+record Node(op, left, right) = node
+record Rev(c, b, a) = rev
+record Fwd(a, b, c) = fwd
+tk := token('id, "abc", 3)
+check(tk.kind, 'id)
+check(tk.value, "abc")
+check(tk.pos + 1, 4)
+nd := node("+", node("*", 1, 2), 3)
+check(nd.op, "+")
+check(nd.left.op, "*")
+check(nd.left.right, 2)
+check(nd.right, 3)
+check(type(tk) == Token, true)
+check(type(nd) == Token, false)
+check(rev(1, 2, 3).a, 3)
+check(fwd(1, 2, 3).a, 1)
+getv(t) := t.value
+check(getv(tk), "abc")
+check(getv(token('num, 7, 0)), 7)
+check((match tk { t @ Token -> t.kind }), 'id)
+record Token(value, kind) = tok2
+check(tok2(1, 2).kind, 2)
+check(type(tok2(1, 2)) == Token, true)
+check(type(tk) == Token, false)
+check(_record_index(tok2(1, 2), 'kind), 1)
+check(_record_index(tok2(1, 2), 'value), 0)
+check(_record_index(tk, 'pos), 2)
+check(_record_index(tk, 'x), none)
+check(_record_index(3, 'x), none)
+check(_record_index(nd, 'op), 0)
+check(_record_index(rev(1, 2, 3), 'a), 2)
+check(_record_index(fwd(1, 2, 3), 'a), 0)
+check(tk.kind, 'id)
+check(_record_get(tk, 'pos), 3)
+record R0() = r0
+check(_record_index(r0(), 'x), none)
+check(arity(r0()), 0)
+check(tk == tk, true)
+check(token('id, "abc", 3) == tk, false)
+tk2 := tk with { kind = 'num, pos = 9 }
+check(tk2.kind, 'num)
+check(tk2.pos, 9)
+check(tk2.value, "abc")
+check(tk.pos, 3)
+check(type(tk2) == Token, false)
+check((tk with { pos = tk.pos + 1 }).pos, 4)
+
+rh := 'Lambda{Tuple{Return{v}, k}, v}
+bh := 'Lambda{Tuple{Break{}, k}, none}
+check(tree("for (x in xs) f(x)"), 'Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Apply{f, Tuple{x}}}}})
+check(tree("for (Tuple{a, b} in ps) a"), 'Apply{peg_for, Tuple{ps, Lambda{Tuple{Tuple{a, b}}, a}}})
+check(tree("for (x in f(y)) { z }"), 'Apply{peg_for, Tuple{Apply{f, Tuple{y}}, Lambda{Tuple{x}, Do{z}}}})
+check(tree("return 1"), 'Perform{Return{1}})
+check(tree("return a + 1"), 'Perform{Return{Apply{_add, Tuple{a, 1}}}})
+check(tree("return"), 'Perform{Return{none}})
+check(tree("{ return\n 1 }"), 'Do{Perform{Return{none}}, 1})
+check(tree("{ return }"), 'Do{Perform{Return{none}}})
+check(tree("if (a) return 1 else 2"), 'If{a, Perform{Return{1}}, 2})
+check(tree("break"), 'Perform{Break{}})
+check(tree("f(x) := { return x }"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, Handle{Do{Perform{Return{x}}}, !rh}}}}})
+check(tree("f(x) := x"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
+check(tree("x -> return x"), `Lambda{Tuple{x}, Handle{Perform{Return{x}}, !rh}})
+check(tree("while (a) { break }"), `Handle{While{a, Do{Perform{Break{}}}}, !bh})
+check(tree("while (a) b"), 'While{a, b})
+check(tree("for (x in xs) break"), `Handle{Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Perform{Break{}}}}}, !bh})
+check(tree("while (a) { while (b) break }"), `While{a, Do{Handle{While{b, Perform{Break{}}}, !bh}}})
+check(tree("f() := { g() := return 1; 2 }"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Do{Do{Declare{g}, Set{g, Fusion{g, Lambda{Tuple{}, Handle{Perform{Return{1}}, !rh}}}}}, 2}}}}})
+check(tree("f() := for (x in xs) return x"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Handle{Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Perform{Return{x}}}}}, !rh}}}}})
+check(tree("f() := match x { 1 -> return 2 | _ -> 3 }"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Handle{Apply{Fusion{Lambda{Tuple{1}, Perform{Return{2}}}, Lambda{Tuple{_}, 3}}, Tuple{x}}, !rh}}}}})
+check(tree("f() := '(return 1)"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Quote{Perform{Return{1}}}}}}})
+ch := 'Lambda{Tuple{Continue{}, k}, none}
+check(tree("continue"), 'Perform{Continue{}})
+check(tree("while (a) { continue }"), `While{a, Handle{Do{Perform{Continue{}}}, !ch}})
+check(tree("for (x in xs) continue"), `Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Handle{Perform{Continue{}}, !ch}}}})
+check(tree("while (a) { if (b) continue else break }"), `Handle{While{a, Handle{Do{If{b, Perform{Continue{}}, Perform{Break{}}}}, !ch}}, !bh})
+check(tree("while (a) { for (x in xs) continue }"), `While{a, Do{Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Handle{Perform{Continue{}}, !ch}}}}}})
+check(tree("while (a) b"), 'While{a, b})
+check(head(tree("for x in xs f(x)")), 'SyntaxError)
+check(head(tree("for (x in xs)")), 'SyntaxError)
+check(head(tree("for (x xs) x")), 'SyntaxError)
+
+use("list")
+use("vector")
+use("table")
+total := 0
+for (x in [1, 2, 3]) total = total + x
+check(total, 6)
+for (x in []) total = 100
+check(total, 6)
+vv := vector.new()
+vector.push(vv, 10)
+vector.push(vv, 20)
+for (x in vv) total = total + x
+check(total, 36)
+for (Tuple{a, b} in [Tuple{1, 2}, Tuple{3, 4}]) total = total + a * b
+check(total, 50)
+check((for (x in [1]) x), none)
+collect(xs) := {
+    r := []
+    for (x in xs) r = x :: r
+    reverse(r)
+}
+check(collect(1..4), [1, 2, 3, 4])
+check(collect(4..1), [])
+check(collect([5, 6]), [5, 6])
+check(collect([]), [])
+check(collect([none, false, 0]), [none, false, 0])
+check(collect([() -> 1])[0](), 1)
+av := array(3)
+av[0] = 7
+av[2] = 9
+check(collect(av), [7, none, 9])
+check(collect(array(0)), [])
+pv := u8_array(3)
+pv[1] = 200
+check(collect(pv), [0, 200, 0])
+check(collect(u16_array(0)), [])
+tv := table.new()
+tv["a"] = 1
+tv["b"] = 2
+tv["c"] = 3
+check(list.sum(map(kv -> kv[1], collect(tv))), 6)
+check(length(collect(tv)), 3)
+check(member("b", map(kv -> kv[0], collect(tv))), true)
+check(length(collect(table.new())), 0)
+bv := vector.new()
+vector.push(bv, 1)
+vector.push(bv, 2)
+check(collect(bv), [1, 2])
+check(collect(vector.new()), [])
+grow := vector.new()
+vector.push(grow, 1)
+for (x in grow) if (x < 4) vector.push(grow, x + 1)
+check(vector.to_list(grow), [1, 2, 3, 4])
+record Countdown(n) = countdown
+_iter = (c @ Countdown) -> {
+    i := c.n
+    (end) -> if (i > 0) {
+        i -= 1
+        i + 1
+    } else end
+} | _iter
+check(collect(countdown(3)), [3, 2, 1])
+check(collect(countdown(0)), [])
+cd_sum := 0
+for (x in countdown(5)) {
+    if (x == 4) continue
+    if (x == 2) break
+    cd_sum += x
+}
+check(cd_sum, 8)
+cd_first(xs, k) := {
+    for (x in xs) if (x < k) return x
+    none
+}
+check(cd_first(countdown(9), 3), 2)
+record Nat() = nat
+_iter = (_ @ Nat) -> {
+    i := 0
+    (end) -> {
+        i += 1
+        i - 1
+    }
+} | _iter
+nat_sum := 0
+for (x in nat()) {
+    if (x > 10) break
+    nat_sum += x
+}
+check(nat_sum, 55)
+pairs := []
+for (x in countdown(2)) for (y in countdown(2)) pairs = Tuple{x, y} :: pairs
+check(length(pairs), 4)
+find_first(p, xs) := {
+    for (x in xs) {
+        if (p(x)) return x
+    }
+    none
+}
+check(find_first(x -> x > 2, [1, 2, 3, 4]), 3)
+check(find_first(x -> x > 9, [1, 2]), none)
+n := 0
+while (true) {
+    n = n + 1
+    if (n == 5) break
+}
+check(n, 5)
+s := 0
+for (x in range(1, 100)) {
+    if (x > 4) break
+    s = s + x
+}
+check(s, 10)
+pairs := 0
+for (i in range(0, 3)) {
+    for (j in range(0, 3)) {
+        if (j == 1) break
+        pairs = pairs + 1
+    }
+}
+check(pairs, 3)
+odd := 0
+i := 0
+while (i < 10) {
+    i = i + 1
+    if (i % 2 == 0) continue
+    odd = odd + i
+}
+check(odd, 25)
+evens := Nil{}
+for (x in range(0, 8)) {
+    if (x % 2 == 1) continue
+    evens = Cons{x, evens}
+}
+check(evens, [6, 4, 2, 0])
+tsum := 0
+for (Tuple{a, b} in [Tuple{1, 2}, Tuple{0, 5}, Tuple{3, 4}]) {
+    if (a == 0) continue
+    tsum = tsum + a * b
+}
+check(tsum, 14)
+cnt := 0
+for (i in range(0, 3)) {
+    for (j in range(0, 4)) {
+        if (j == 1) continue
+        cnt = cnt + 1
+    }
+    cnt = cnt + 100
+}
+check(cnt, 3 * 100 + 3 * 3)
+cnt = 0
+i = 0
+while (i < 3) {
+    i = i + 1
+    j := 0
+    while (j < 3) {
+        j = j + 1
+        continue
+        cnt = cnt + 1000
+    }
+    cnt = cnt + 1
+}
+check(cnt, 3)
+k := 0
+log := 0
+while (true) {
+    k = k + 1
+    if (k > 8) break
+    if (k % 3 != 0) continue
+    log = log + k
+}
+check(log, 9)
+skip_neg(xs) := {
+    r := Nil{}
+    for (x in xs) {
+        match x { n if n < 0 -> continue | _ -> none }
+        if (x == 99) return r
+        r = Cons{x, r}
+    }
+    r
+}
+check(skip_neg([1, -2, 3, 99, 4]), [3, 1])
+check(skip_neg([-1, 5]), [5])
+f_in() := { t := 0; for (x in [1, 2, 3]) { if (x == 2) continue; t = t + x }; t }
+w := 0
+for (x in [1, 2]) { if (x == 1) continue; w = w + f_in() }
+check(w, 4)
+first_pair(xs) := {
+    for (a in xs) {
+        for (b in xs) {
+            if (a < b) return Tuple{a, b}
+        }
+    }
+    none
+}
+check(first_pair([3, 1, 2]), Tuple{1, 3})
+check(first_pair([1]), none)
+count_to(m) := {
+    i := 0
+    while (true) {
+        i = i + 1
+        if (i >= m) return i * 10
+    }
+}
+check(count_to(4), 40)
+bare() := { return; 1 }
+check(bare(), none)
+outer() := {
+    inner() := return 1
+    inner() + 10
+}
+check(outer(), 11)
+by_match(x) := match x { 0 -> return "zero" | _ -> "other" }
+check(by_match(0), "zero")
+check(by_match(1), "other")
+check(map(x -> { if (x > 1) return x * 2; x }, [1, 2, 3]), [1, 4, 6])
+ask() := {
+    r := perform Ask{}
+    if (r > 0) return r * 2
+    0
+}
+check(handle ask() with (Ask{}, k) -> k(21), 42)
+check(handle ask() with (Ask{}, k) -> k(-1), 0)
+fact(m) := { if (m <= 1) return 1; m * fact(m - 1) }
+check(fact(10), 3628800)
+x := 7
+for (x in [1, 2]) total = total + x
+check(x, 7)
+
+check(tree("x := x + 1"), 'Def{x, Apply{_add, Tuple{x, 1}}})
+check(tree("x := (n) -> x(n)"), 'Def{x, Lambda{Tuple{n}, Apply{x, Tuple{n}}}})
+prev_a := 1
+prev_a := prev_a + 1
+check(prev_a, 2)
+prev_f(n) := n + 1
+prev_f := (n) -> prev_f(n) * 10
+check(prev_f(1), 20)
+prev_c(n) := if (n == 0) 0 else 1 + prev_c(n - 1)
+check(prev_c(3), 3)
+check({ pb := 1; pb := pb + 1; pb }, 2)
+check({ pf(n) := n + 1; pf := (n) -> pf(n) * 10; pf(1) }, 20)
+check({ pc(n) := if (n == 0) 0 else 1 + pc(n - 1); pc(3) }, 3)
+
+check(tree("{ f(x) := x }"), 'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}}})
+check(tree("{ a := 1; f() := { a }; f() }"), 'Do{Def{a, 1}, Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Do{a}}}}}, Apply{f, Tuple{}}})
+check(tree("{ f(x :: xs) := x }"), 'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}}}})
+check(tree("{ f() := { return 1 } }"), `Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Handle{Do{Perform{Return{1}}}, !rh}}}}}})
+check(tree("{ f(x) := 1; f(x) := 2 }"), 'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, 1}}}}, Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, 2}}}}})
+check(tree("{ g := x -> x; y := 1 }"), 'Do{Def{g, Lambda{Tuple{x}, x}}, Def{y, 1}})
+check(tree("{ a; b }"), 'Do{a, b})
+
+check(tree("fun f"), 'Def{f, none})
+check(tree("{ fun f; f(x) = x }"), 'Do{Def{f, none}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
+check(tree("f(x, y) = x + y"), 'Set{f, Fusion{f, Lambda{Tuple{x, y}, Apply{_add, Tuple{x, y}}}}})
+check(tree("f(x :: xs) = x"), 'Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}})
+check(tree("f() = { return 1 }"), `Set{f, Fusion{f, Lambda{Tuple{}, Handle{Do{Perform{Return{1}}}, !rh}}}})
+check(tree("f = (x) -> x"), 'Set{f, Lambda{Tuple{x}, x}})
+check(tree("f(x) == 1"), 'Apply{_eq, Tuple{Apply{f, Tuple{x}}, 1}})
+check(tree("if (c) f(x) = 1 else f(x) = 2"), 'If{c, Set{f, Fusion{f, Lambda{Tuple{x}, 1}}}, Set{f, Fusion{f, Lambda{Tuple{x}, 2}}}})
+check(head(tree("fun")), 'SyntaxError)
+check(head(tree("fun f(x)")), 'SyntaxError)
+check(head(tree("fun 1")), 'SyntaxError)
+check(head(tree("fun = 1")), 'SyntaxError)
+fun fun_ev
+fun fun_od
+fun_ev(n) = if (n == 0) true else fun_od(n - 1)
+fun_od(n) = if (n == 0) false else fun_ev(n - 1)
+check(Tuple{fun_ev(10), fun_od(10), fun_ev(7)}, Tuple{true, false, false})
+fun_blk(n) := {
+    fun ev
+    od(n) := if (n == 0) false else ev(n - 1)
+    ev(n) = if (n == 0) true else od(n - 1)
+    ev(n)
+}
+check(fun_blk(10), true)
+check(fun_blk(7), false)
+
+check({
+    fun odd
+    even(n) := if (n == 0) true else odd(n - 1)
+    odd(n) = if (n == 0) false else even(n - 1)
+    Tuple{even(10), odd(10), even(7)}
+}, Tuple{true, false, false})
+fun fun_fact
+fun_fact(0) = 1
+fun_fact(n) = n * fun_fact(n - 1)
+check(Tuple{fun_fact(0), fun_fact(5)}, Tuple{1, 120})
+fun fun_order
+fun_order(n) = 1
+fun_order(0) = 2
+check(fun_order(0), 1)
+fun fun_first
+fun_first(x) = x + 1
+fun_first_g := fun_first
+fun_first(0) = 5
+check(Tuple{fun_first(0), fun_first_g(0), fun_first_g == fun_first}, Tuple{1, 1, false})
+fun fun_ar
+fun_ar(x) = 1
+fun_ar(x, y) = 2
+fun_ar() = 0
+check(Tuple{fun_ar(), fun_ar(7), fun_ar(7, 8)}, Tuple{0, 1, 2})
+fib3(0) := 0
+fib3(1) = 1
+fib3(n) = fib3(n - 1) + fib3(n - 2)
+check(Tuple{fib3(0), fib3(1), fib3(20)}, Tuple{0, 1, 6765})
+fun_def(0) := 10
+fun_def(n) = n
+check(Tuple{fun_def(0), fun_def(3)}, Tuple{10, 3})
+
+check({
+    fun fb
+    fb(Nil{}) = 0
+    fb(x :: xs) = x + fb(xs)
+    fb([1, 2, 3])
+}, 6)
+fun fun_gd
+fun_gd = (n) if n > 0 -> 1
+fun_gd(n) = 0
+check(fun_gd(5), 1)
+counter() := {
+    c := 0
+    inc() := {
+        c = c + 1
+        c
+    }
+    inc()
+    inc()
+}
+check(counter(), 2)
+fact_sum(n) := {
+    base := 1
+    fact(m) := if (m <= 1) base else m * fact(m - 1)
+    sum_to(m) := if (m == 0) 0 else fact(m) + sum_to(m - 1)
+    sum_to(n)
+}
+check(fact_sum(4), 33)
+find_in(xs, y) := {
+    go(l) := {
+        for (x in l) {
+            if (x == y) return true
+        }
+        false
+    }
+    go(xs)
+}
+check(find_in([1, 2, 3], 2), true)
+check(find_in([1, 2, 3], 5), false)
+parse_sum(toks) := {
+    pos := 0
+    fun sum
+    peek() := if (pos < length(toks)) list.nth(toks, pos) else "eof"
+    atom() := {
+        t := peek()
+        pos = pos + 1
+        if (t == "(") {
+            v := sum()
+            pos = pos + 1
+            v
+        } else t
+    }
+    sum() = {
+        v := atom()
+        while (peek() == "+") {
+            pos = pos + 1
+            v = v + atom()
+        }
+        v
+    }
+    sum()
+}
+check(parse_sum([1, "+", "(", 2, "+", 3, ")", "+", 4]), 10)
+
+bind_x := "global"
+bind_g() := bind_x
+bind_h() := { bind_x := "local"; bind_g() }
+check(bind_h(), "global")
+bind_mk() := { y := 1; () -> y }
+bind_k := bind_mk()
+bind_use() := { y := 2; bind_k() }
+check(bind_use(), 1)
+bind_add(n) := m -> n + m
+bind_call(f) := { n := 100; f(1) }
+check(bind_call(bind_add(10)), 11)
+fun bind_od
+bind_ev(n) := if (n == 0) true else bind_od(n - 1)
+bind_od(n) = if (n == 0) false else bind_ev(n - 1)
+check(bind_ev(10), true)
+bind_b(n) := "global b"
+bind_ab() := {
+    a(n) := bind_b(n)
+    bind_b(n) := "local b"
+    Tuple{a(1), bind_b(1)}
+}
+check(bind_ab(), Tuple{"global b", "local b"})
+check(bind_b(1), "global b")
+bind_f(x) := 1
+bind_fg() := bind_f(0)
+bind_f := (x) -> 2
+check(Tuple{bind_fg(), bind_f(0)}, Tuple{1, 2})
+bind_h2(x) := 1
+bind_h2g() := bind_h2(0)
+bind_h2 = (x) -> 2
+check(bind_h2g(), 2)
+fun bind_h3
+bind_h3g() := bind_h3(0)
+bind_h3(x) = 2
+check(bind_h3g(), 2)
+bind_h3(x) = 3
+check(bind_h3g(), 2)
+bind_v := "outer"
+bind_seq() := { a := bind_v; bind_v := "inner"; Tuple{a, bind_v} }
+check(bind_seq(), Tuple{"outer", "inner"})
+bind_late(n) := {
+    x := n
+    g() := x
+    x = x + 1
+    g()
+}
+check(bind_late(2), 3)
+
+empty?(xs) := arity(xs) == 0
+set!(x) := x + 1
+ok? := true
+check(empty?(Tuple{}), true)
+check(empty?(Tuple{1}), false)
+check(set!(4), 5)
+check(ok?, true)
+check(if (ok?) 1 else 2, 1)
+check(match 3 { x! -> x! }, 3)
+check(match 'a { done? -> done? }, 'a)
+check('empty?, 'empty?)
+a := 1
+b := 2
+check(a!=b, true)
+check(a != b, true)
+check(a!=1, false)
+check(if (a!=b) 1 else 2, 1)
+check(f"{ok?}", "true")
+qn_num ::= integer
+qn_opt ::= x:qn_num? "." { x }
+check(arg(peg_parse('qn_opt, "7 ."), 0), 'Tuple{7})
+check(arg(peg_parse('qn_opt, "."), 0), 'Tuple{})
+
+num ::= integer
+check(arg(peg_parse('num, "12 rest"), 0), 12)
+check(arg(peg_parse('num, "12 rest"), 1), "rest")
+
+diff ::= a:diff "-" b:num { a - b } | num
+check(arg(peg_parse('diff, "10 - 3 - 2"), 0), 5)
+
+nums ::= "[" xs:num* "]" { xs }
+check(arg(peg_parse('nums, "[1 2 3]"), 0), 'Tuple{1, 2, 3})
+check(arg(peg_parse('nums, "[]"), 0), 'Tuple{})
+some ::= xs:num+ { xs }
+check(arg(peg_parse('some, "1 2"), 0), 'Tuple{1, 2})
+check(head(arg(peg_parse('some, "x"), 0)), 'SyntaxError)
+opt ::= a:num b:("," num)? { Tuple{a, b} }
+check(arg(peg_parse('opt, "1, 2"), 0), 'Tuple{1, Tuple{Tuple{",", 2}}})
+check(arg(peg_parse('opt, "1"), 0), 'Tuple{1, Tuple{}})
+notx ::= !"x" a:ident { a }
+check(arg(peg_parse('notx, "y"), 0), 'y)
+check(head(arg(peg_parse('notx, "x"), 0)), 'SyntaxError)
+andx ::= &"x" a:ident { a }
+check(arg(peg_parse('andx, "x"), 0), 'x)
+kw ::= 'go a:num { a }
+check(arg(peg_parse('kw, "go 1"), 0), 1)
+check(head(arg(peg_parse('kw, "gopher 1"), 0)), 'SyntaxError)
+pair ::= a:num "," b:num { Tuple{a, b} }
+       | a:num { Tuple{a} }
+check(arg(peg_parse('pair, "1, 2"), 0), 'Tuple{1, 2})
+check(arg(peg_parse('pair, "1"), 0), 'Tuple{1})
+
+call ::= f:ident nospace("(") xs:delimited(num, ",") ")" { Tuple{f, xs} }
+check(arg(peg_parse('call, "f(1, 2)"), 0), 'Tuple{f, Tuple{1, 2}})
+check(arg(peg_parse('call, "f()"), 0), 'Tuple{f, Tuple{}})
+check(head(arg(peg_parse('call, "f (1)"), 0)), 'SyntaxError)
+list1 ::= xs:delimited1(num, ("," | ";")) { xs }
+check(arg(peg_parse('list1, "1, 2; 3"), 0), 'Tuple{1, 2, 3})
+check(head(arg(peg_parse('list1, "x"), 0)), 'SyntaxError)
+twin ::= a:num same b:num { Tuple{a, b} }
+check(arg(peg_parse('twin, "1 2"), 0), 'Tuple{1, 2})
+check(head(arg(peg_parse('twin, "1\n2"), 0)), 'SyntaxError)
+nospace_num ::= num
+delimited_num ::= x:nospace_num { x }
+check(arg(peg_parse('delimited_num, "5"), 0), 5)
+
+color ::= 'red { 1 }
+color ::= 'blue { 2 } | ...
+check(arg(peg_parse('color, "red"), 0), 1)
+check(arg(peg_parse('color, "blue"), 0), 2)
+
+cc_two ::= a:. b:. { Tuple{a, b} }
+check(arg(peg_parse('cc_two, "xy"), 0), 'Tuple{"x", "y"})
+check(arg(peg_parse('cc_two, "  x\n y rest"), 0), 'Tuple{"x", "y"})
+check(arg(peg_parse('cc_two, "xy rest"), 1), "rest")
+check(head(arg(peg_parse('cc_two, "x"), 0)), 'SyntaxError)
+check(head(arg(peg_parse('cc_two, "x   "), 0)), 'SyntaxError)
+cc_dots ::= a:. "..." { a }
+check(arg(peg_parse('cc_dots, "x ..."), 0), "x")
+cc_digits ::= ds:[0-9]+ { ds }
+check(arg(peg_parse('cc_digits, "123 rest"), 0), 'Tuple{"1", "2", "3"})
+check(arg(peg_parse('cc_digits, "123 rest"), 1), "rest")
+check(arg(peg_parse('cc_digits, "1 2"), 0), 'Tuple{"1", "2"})
+check(head(arg(peg_parse('cc_digits, "x1"), 0)), 'SyntaxError)
+cc_hex ::= ds:[A-Fa-f0-9_]* { ds }
+check(arg(peg_parse('cc_hex, "Fa_9g"), 0), 'Tuple{"F", "a", "_", "9"})
+cc_str ::= "\"" cs:[^"]* "\"" { cs }
+check(arg(peg_parse('cc_str, "\"ab\""), 0), 'Tuple{"a", "b"})
+check(arg(peg_parse('cc_str, "\"\""), 0), 'Tuple{})
+cc_not ::= a:[^a-c\n] { a }
+check(arg(peg_parse('cc_not, "d"), 0), "d")
+check(head(arg(peg_parse('cc_not, "b"), 0)), 'SyntaxError)
+check(arg(peg_parse('cc_not, "\n"), 0), 'Eof{})
+cc_esc ::= a:[\]\-\\]+ { a }
+check(arg(peg_parse('cc_esc, "]-\\x"), 0), 'Tuple{"]", "-", "\\"})
+cc_bell ::= a:[\a\0] { a }
+check(arg(peg_parse('cc_bell, "\a"), 0), "\a")
+check(head(arg(peg_parse('cc_bell, "x"), 0)), 'SyntaxError)
+cc_sp ::= a:nospace("<") b:[\ x]+ { b }
+check(arg(peg_parse('cc_sp, "<x x"), 0), 'Tuple{"x", "x"})
+cc_sym ::= a:[+-*]+ { a }
+check(arg(peg_parse('cc_sym, "+-*/"), 0), 'Tuple{"+", "-", "*"})
+cc_id ::= a:[a-z] bs:[a-z0-9]* { Tuple{a, bs} } | "@" { 0 }
+check(arg(peg_parse('cc_id, "x12"), 0), 'Tuple{"x", Tuple{"1", "2"}})
+check(arg(peg_parse('cc_id, "@"), 0), 0)
+check(head(tree("cc_bad ::= [c-a]")), 'SyntaxError)
+check(head(tree("cc_bad ::= [a-]")), 'SyntaxError)
+check(head(tree("cc_bad ::= []")), 'SyntaxError)
+check(head(tree("cc_bad ::= [ ]")), 'SyntaxError)
+check(head(tree("cc_bad ::= [abc")), 'SyntaxError)
+
+check(num{| 12 |}, 12)
+check(diff{| 10 - 3 - 2 |}, 5)
+check(diff{|10-3|}, 7)
+check(nums{| [1 2 3] |}, 'Tuple{1, 2, 3})
+check(color{| blue |}, 2)
+check(tree("num{| 12 |}"), 'Quote{12})
+check(tree("diff{| 10 - 3 - 2 |}"), 'Quote{5})
+check(tree("nums{| [] |}"), 'Quote{Tuple{}})
+check(rest("num{| 1 |} x"), "x")
+check(diff{|
+    10   # ten
+    - 3
+|}, 7)
+bars ::= xs:("|" integer)* { xs }
+check(bars{| |1 |2 |}, 'Tuple{Tuple{"|", 1}, Tuple{"|", 2}})
+strings ::= xs:string* { xs }
+check(strings{| "a |} b" "c" |}, 'Tuple{"a |} b", "c"})
+braces ::= "{" xs:num* "}" { xs }
+check(braces{| {1 2} |}, 'Tuple{1, 2})
+check(tree("F{x}"), 'F{x})
+check(tree("num {1}"), 'num)
+check(tree("num{| x |}"), 'SyntaxError{"unexpected input", "x |}"})
+check(tree("diff{| 10 - 3 2 |}"), 'SyntaxError{"unexpected input", "2 |}"})
+check(tree("diff{| 10 -\n 3 4 |}"), 'SyntaxError{"unexpected input", "4 |}"})
+check(tree("num{| 1"), 'SyntaxError{"unexpected end of input"})
+check(tree("num{| 1 |"), 'SyntaxError{"unexpected input", "|"})
+check(head(tree("nosuch{| 1 |}")), 'SyntaxError)
+
+check(expr{| f(`!a) |}, 'Apply{f, Tuple{QuasiQuote{UnQuote{a}}}})
+check(expr{| 'a |}, 'Quote{a})
+
+check(tree("a@Int + b@Int -> a + b"), 'Lambda{Tuple{Apply{Quote{_add}, Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}}, Apply{_add, Tuple{a, b}}})
+check(tree("a * b + c -> a"), 'Lambda{Tuple{Apply{Quote{_add}, Tuple{Apply{Quote{_mul}, Tuple{a, b}}, c}}}, a})
+check(tree("(a + b) * c -> a"), 'Lambda{Tuple{Apply{Quote{_mul}, Tuple{Apply{Quote{_add}, Tuple{a, b}}, c}}}, a})
+check(tree("a - b - c -> a"), 'Lambda{Tuple{Apply{Quote{_sub}, Tuple{Apply{Quote{_sub}, Tuple{a, b}}, c}}}, a})
+check(tree("a / b % c -> a"), 'Lambda{Tuple{Apply{Quote{_mod}, Tuple{Apply{Quote{_div}, Tuple{a, b}}, c}}}, a})
+check(tree("-a -> a"), 'Lambda{Tuple{Apply{Quote{_sub}, Tuple{0, a}}}, a})
+check(tree("-1 -> a"), 'Lambda{Tuple{-1}, a})
+check(tree("f(x, 1) -> x"), 'Lambda{Tuple{Apply{Quote{f}, Tuple{x, 1}}}, x})
+check(tree("f() -> 0"), 'Lambda{Tuple{Apply{Quote{f}, Tuple{}}}, 0})
+check(tree("[a, b + 1] -> a"), 'Lambda{Tuple{Cons{a, Cons{Apply{Quote{_add}, Tuple{b, 1}}, Nil{}}}}, a})
+check(tree("a + 1 :: b -> a"), 'Lambda{Tuple{Cons{Apply{Quote{_add}, Tuple{a, 1}}, b}}, a})
+check(tree("a == b -> a"), 'Lambda{Tuple{Apply{Quote{_eq}, Tuple{a, b}}}, a})
+check(tree("a < b + 1 -> a"), 'Lambda{Tuple{Apply{Quote{_lt}, Tuple{a, Apply{Quote{_add}, Tuple{b, 1}}}}}, a})
+check(tree("(not a, b and c, If{d, 'true, e}) -> a"),
+      'Lambda{Tuple{Apply{Quote{_not}, Tuple{a}}, If{b, c, Quote{false}}, If{d, Quote{true}, e}}, a})
+check(tree("'(x + 1) -> 0"), 'Lambda{Tuple{Quote{Apply{_add, Tuple{x, 1}}}}, 0})
+check(tree("F{a + 1, g(b)} -> a"), 'Lambda{Tuple{F{Apply{Quote{_add}, Tuple{a, 1}}, Apply{Quote{g}, Tuple{b}}}}, a})
+check(tree("(a + b, c) -> a"), 'Lambda{Tuple{Apply{Quote{_add}, Tuple{a, b}}, c}, a})
+check(tree("((a, b)) -> a"), 'Lambda{Tuple{Tuple{a, b}}, a})
+check(tree("f(a + b) := a"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Apply{Quote{_add}, Tuple{a, b}}}, a}}}})
+check(tree("match e { a + 0 -> a | _ -> e }"), 'Apply{Fusion{Lambda{Tuple{Apply{Quote{_add}, Tuple{a, 0}}}, a}, Lambda{Tuple{_}, e}}, Tuple{e}})
+check(tree("Apply{f, Tuple{x}} -> f"), 'Lambda{Tuple{Apply{f, Tuple{x}}}, f})
+check(tree("Apply{'_add, Tuple{a @ Int, b}} -> a"), 'Lambda{Tuple{Apply{Quote{_add}, Tuple{_TypeOf{a, Int}, b}}}, a})
+check(tree("x - 1 -> x"), 'Lambda{Tuple{Apply{Quote{_sub}, Tuple{x, 1}}}, x})
+check(tree("x->x - 1"), 'Lambda{Tuple{x}, Apply{_sub, Tuple{x, 1}}})
+
+simp(e) := match e {
+    a@Int + b@Int -> a + b
+  | a + 0 -> a
+  | 0 + a -> a
+  | x * y if x == y -> `sq(!x)
+  | f(x) -> x
+  | _ -> e
+}
+check(simp('(1 + 2)), 3)
+check(simp('(x + 0)), 'x)
+check(simp('(0 + y)), 'y)
+check(simp('(z * z)), 'sq(z))
+check(simp('(z * w)), 'Apply{_mul, Tuple{z, w}})
+check(simp('(x + 1)), 'Apply{_add, Tuple{x, 1}})
+check(simp('f(5)), 5)
+check(simp('g(5)), 'Apply{g, Tuple{5}})
+check(match '((1 + 2) * 3) { (a + b) * c -> Tuple{a, b, c} | _ -> 0 }, Tuple{1, 2, 3})
+check(match '(1 + 2 * 3) { (a + b) * c -> 1 | a + b * c -> 2 | _ -> 0 }, 2)
+check(match '(-x) { -a -> a | _ -> 0 }, 'x)
+check(match '(not p) { not a -> a | _ -> 0 }, 'p)
+check(match '(p and q) { If{a, 'true, b} -> 1 | a and b -> b | _ -> 0 }, 'q)
+check(match '(a < b) { x > y -> 1 | x < y -> 2 | _ -> 0 }, 2)
+check(match '(a :: b) { x :: y -> y | _ -> 0 }, 'b)
+check(match '[1, 2] { [x] -> 1 | [x, y] -> y | _ -> 0 }, 2)
+check(match [1, 2] { [x, y] -> x + y | _ -> 0 }, 3)
+check(match '(x + 1) { a@Int + b@Int -> 0 | _ -> 1 }, 1)
+check(match 'F{1 + x} { F{a + b @ Symbol} -> b | _ -> 0 }, 'x)
+check(match '(f(1)) { Apply{g, Tuple{x}} -> g | _ -> 0 }, 'f)
+check(match 'f(1, 2) { f(a) -> 1 | f(a, b) -> b | _ -> 0 }, 2)
+swap(a + b) := `(!b + !a)
+check(swap('(1 + x)), 'Apply{_add, Tuple{x, 1}})
+check(((a - b) -> a)('(5 - 3)), 5)
+pacc := 0
+for (a * b in ['(1 * 2), '(3 * 4)]) pacc = pacc + a * b
+check(pacc, 14)
+
+primary ::= 'unless c:expr a:block 'else b:block { `If{!c, !b, !a} } | ...
+check(unless 1 > 2 { "a" } else { "b" }, "a")
+check(tree("unless c { a } else { b }"), 'If{c, Do{b}, Do{a}})
+
+check(tree("a[i]"), 'Apply{_index_get, Tuple{a, i}})
+check(tree("a[i][j]"), 'Apply{_index_get, Tuple{Apply{_index_get, Tuple{a, i}}, j}})
+check(tree("f(x)[i].g"), 'Apply{_record_get, Tuple{Apply{_index_get, Tuple{Apply{f, Tuple{x}}, i}}, Quote{g}}})
+check(tree("a[i](x)"), 'Apply{Apply{_index_get, Tuple{a, i}}, Tuple{x}})
+check(tree("-a[i]"), 'Apply{_sub, Tuple{0, Apply{_index_get, Tuple{a, i}}}})
+check(tree("a[i] = v"), 'Apply{_index_set, Tuple{a, i, v}})
+check(tree("a[i][j] = v"), 'Apply{_index_set, Tuple{Apply{_index_get, Tuple{a, i}}, j, v}})
+check(tree("a[i] = b[j] = v"), 'Apply{_index_set, Tuple{a, i, Apply{_index_set, Tuple{b, j, v}}}})
+check(tree("a[i] == v"), 'Apply{_eq, Tuple{Apply{_index_get, Tuple{a, i}}, v}})
+check(tree("t[x -> 1 | y -> 2]"), 'Apply{_index_get, Tuple{t, Fusion{Lambda{Tuple{x}, 1}, Lambda{Tuple{y}, 2}}}})
+check(tree("a\n[1, 2]"), 'a)
+check(rest("a\n[1, 2]"), "[1, 2]")
+check(tree("a [1]"), 'a)
+check(rest("a [1]"), "[1]")
+check(tree("{ a\n[1] }"), 'Do{a, Cons{1, Nil{}}})
+check(head(tree("f(a [1])")), 'SyntaxError)
+
+ia := array(3)
+ia[0] = 5
+check(ia[0], 5)
+check(ia[1] = 7, none)
+ia[2] = ia[0] + ia[1]
+check(ia[2], 12)
+check(array_get(ia, 2), 12)
+ib := array(2)
+ib[1] = array(2)
+ib[1][0] = "x"
+check(ib[1][0], "x")
+it := table.new()
+it["a"] = 1
+it['b] = 2
+it["a"] = it["a"] + 10
+check(it["a"], 11)
+check(it['b], 2)
+check(it["z"], none)
+check(table.get(it, "a", 0), 11)
+fk := x -> x
+it[fk] = 3
+check(it[fk], 3)
+check("abc"[0], "a")
+check("abc"[2], "c")
+check([10, 20, 30][0], 10)
+check([10, 20, 30][2], 30)
+check(F{1, 2}[1], 2)
+check(('(f(x, y)))[1][0], 'x)
+_index_get = (Matrix{w, _, d}, (i, j)) -> d[i * w + j] | _index_get
+_index_set = (Matrix{w, _, d}, (i, j), v) -> { d[i * w + j] = v } | _index_set
+im := Matrix{3, 2, array(6)}
+im[(1, 2)] = 8
+check(im[(1, 2)], 8)
+check(array_get(arg(im, 2), 5), 8)
+check(im[0], 3)
+check([1, 2][1], 2)
+index_var_test() := {
+    index := 2
+    index_set := 7
+    xs := [10, 20, 30]
+    check(xs[index], 30)
+    ys := array(3)
+    ys[index] = index_set
+    check(ys[index], 7)
+    check(ys[index_set - 6], none)
+}
+index_var_test()
+index := 1
+check([5, 6][index], 6)
+record IP(x, y) = ip
+shadow_test() := {
+    add := 1
+    sub := 1
+    mul := 1
+    div := 1
+    mod := 1
+    lt := 1
+    le := 1
+    gt := 1
+    ge := 1
+    eq := 1
+    ne := 1
+    not := 1
+    strcat := 1
+    to_text := 1
+    record_get := 1
+    define_rule := 1
+    index_get := 1
+    check(2 + 3 * 4 - 6 / 3 + 7 % 4, 15)
+    check(-add, -1)
+    check(1 < 2 and 1 <= 1 and 2 > 1 and 2 >= 2 and 1 == 1 and 1 != 2, true)
+    check(not (1 == 2), true)
+    check(f"a{add}b{sub + 1}", "a1b2")
+    check(ip(3, 4).x, 3)
+    check([7, 8][index_get], 8)
+}
+shadow_test()
+
+rt1 := 'F{G{1}, H{2}}
+check(rt1[G{a} -> 'first | G{1} -> 'second], 'F{first, H{2}})
+check(rt1[G{1} -> 'second | G{a} -> 'first], 'F{second, H{2}})
+check(('F{G{G{1}}})[G{a} -> K{a}], 'F{K{G{1}}})
+check(('F{1, G{2}, K{G{3}, G}})[G{a} -> a], 'F{1, 2, K{3, G}})
+check(('G{1})[G{a} -> a], 1)
+check(('F{1})[G{a} -> a], 'F{1})
+check([1, 2, 3][x @ Int -> x * 10], [10, 20, 30])
+check(('(x * 1 + y))[Apply{_mul, Tuple{a, 1}} -> a], '(x + y))
+check(('(x * 1 + y))[a * 1 -> a], '(x + y))
+check(('(1 + 2 * (3 + 4)))[a @ Int + b @ Int -> a + b], '(1 + 2 * 7))
+check(('(a + a + b))[a + b if a == b -> `(2 * !a)], '(2 * a + b))
+check(('(f(1) + g(2)))[f(x) -> x | g(x) -> x * 10], '(1 + 20))
+check(('(x + 0 * y))[a + 0 -> a | 0 * a -> 0], '(x + 0))
+check(tree("t[a @ Int + b @ Int -> a + b | -x -> x]"), 'Apply{_index_get, Tuple{t, Fusion{Lambda{Tuple{Apply{Quote{_add}, Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}}, Apply{_add, Tuple{a, b}}}, Lambda{Tuple{Apply{Quote{_sub}, Tuple{0, x}}}, x}}}})
+rt2 := 'F{P{1, 1}, P{1, 2}}
+check(rt2[P{a, b} if a == b -> a], 'F{1, P{1, 2}})
+check(rt2[P{a, b} if a == b -> 'same | P{a, b} -> 'diff], 'F{same, diff})
+check(('P{P{3, 3}, 2})[P{a, b} if a == b -> a], 'P{3, 2})
+check(rt2[P{1, 2} -> 'x | P{a, b} if a == b -> a], 'F{1, x})
+check(('F{G{1}, P{2, 2}})[P{a, b} if a == b -> a | G{a} if a > 5 -> a], 'F{G{1}, 2})
+check(('(a + a + b))[Apply{_add, Tuple{a, b}} if a == b -> `(2 * !a)], '(2 * a + b))
+rf := G{a} -> a
+check(('F{G{1}})[rf], 'F{1})
+check(('(g(1, 2)))[(f)(a, b) -> a + b], 3)
+check(('(g(1, 2)))[(f)(a, b) -> f], 'g)
+check(('(k(7)))[(f)(a) -> a], 7)
+check(('(k(7, 8)))[(f)(a) -> a | (f)(a, b) -> b], 8)
+
+check(tree("f(a, rest...)"), 'Apply{f, Tuple{a, _Rest{rest}}})
+check(tree("(a, rest...) -> a"), 'Lambda{Tuple{a, _Rest{rest}}, a})
+check(tree("(rest...) -> rest"), 'Lambda{Tuple{_Rest{rest}}, rest})
+check(tree("F{a, rest...} -> a"), 'Lambda{Tuple{F{a, _Rest{rest}}}, a})
+check(tree("f(a, rest...) -> a"), 'Lambda{Tuple{Apply{Quote{f}, Tuple{a, _Rest{rest}}}}, a})
+check(tree("_..."), '_Rest{_})
+drop_first(t) := {
+    r := Tuple{}
+    i := 1
+    while (i < arity(t)) {
+        r = push(r, arg(t, i))
+        i = i + 1
+    }
+    r
+}
+rest_sum(t) := if (arity(t) == 0) 0 else arg(t, 0) + rest_sum(drop_first(t))
+rest_total(xs...) := rest_sum(xs)
+check(rest_total(), 0)
+check(rest_total(1, 2, 3), 6)
+rest_scale(k, xs...) := k * rest_sum(xs)
+check(rest_scale(10, 1, 2, 3), 60)
+check(((a, r...) -> arity(r))(1), 0)
+check(((a, r...) -> arity(r))(1, 2, 3), 2)
+check(((a, r...) -> r)(1, 2, 3), 'Tuple{2, 3})
+check(((_...) -> 1)(5, 6), 1)
+rest_kind(a) := "one"
+rest_kind(a, b) := "two"
+rest_kind(a, b, c...) := "many"
+check(rest_kind(1), "one")
+check(rest_kind(1, 2), "two")
+check(rest_kind(1, 2, 3), "many")
+check(rest_kind(1, 2, 3, 4), "many")
+check(match 'F{1, 2, 3} { F{a, r...} -> r }, 'Tuple{2, 3})
+check(match 'F{1} { F{a, r...} -> r }, 'Tuple{})
+check(match 'F{1, 2} { F{a, b, r...} -> r | F{a, r...} -> a }, 'Tuple{})
+check(match 'G{1, 2} { F{a, r...} -> 0 | _ -> 1 }, 1)
+check(match 'F{} { F{a, r...} -> 0 | _ -> 1 }, 1)
+check(match 'F{1, 2, 3} { F{a, r1...} -> r1 }, 'Tuple{2, 3})
+check(match ('f(1, 2, 3)) { (g)(a, r...) -> r }, 'Tuple{2, 3})
+check(match ('f(1, 2, 3)) { f(a, r...) -> r }, 'Tuple{2, 3})
+check(match 'F{1, G{2, 3, 4}} { F{a, G{b, r...}} -> r }, 'Tuple{3, 4})
+check(match 'F{1, 2, 3} { F{a, _...} -> a }, 1)
+
+check(tree("p with { x = 1 }"), 'Apply{_with, Tuple{p, Quote{x}, 1}})
+check(tree("p with { x = 1, y = a + 2 }"), 'Apply{_with, Tuple{Apply{_with, Tuple{p, Quote{x}, 1}}, Quote{y}, Apply{_add, Tuple{a, 2}}}})
+check(tree("p with { x = 1 } with { y = 2 }"), 'Apply{_with, Tuple{Apply{_with, Tuple{p, Quote{x}, 1}}, Quote{y}, 2}})
+check(tree("f(a).b with { x = 1 }"), 'Apply{_with, Tuple{Apply{_record_get, Tuple{Apply{f, Tuple{a}}, Quote{b}}}, Quote{x}, 1}})
+check(tree("r := p with { x = 1 }"), 'Def{r, Apply{_with, Tuple{p, Quote{x}, 1}}})
+check(tree("handle p with (E{}, k) -> 1"), 'Handle{p, Lambda{Tuple{E{}, k}, 1}})
+
+check(head(tree("(a, b) := e")), 'Do)
+check(arity(tree("(a, b) := e")), 3)
+check(arity(tree("(a, b, c) = e")), 4)
+check(head(arg(tree("(a, b) := e"), 1)), 'Def)
+check(head(arg(tree("(a, b) = e"), 1)), 'Set)
+check(arg(arg(tree("(a, b) := e"), 1), 0), 'a)
+check(tree("(a, b)"), 'Tuple{a, b})
+check(tree("(a, b) == c"), 'Apply{_eq, Tuple{Tuple{a, b}, c}})
+check(tree("(a, b) -> a"), 'Lambda{Tuple{a, b}, a})
+
+check(tree("x += 1"), 'Set{x, Apply{_add, Tuple{x, 1}}})
+check(tree("x -= 1"), 'Set{x, Apply{_sub, Tuple{x, 1}}})
+check(tree("x *= y + 1"), 'Set{x, Apply{_mul, Tuple{x, Apply{_add, Tuple{y, 1}}}}})
+check(tree("x /= 2"), 'Set{x, Apply{_div, Tuple{x, 2}}})
+check(tree("x %= 2"), 'Set{x, Apply{_mod, Tuple{x, 2}}})
+check(tree("x += y -= 1"), 'Set{x, Apply{_add, Tuple{x, Set{y, Apply{_sub, Tuple{y, 1}}}}}})
+check(head(tree("a[i] += 1")), 'Do)
+check(arity(tree("a[i] += 1")), 3)
+check(arg(arg(tree("a[i] += 1"), 2), 0), '_index_set)
+check(tree("x == 1"), 'Apply{_eq, Tuple{x, 1}})
+check(tree("a[i] = 1"), 'Apply{_index_set, Tuple{a, i, 1}})
+check(tree("if (c) x += 1"), 'If{c, Set{x, Apply{_add, Tuple{x, 1}}}, none})
+
+size(0 or 1) := "small"
+size(_) := "big"
+check(size(0), "small")
+check(size(1), "small")
+check(size(2), "big")
+check(match 3 { 1 or 2 or 3 -> "low" | _ -> "high" }, "low")
+check(match 7 { 1 or 2 or 3 -> "low" | _ -> "high" }, "high")
+check(match 'b { 'a or 'b -> 1 | _ -> 2 }, 1)
+check(match F{2, 9} { F{1 or 2, x} -> x | _ -> 0 }, 9)
+check(match F{3, 9} { F{1 or 2, x} -> x | _ -> 0 }, 0)
+check(match (2, 5) { ((1 or 2, 5 or 6)) -> "in" | _ -> "out" }, "in")
+check(match (2, 7) { ((1 or 2, 5 or 6)) -> "in" | _ -> "out" }, "out")
+check(match G{2} { G{(1 or 2) or 3} -> 1 | _ -> 0 }, 1)
+check(match G{H{4}} { G{H{3 or 4} or J{}} -> 1 | _ -> 0 }, 1)
+check(match G{J{}} { G{H{3 or 4} or J{}} -> 1 | _ -> 0 }, 1)
+orlam := (1 or 2, x) -> x
+check(orlam(2, 8), 8)
+og(0 or 1, y) if y > 0 := "yes"
+og(_, _) := "no"
+check(og(1, 5), "yes")
+check(og(1, -5), "no")
+check(og(2, 5), "no")
+check(match '(p or q) { If{a, 'true, b} -> b | _ -> 0 }, 'q)
+check(match 5 { 'true or 'false -> 1 | 1 or 2 -> 2 | none or 5 -> 3 | _ -> 4 }, 3)
+check(match 6 { none or true -> 1 | _ -> 2 }, 2)
+
+same(a, a) := "same"
+same(_, _) := "differ"
+check(same(1, 1), "same")
+check(same(1, 2), "differ")
+check(same([1], [1]), "same")
+check(same([1], [2]), "differ")
+check(same("a", "a"), "same")
+check(match (3, 3, 4) { ((a, a, b)) -> b | _ -> 0 }, 4)
+check(match (3, 4, 3) { ((a, a, b)) -> b | _ -> 0 }, 0)
+check(match F{[1, 2], [1, 2]} { F{a, a} -> a | _ -> 0 }, [1, 2])
+check(match F{1, 2, 1} { F{a, b, a} -> b | _ -> 0 }, 2)
+check(match F{1, 2, 3} { F{a, b, a} -> b | _ -> 0 }, 0)
+check(match (5, 5, 5) { ((a, a, a)) -> a | _ -> 0 }, 5)
+check(match (5, 5, 6) { ((a, a, a)) -> a | _ -> 0 }, 0)
+sg(a, a) if a > 0 := "pos"
+sg(_, _) := "no"
+check(sg(2, 2), "pos")
+check(sg(-2, -2), "no")
+check(sg(2, 3), "no")
+sl := (a, a) -> a
+check(sl(7, 7), 7)
+sor(a, 1 or 2, a) := a
+sor(_, _, _) := "no"
+check(sor(5, 2, 5), 5)
+check(sor(5, 3, 5), "no")
+check(sor(5, 2, 6), "no")
+
+ov((x, 0) or (0, x)) := x
+ov(_) := "no"
+check(ov((3, 0)), 3)
+check(ov((0, 4)), 4)
+check(ov((1, 2)), "no")
+check(match (0, 9) { ((x, 0) or (0, x)) -> x | _ -> 0 }, 9)
+check(match F{1} { F{x} or G{x} -> x | _ -> 0 }, 1)
+check(match G{2} { F{x} or G{x} -> x | _ -> 0 }, 2)
+check(match H{2} { F{x} or G{x} -> x | _ -> 0 }, 0)
+check(match (1, (2, 0)) { ((a, (x, 0) or (0, x))) -> Tuple{a, x} | _ -> 0 }, Tuple{1, 2})
+check(match (1, (0, 5)) { ((a, (x, 0) or (0, x))) -> Tuple{a, x} | _ -> 0 }, Tuple{1, 5})
+check(match F{G{1}, K{2}} { F{G{x} or H{x}, J{y} or K{y}} -> x + y | _ -> 0 }, 3)
+check(match F{K{7}} { F{G{x} or H{x} or K{x}} -> x | _ -> 0 }, 7)
+check(match (4, 0) { (((x, 0) or (0, x)) or (1, x)) -> x | _ -> 0 }, 4)
+check(match (1, 8) { (((x, 0) or (0, x)) or (1, x)) -> x | _ -> 0 }, 8)
+ovg((x, 0) or (0, x)) if x > 2 := "big"
+ovg(_) := "small"
+check(ovg((3, 0)), "big")
+check(ovg((0, 1)), "small")
+check(ovg((0, 5)), "big")
+ovl := ((x, 0) or (0, x)) -> x + 1
+check(ovl((0, 5)), 6)
+
+sign(x) if x > 0 := "pos"
+sign(0) := "zero"
+sign(_) := "neg"
+check(sign(4), "pos")
+check(sign(0), "zero")
+check(sign(-4), "neg")
+dg1(x) if x > 1 := "a"
+dg1(x) if x > 0 := "b"
+dg1(_) := "c"
+dg2(x) := x + 1
+check(dg1(5), "a")
+check(dg1(1), "b")
+check(dg1(0), "c")
+check(dg2(1), 2)
+blk := {
+    h(x) if x > 0 := "p"
+    h(_) := "n"
+    Tuple{h(-3), h(3)}
+}
+check(blk, Tuple{"n", "p"})
+
+check(peg_parse('toplevel, "x := )"), Tuple{'SyntaxError{"unexpected input", ")"}, ""})
+check(tree("1 +"), 'SyntaxError{"unexpected end of input"})
+check(tree_at("x := )", Loc{"f.pk", 1, 1}), 'SyntaxError{"unexpected input", ")", Loc{"f.pk", 1, 6}})
+check(tree_at("\n  b := )\n", Loc{"f.pk", 3, 4}), 'SyntaxError{"unexpected input", ")", Loc{"f.pk", 4, 8}})
+check(tree_at("a := (1 +", Loc{"f.pk", 2, 1}), 'SyntaxError{"unexpected end of input", Loc{"f.pk", 2, 10}})
+check(tree_at("a := (1 +\n", Loc{"f.pk", 2, 1}), 'SyntaxError{"unexpected end of input", Loc{"f.pk", 3, 1}})
+check(peg_error_text(tree_at("x := )", Loc{"f.pk", 1, 1})), "f.pk:1:6: syntax error: unexpected input: \")\"")
+check(peg_error_text(tree_at("1 +", Loc{"<repl>", 1, 1})), "<repl>:1:4: syntax error: unexpected end of input")
+check(peg_error_text(tree("1 +")), "syntax error: unexpected end of input")
+check(peg_file_error_text("g.pk", "a := 1\nb := 2 )\nc := 3\n", "b := 2 )\nc := 3\n"), "g.pk:2:8: syntax error: unexpected input: \")\"")
+
+check(tree("f(1, a = 5)"), 'Apply{f, Tuple{1, _Kw{Quote{a}, 5}}})
+check(tree("f(a = 1, b = 2)"), 'Apply{f, Tuple{_Kw{Quote{a}, 1}, _Kw{Quote{b}, 2}}})
+check(tree("f(a == 1)"), 'Apply{f, Tuple{Apply{_eq, Tuple{a, 1}}}})
+check(rest("f(a = 1, 2)"), "(a = 1, 2)")
+
+kw1(x, a = 1, b = x + 10) := [x, a, b]
+check(kw1(1), [1, 1, 11])
+check(kw1(1, 7), [1, 7, 11])
+check(kw1(1, 7, 8), [1, 7, 8])
+check(kw1(1, b = 5), [1, 1, 5])
+check(kw1(1, 7, b = 5), [1, 7, 5])
+check(kw1(1, b = 5, a = 6), [1, 6, 5])
+check(kw1(1, a = 6, b = 5), [1, 6, 5])
+check(kw1(2, a = 6), [2, 6, 12])
+kw_count := 0
+kw2(a = { kw_count = kw_count + 1; kw_count }) := a
+check([kw2(), kw2(), kw2(a = 9), kw2()], [1, 2, 9, 3])
+kw3(x) := "one"
+kw3(x, y = 0) := "two"
+check(kw3(1), "one")
+
+check(repr([1, "x", 'b]), "[1, \"x\", 'b]")
+check(repr("q"), "\"q\"")
+check(repr(Foo{1, [2]}), "Foo{1, [2]}")
+check(f"{[1, 'b, "s"]}", "[1, b, \"s\"]")
+
+print(f"Tests passed {passed}/{passed + failed}")
+if (failed > 0) exit(1)

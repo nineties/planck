@@ -1,0 +1,8 @@
+odd: 1
+odd: 3
+odd: 5
+12
+5
+77
+Error{"unexpected", "* (3 + 4"}
+SyntaxError{"unexpected input", ")"}

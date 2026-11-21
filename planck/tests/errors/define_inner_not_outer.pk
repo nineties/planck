@@ -1,0 +1,7 @@
+f(x) := "outer"
+g() := {
+    f(0) := "inner"
+    f(1)
+}
+print("run")
+g()

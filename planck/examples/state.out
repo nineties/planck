@@ -1,0 +1,2 @@
+Tuple{30, 3}
+Tuple{Node{Node{Leaf{}, Tuple{100, "a"}, Leaf{}}, Tuple{101, "b"}, Node{Node{Leaf{}, Tuple{102, "c"}, Leaf{}}, Tuple{103, "d"}, Leaf{}}}, 104}

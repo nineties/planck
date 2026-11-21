@@ -1,0 +1,92 @@
+# Copyright (C) 2026 nineties
+
+used_libs := table_new()
+
+grammar_chain := f"{hash(read_file("planck/init.pk"))}.{hash(read_file("planck/peg.pk"))}.{hash(read_file("planck/syntax.pk"))}"
+grammar_state() := f"{grammar_chain}@{peg_version}"
+
+preprocess_hook := none
+
+reverse_onto(Nil{}, acc) := acc
+reverse_onto(x :: xs, acc) := reverse_onto(xs, x :: acc)
+
+read_preprocessed(path, state, text) := {
+    s := try_read_file(path)
+    if (s == none) return none
+    r := parse_mexpr(s)
+    h := arg(r, 0)
+    if (type(h) != Expr or head(h) != 'Preprocessed or arity(h) != 2) return none
+    if (arg(h, 0) != state or arg(h, 1) != text) return none
+    s = arg(r, 1)
+    acc := []
+    n := 0
+    go := true
+    while (go) {
+        r = parse_mexpr(s)
+        e := arg(r, 0)
+        if (e == Eof{}) go = false
+        else if (type(e) == Expr and head(e) == 'SyntaxError) return none
+        else {
+            acc = e :: acc
+            n = n + 1
+            s = arg(r, 1)
+        }
+    }
+    if (acc == []) return none
+    last := arg(acc, 0)
+    if (type(last) != Expr or head(last) != 'PreprocessEnd or arity(last) != 1 or arg(last, 0) != n - 1) return none
+    reverse_onto(arg(acc, 1), [])
+}
+
+use(name) := if (table_get(used_libs, name, false)) none else {
+    table_set(used_libs, name, true)
+    path := f"planck/lib/{name}.pk"
+    text := read_file(path)
+    state := grammar_state()
+    declared := peg_version
+    if (preprocess_hook != none) preprocess_hook(name, path, state, text)
+    else {
+        trees := read_preprocessed(f"planck/lib/{name}.pkm", state, text)
+        if (trees == none) load(path)
+        else {
+            prev := _set_file(path)
+            for (e in trees) eval(e)
+            _set_file(prev)
+        }
+    }
+    if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
+    none
+}
+
+" the module that import loads: use of the file loads it, and the module is the variable of the name m "
+_import_module(file, m) := {
+    use(file)
+    eval(m)
+}
+
+" the definitions of the fields of the module that are not in hidden, which import runs by eval "
+_import_defs(m @ Module, hidden) := {
+    a := arg(arg(m, 0), 0)
+    ds := Tuple{}
+    b := array_get(a, 0)
+    i := 0
+    while (i < array_len(b)) {
+        e := array_get(b, i)
+        while (e != none) {
+            k := array_get(e, 0)
+            skip := false
+            j := 0
+            while (j < arity(hidden)) {
+                if (arg(hidden, j) == k) skip = true
+                j = j + 1
+            }
+            if (not skip) {
+                v := array_get(e, 1)
+                ds = push(ds, `Def{!k, Quote{!v}})
+            }
+            e = array_get(e, 2)
+        }
+        i = i + 1
+    }
+    mexpr('Do, push(ds, none))
+}

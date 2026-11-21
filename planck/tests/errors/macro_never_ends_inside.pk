@@ -1,0 +1,3 @@
+macro Grow{x} := `Do{Grow{!x}}
+print("run")
+Grow{1}

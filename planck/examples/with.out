@@ -1,0 +1,6 @@
+Point{1, 2}
+Point{1, 5}
+Point{10, 20}
+Point{7, 8}
+Circle{Point{3, 2}, 3}
+Circle{Point{1, 2}, 3}

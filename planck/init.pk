@@ -1,0 +1,142 @@
+" init script for planck"
+" Copyright (C) 2026 nineties "
+
+" This script bootstraps Planck from its minimal core into a full-featured "
+" programming language by leveraging its langugage extension capabilities. "
+
+" === Builtin Symbols === "
+Def{true, Quote{true}}
+Def{false, Quote{false}}
+Def{none, Quote{none}}
+
+" === Types === "
+" The types Int, String, Symbol, Expr, Function, Array, Plain and Type are values of planck0, and type(x) gives the type of x. "
+
+" === Basic Functions === "
+Def{_not, Fusion{
+    Lambda{Tuple{Quote{false}}, true},
+    Lambda{Tuple{_}, false}}}
+
+" === Output === "
+" print(x) writes x as text for a person, and a new line. A string is written as its characters, without quotes. "
+" Until lib/pretty.pk is loaded, which is at the end of this file, any other value is written in one line by the primitive. lib/pretty.pk then sets print to write the value as pretty.text(x, 60) does, and takes the argument pretty, and sets repr. "
+" The primitive print of planck0 writes a string with quotes, so the characters of a string are written by put, the primitive of planck0 that only this definition uses. "
+Def{_print_value, print}
+Def{_put_value, Lambda{Tuple{x}, If{Apply{_eq, Tuple{Apply{type, Tuple{x}}, String}}, Apply{put, Tuple{x}}, Apply{_print_value, Tuple{x}}}}}
+Def{print, Lambda{Tuple{x}, Do{Apply{_put_value, Tuple{x}}, Apply{put, Tuple{"\n"}}}}}
+" repr(x) is the text of x that reads back as the same value. lib/pretty.pk defines it. "
+Def{repr, none}
+
+" === Tables === "
+" A table is a Table, whose field is an array | buckets | number of entries |. Each bucket is a chain of entries "
+" | key | value | next entry or none | hash of the key |. Keys are compared by eq. "
+" The number of buckets doubles when there are more entries than buckets. "
+Def{_table_type, Apply{_record_new, Tuple{Quote{Table}, Quote{Tuple{a}}}}}
+
+Def{Table, Apply{arg, Tuple{_table_type, 0}}}
+
+Def{_make_table, Apply{arg, Tuple{_table_type, 1}}}
+
+Def{table_new, Lambda{Tuple{}, Do{
+    Def{t, Apply{array, Tuple{2}}},
+    Apply{array_set, Tuple{t, 0, Apply{array, Tuple{16}}}},
+    Apply{array_set, Tuple{t, 1, 0}},
+    Apply{_make_table, Tuple{t}}}}}
+
+Def{table_find, Lambda{Tuple{t, k, h}, Do{
+    Def{b, Apply{array_get, Tuple{t, 0}}},
+    Def{e, Apply{array_get, Tuple{b, Apply{_mod, Tuple{h, Apply{array_len, Tuple{b}}}}}}},
+    While{If{Apply{_ne, Tuple{e, none}},
+            If{Apply{_eq, Tuple{Apply{array_get, Tuple{e, 3}}, h}},
+                Apply{_ne, Tuple{Apply{array_get, Tuple{e, 0}}, k}},
+                true},
+            false},
+        Set{e, Apply{array_get, Tuple{e, 2}}}},
+    e}}}
+
+Def{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
+    Def{t, Apply{arg, Tuple{tb, 0}}},
+    Def{e, Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}},
+    If{Apply{_eq, Tuple{e, none}}, default, Apply{array_get, Tuple{e, 1}}}}}}
+
+Def{table_grow, Lambda{Tuple{t}, Do{
+    Def{old, Apply{array_get, Tuple{t, 0}}},
+    Def{m, Apply{_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
+    Def{nb, Apply{array, Tuple{m}}},
+    Def{i, 0},
+    Def{e, none},
+    Def{next, none},
+    Def{j, 0},
+    While{Apply{_lt, Tuple{i, Apply{array_len, Tuple{old}}}}, Do{
+        Set{e, Apply{array_get, Tuple{old, i}}},
+        While{Apply{_ne, Tuple{e, none}}, Do{
+            Set{next, Apply{array_get, Tuple{e, 2}}},
+            Set{j, Apply{_mod, Tuple{Apply{array_get, Tuple{e, 3}}, m}}},
+            Apply{array_set, Tuple{e, 2, Apply{array_get, Tuple{nb, j}}}},
+            Apply{array_set, Tuple{nb, j, e}},
+            Set{e, next}}},
+        Set{i, Apply{_add, Tuple{i, 1}}}}},
+    Apply{array_set, Tuple{t, 0, nb}}}}}
+
+Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
+    Def{t, Apply{arg, Tuple{tb, 0}}},
+    Def{h, Apply{hash, Tuple{k}}},
+    Def{e, Apply{table_find, Tuple{t, k, h}}},
+    If{Apply{_eq, Tuple{e, none}}, Do{
+        Def{b, Apply{array_get, Tuple{t, 0}}},
+        Def{i, Apply{_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
+        Def{n, Apply{array, Tuple{4}}},
+        Apply{array_set, Tuple{n, 0, k}},
+        Apply{array_set, Tuple{n, 1, v}},
+        Apply{array_set, Tuple{n, 2, Apply{array_get, Tuple{b, i}}}},
+        Apply{array_set, Tuple{n, 3, h}},
+        Apply{array_set, Tuple{b, i, n}},
+        Def{c, Apply{_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
+        Apply{array_set, Tuple{t, 1, c}},
+        If{Apply{_gt, Tuple{c, Apply{array_len, Tuple{b}}}}, Apply{table_grow, Tuple{t}}, none}},
+        Apply{array_set, Tuple{e, 1, v}}},
+    none}}}
+
+" === Loading files === "
+" load(path) parses and evaluates the file by the current parse and eval. "
+" The top-level definitions of the file are made while path is the file being loaded. "
+" A syntax error is printed as file:line:column: syntax error: message, once planck/syntax.pk has replaced parse and planck/peg.pk has defined peg_file_error_text. "
+Def{peg_file_error_text, none}
+Def{_parse0, parse}
+Def{load, Lambda{Tuple{path}, Do{
+    Def{s, Apply{read_file, Tuple{path}}},
+    Def{s0, s},
+    Def{prev, Apply{_set_file, Tuple{path}}},
+    Def{r, none},
+    Def{e, none},
+    Def{go, true},
+    While{go, Do{
+        Set{r, Apply{parse, Tuple{s}}},
+        Set{e, Apply{arg, Tuple{r, 0}}},
+        If{Apply{_eq, Tuple{e, Eof{}}}, Set{go, false},
+        If{If{Apply{_eq, Tuple{Apply{type, Tuple{e}}, Expr}}, Apply{_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
+            Do{
+                Def{text, If{Apply{_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, s}}, none}},
+                If{Apply{_eq, Tuple{text, none}},
+                    Do{
+                        Apply{put, Tuple{path}},
+                        Apply{put, Tuple{": syntax error: "}},
+                        Apply{print, Tuple{e}}},
+                    Apply{print, Tuple{text}}},
+                Apply{exit, Tuple{1}}},
+            Do{
+                Apply{eval, Tuple{e}},
+                Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
+    Apply{_set_file, Tuple{prev}},
+    none}}}
+
+" === Syntax === "
+" planck/syntax.pk replaces parse. The files after it are read by the new syntax. "
+Apply{load, Tuple{"planck/peg.pk"}}
+Apply{load, Tuple{"planck/syntax.pk"}}
+
+" planck/lib/use.pk defines use(name), which loads planck/lib/<name>.pk once. It is written in the syntax above. "
+Apply{load, Tuple{"planck/lib/use.pk"}}
+
+" planck/lib/pretty.pk defines show, repr and the print that takes pretty and end. It is loaded here, so that every program has them. "
+Apply{use, Tuple{"pretty"}}

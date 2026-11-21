@@ -1,0 +1,93 @@
+# Copyright (C) 2026 nineties
+
+use("base")
+use("list")
+
+module bitset {
+    export new(n) := i32_array(n / 30 + 1)
+
+    export add(s, i) := {
+        w := i / 30
+        s[w] = bit_or(s[w], bit_shl(1, i % 30))
+    }
+
+    export del(s, i) := {
+        w := i / 30
+        s[w] = bit_and(s[w], bit_not(bit_shl(1, i % 30)))
+    }
+
+    export has(s, i) := bit_and(s[i / 30], bit_shl(1, i % 30)) != 0
+
+    export copy(s) := {
+        r := i32_array(plain_len(s))
+        plain_copy(r, 0, s, 0, plain_len(s))
+        r
+    }
+
+    clear(s) := {
+        i := 0
+        while (i < plain_len(s)) {
+            s[i] = 0
+            i = i + 1
+        }
+    }
+
+    export union(dst, src) := {
+        changed := false
+        i := 0
+        while (i < plain_len(dst)) {
+            w := bit_or(dst[i], src[i])
+            if (w != dst[i]) {
+                dst[i] = w
+                changed = true
+            }
+            i = i + 1
+        }
+        changed
+    }
+
+    export minus(dst, src) := {
+        i := 0
+        while (i < plain_len(dst)) {
+            dst[i] = bit_and(dst[i], bit_not(src[i]))
+            i = i + 1
+        }
+    }
+
+    export equal(a, b) := {
+        i := 0
+        ok := true
+        while (ok and i < plain_len(a)) {
+            if (a[i] != b[i]) ok = false
+            i = i + 1
+        }
+        ok
+    }
+
+    export each(s, f) := {
+        i := 0
+        while (i < plain_len(s)) {
+            w := s[i]
+            if (w != 0) {
+                k := 0
+                while (k < 30) {
+                    if (bit_and(w, bit_shl(1, k)) != 0) f(i * 30 + k)
+                    k = k + 1
+                }
+            }
+            i = i + 1
+        }
+    }
+
+    export to_list(s) := {
+        r := []
+        each(s, x -> { r = x :: r })
+        reverse(r)
+    }
+
+    export count(s) := {
+        n := 0
+        each(s, _ -> { n = n + 1 })
+        n
+    }
+}

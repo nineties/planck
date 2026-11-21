@@ -1,0 +1,26 @@
+primary ::= 'unless c:expr body:block { `if (not !c) !body } | ...
+
+for (i in 1..5) unless i % 2 == 0 { print(f"odd: {i}") }
+
+union ::= x:union "|>" f:arrow { `(!f)(!x) } | ...
+
+double(x) := 2 * x
+3 |> double |> double |> print
+
+calc_expr ::= a:calc_expr "+" b:calc_term { a + b }
+            | a:calc_expr "-" b:calc_term { a - b }
+            | calc_term
+calc_term ::= a:calc_term "*" b:calc_atom { a * b }
+            | a:calc_term "/" b:calc_atom { a / b }
+            | calc_atom
+calc_atom ::= integer | "(" e:calc_expr ")" { e }
+
+print(calc_expr{| 1 + 2 * (10 - 4) / 3 |})
+print(calc_expr{| 100 - 20 - 3 |})
+
+calc(s) := {
+    r := peg_parse('calc_expr, s)
+    if (arg(r, 1) == "") arg(r, 0) else Error{"unexpected", arg(r, 1)}
+}
+print(calc("2 * (3 + 4"))
+print(calc(")"))

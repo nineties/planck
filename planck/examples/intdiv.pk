@@ -1,0 +1,18 @@
+print(7 // 2)
+print(8 // 2)
+print(-8 // 2)
+print(-7 // -2)
+print(-7 // 2)
+print(7 // -2)
+print((-7 // 2 * 2 + -7 % 2, -7 % 2, 7 % -2))
+print(0 // 5)
+print(1 + 7 // 2 * 2)
+print(100 // 7 // 2)
+
+fun digits
+digits(0) := 0
+digits(n) := 1 + digits(n // 10)
+print(digits(12345))
+
+q := 17 // 5
+print((q, 17 - q * 5, 17 % 5))

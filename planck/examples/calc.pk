@@ -1,0 +1,195 @@
+use("list")
+use("vector")
+use("string")
+use("table")
+use("symbol")
+use("error")
+use("pretty")
+
+cur_file := ""
+cur_src := ""
+here(p) := error.loc_at(cur_file, cur_src, p)
+
+record Token(kind, value, pos) = token
+
+lex(src) := {
+    toks := vector.new()
+    n := strlen(src)
+    i := 0
+    while (i < n) {
+        c := ord(src, i)
+        match c {
+            10 -> {
+                vector.push(toks, token('nl, "\n", i))
+                i = i + 1
+            }
+          | c if string.is_space(c) -> { i = i + 1 }
+          | c if string.is_digit(c) -> {
+                j := i
+                while (j < n and string.is_digit(ord(src, j))) j = j + 1
+                vector.push(toks, token('num, string.string_to_int(substr(src, i, j)), i))
+                i = j
+            }
+          | c if string.is_ident_start(c) -> {
+                j := i
+                while (j < n and string.is_ident_char(ord(src, j))) j = j + 1
+                vector.push(toks, token('id, substr(src, i, j), i))
+                i = j
+            }
+          | c if string.index_of_string("+-*/()=", string.char(c), 0) >= 0 -> {
+                vector.push(toks, token('op, string.char(c), i))
+                i = i + 1
+            }
+          | _ -> error.at(here(i), f"unexpected character {pretty.quote_string(string.char(c))}")
+        }
+    }
+    vector.push(toks, token('eof, "", n))
+    toks
+}
+
+parse_program(toks) := {
+    pos := 0
+    peek() := vector.get(toks, pos)
+    advance() := {
+        t := peek()
+        pos = pos + 1
+        t
+    }
+    at(kind, v) := peek().kind == kind and peek().value == v
+    syntax_error(msg) := error.at(here(peek().pos), msg)
+    expect_op(v) := if (at('op, v)) advance() else syntax_error(f"expected \"{v}\"")
+
+    chain(next, ops) := {
+        l := next()
+        while (peek().kind == 'op and member(peek().value, ops)) {
+            t := advance()
+            l = Bin{t.value, l, next(), t.pos}
+        }
+        l
+    }
+    fun expr
+    factor() := {
+        t := peek()
+        if (t.kind == 'num) {
+            advance()
+            Num{t.value}
+        } else if (t.kind == 'id) {
+            advance()
+            Var{t.value, t.pos}
+        } else if (at('op, "(")) {
+            advance()
+            e := expr()
+            expect_op(")")
+            e
+        } else if (at('op, "-")) {
+            advance()
+            Neg{factor()}
+        } else syntax_error("expected an expression")
+    }
+    term() := chain(factor, ["*", "/"])
+    expr() = chain(term, ["+", "-"])
+    stmt() := if (at('id, "let")) {
+        advance()
+        t := peek()
+        if (t.kind != 'id) syntax_error("expected a variable name")
+        advance()
+        expect_op("=")
+        Let{t.value, expr(), t.pos}
+    } else Expr{expr()}
+    skip_newlines() := while (peek().kind == 'nl) advance()
+
+    stmts := []
+    skip_newlines()
+    while (peek().kind != 'eof) {
+        stmts = stmt() :: stmts
+        if (peek().kind != 'eof and peek().kind != 'nl) syntax_error("expected the end of the line")
+        skip_newlines()
+    }
+    reverse(stmts)
+}
+
+compile(stmts) := {
+    code := vector.new()
+    defined := set.new()
+    symbol.reset()
+    fun operand
+    operand = (Num{n}) -> n
+             | (Var{x, p}) -> {
+                   if (not set.has(defined, intern(x))) error.at(here(p), f"undefined variable {x}")
+                   intern(x)
+               }
+             | (Neg{e}) -> {
+                   a := operand(e)
+                   t := symbol.gensym("%t")
+                   vector.push(code, Bin{t, "-", 0, a, 0})
+                   t
+               }
+             | (Bin{op, l, r, p}) -> {
+                   a := operand(l)
+                   b := operand(r)
+                   t := symbol.gensym("%t")
+                   vector.push(code, Bin{t, op, a, b, p})
+                   t
+               }
+    each((Let{x, e, p}) -> {
+             a := operand(e)
+             set.add(defined, intern(x))
+             vector.push(code, Copy{intern(x), a})
+         } | (Expr{e}) -> vector.push(code, Print{operand(e)}), stmts)
+    vector.to_list(code)
+}
+
+show_operand(o) := if (type(o) == Int) string.int_to_string(o) else symname(o)
+show_instr(Bin{d, op, a, b, _}) := join(" ", [show_operand(d), "=", show_operand(a), op, show_operand(b)])
+show_instr(Copy{d, a}) := join(" ", [show_operand(d), "=", show_operand(a)])
+show_instr(Print{a}) := _strcat("print ", show_operand(a))
+
+run_code(code) := {
+    vars := table.new()
+    ops := table.new()
+    table.set(ops, "+", (a, b) -> a + b)
+    table.set(ops, "-", (a, b) -> a - b)
+    table.set(ops, "*", (a, b) -> a * b)
+    table.set(ops, "/", (a, b) -> a / b)
+    value(o) := if (type(o) == Int) o else table.get(vars, o, none)
+    each((Bin{d, op, a, b, p}) -> {
+             y := value(b)
+             if (op == "/" and y == 0) error.at(here(p), "division by zero")
+             table.set(vars, d, table.get(ops, op, none)(value(a), y))
+         } | (Copy{d, a}) -> table.set(vars, d, value(a))
+           | (Print{a}) -> { print(f"= {value(a)}") }, code)
+}
+
+calc(file, src, verbose) := {
+    cur_file = file
+    cur_src = src
+    r := error.catch(() -> {
+        toks := lex(src)
+        if (verbose) { print(f"tokens: {vector.len(toks)}") }
+        stmts := parse_program(toks)
+        if (verbose) {
+            print("syntax tree:")
+            for (st in stmts) pretty.print(st)
+        }
+        code := compile(stmts)
+        if (verbose) {
+            print("code:")
+            for (i in code) { print(f"  {show_instr(i)}") }
+            print("run:")
+        }
+        run_code(code)
+    })
+    if (head(r) == 'Error) {
+        print(f"error: {error.show(src, arg(r, 0), arg(r, 1))}")
+    }
+}
+
+print("--- planck/examples/calc.txt")
+src := read_file("planck/examples/calc.txt")
+print(src)
+calc("planck/examples/calc.txt", src, true)
+
+each(s -> {
+    print(f"--- {s}")
+    calc("input", s, false)
+}, ["1 + $", "(1 + 2", "let a = 1\na + b", "10 / (5 - 5)", "let = 3", "2 3"])
