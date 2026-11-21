@@ -1,0 +1,12 @@
+fun fib
+fib = (0) -> 0
+    | (1) -> 1
+    | (n) -> fib(n - 1) + fib(n - 2)
+
+fun ack
+ack = (0, n) -> n + 1
+    | (m, 0) -> ack(m - 1, 1)
+    | (m, n) -> ack(m - 1, ack(m, n - 1))
+
+print(fib(24))
+print(ack(2, 20))

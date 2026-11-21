@@ -1,0 +1,22 @@
+calc_expr ::= a:calc_expr "+" b:calc_term { a + b }
+            | a:calc_expr "-" b:calc_term { a - b }
+            | calc_term
+calc_term ::= a:calc_term "*" b:calc_atom { a * b }
+            | a:calc_term "/" b:calc_atom { a / b }
+            | calc_atom
+calc_atom ::= integer | "(" e:calc_expr ")" { e }
+
+union ::= x:union "|>" f:arrow { `(!f)(!x) } | ...
+
+double(x) := 2 * x
+print(3 |> double |> double)
+print(calc_expr{| 1 + 2 * (10 - 4) / 3 |})
+
+i := 0
+t := 0
+while (i < 180) {
+    r := peg_parse('calc_expr, "100 - 20 * (3 + 4) / 7 + 2 * 2 * 2 - 1")
+    t = t + arg(r, 0)
+    i = i + 1
+}
+print(t)

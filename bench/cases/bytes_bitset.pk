@@ -1,0 +1,27 @@
+use("bytes")
+use("bitset")
+
+b := bytes.new()
+i := 0
+while (i < 1500) {
+    bytes.u32(b, i * 40503)
+    bytes.u16(b, i)
+    i = i + 1
+}
+print(bytes.len(b))
+print(bytes.get(b, 100))
+
+s := bitset.new(20000)
+i = 0
+while (i < 20000) {
+    if (i % 3 == 0) bitset.add(s, i)
+    i = i + 1
+}
+t := bitset.new(20000)
+i = 0
+while (i < 20000) {
+    if (i % 5 == 0) bitset.add(t, i)
+    i = i + 1
+}
+bitset.union(s, t)
+print(bitset.count(s))

@@ -1,0 +1,19 @@
+use("string")
+
+words := []
+i := 0
+b := strbuf.new()
+while (i < 150) {
+    strbuf.add(b, string.int_to_string(i))
+    strbuf.add(b, ",")
+    i = i + 1
+}
+text := strbuf.string(b)
+parts := string.split(text, ",")
+print(strlen(text))
+print(string.string_to_int(string.trim("  4242  ")))
+print(string.starts_with(text, "0,1,2"))
+print(string.index_of_string(text, "149", 0))
+print(strlen(string.join("-", parts)))
+print(strlen(string.string_repeat("ab", 1000)))
+print(string.string_less("abc", "abd"))

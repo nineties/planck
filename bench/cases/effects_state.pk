@@ -1,0 +1,23 @@
+run_state(f, init) := {
+    g := handle {
+        r := f()
+        s -> (r, s)
+    } with (Get{}, k) -> (s -> k(s)(s))
+         | (Put{v}, k) -> (s -> k(none)(v))
+    g(init)
+}
+
+get() := perform Get{}
+put_state(v) := perform Put{v}
+
+tick() := {
+    n := get()
+    put_state(n + 1)
+    n
+}
+
+fun repeat
+repeat = (0) -> none
+       | (n) -> { tick(); repeat(n - 1) }
+
+print(run_state(() -> { repeat(9000); get() }, 0))

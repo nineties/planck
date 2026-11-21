@@ -1,0 +1,19 @@
+record Point(x, y) = point
+
+module geometry {
+    export dist2(p @ Point, q @ Point) := (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)
+}
+
+module counter {
+    n := 0
+    export next() := {
+        n = n + 1
+        n
+    }
+}
+
+fun walk
+walk = (0, acc) -> acc
+     | (n, acc) -> walk(n - 1, acc + geometry.dist2(point(n, n), point(0, n * 2)) % 7 + counter.next() % 3)
+
+print(walk(18000, 0))

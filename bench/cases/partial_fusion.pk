@@ -1,0 +1,16 @@
+inc := (x) -> x + 1
+dbl := (x) -> x * 2
+
+fun step
+step = (0) -> 100
+     | (n) -> n
+
+compose(f, g) := (x) -> g(f(x))
+pipeline := compose(compose(inc, dbl), inc)
+
+fun loop
+loop = (0, acc) -> acc
+     | (n, acc) -> loop(n - 1, pipeline(acc) % 1000003)
+
+print(loop(300000, 1))
+print(step(0))
