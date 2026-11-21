@@ -82,55 +82,39 @@ jobs:
           gh release view --repo nineties/hex-to-compiler --json tagName --jq .tagName > planck0.version
         env:
           GH_TOKEN: ${{ github.token }}
-      - name: Measure
-        run: |
-          for round in $(seq ${{ steps.refs.outputs.rounds }}); do
-            if [ -d prev ]; then (cd prev && ../planck0 ../cur/bench/run.pk ../samples-prev.pk $(cut -d' ' -f1 /proc/uptime)); fi
-            (cd cur && ../planck0 bench/run.pk ../samples-cur.pk $(cut -d' ' -f1 /proc/uptime))
-            (cd cur && ../planck0 bench/run.pk ../samples-cur.pk $(cut -d' ' -f1 /proc/uptime))
-            if [ -d prev ]; then (cd prev && ../planck0 ../cur/bench/run.pk ../samples-prev.pk $(cut -d' ' -f1 /proc/uptime)); fi
-          done
-          {
-            echo "ref=${{ steps.refs.outputs.ref }}"
-            echo "commit=${{ steps.refs.outputs.commit }}"
-            echo "prev_ref=${{ steps.refs.outputs.prev_ref }}"
-            echo "prev_commit=${{ steps.refs.outputs.prev_commit }}"
-            echo "planck0=$(cat planck0.version)"
-            echo "nproc=$(nproc)"
-            echo "cpu=$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ *//')"
-            echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "rounds=${{ steps.refs.outputs.rounds }}"
-          } > meta.txt
-      - name: Table in the run summary
-        run: |
-          prev_samples=-
-          if [ -d prev ]; then prev_samples=../samples-prev.pk; fi
-          (cd cur && ../planck0 bench/record.pk ../this-run.pk ../samples-cur.pk "$prev_samples" ../meta.txt)
-          (cd cur && ../planck0 bench/report.pk ../this-run.pk ../this-run.md)
-          echo "# Benchmark ${{ steps.refs.outputs.ref }} against ${{ steps.refs.outputs.prev_ref }}" >> "$GITHUB_STEP_SUMMARY"
-          cat this-run.md >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: samples
-          path: |
-            samples-cur.pk
-            samples-prev.pk
-            this-run.pk
-            this-run.md
-          if-no-files-found: ignore
       - uses: actions/checkout@v4
         if: steps.refs.outputs.record == 'true'
         with:
           ref: main
           path: main
+      - name: Measure
+        env:
+          REF: ${{ steps.refs.outputs.ref }}
+          COMMIT: ${{ steps.refs.outputs.commit }}
+          PREV_REF: ${{ steps.refs.outputs.prev_ref }}
+          PREV_COMMIT: ${{ steps.refs.outputs.prev_commit }}
+          ROUNDS: ${{ steps.refs.outputs.rounds }}
+          RECORD: ${{ steps.refs.outputs.record }}
+        run: |
+          mkdir out
+          prev=
+          if [ -d prev ]; then prev=$PWD/prev; fi
+          results=
+          results_md=
+          if [ "$RECORD" = true ]; then results=$PWD/main/bench/results.pk; results_md=$PWD/main/bench/results.md; fi
+          cd cur
+          ../planck0 bench/measure.pk "planck0_bin=$PWD/../planck0" "cur=$PWD" "prev=$prev" "out=$PWD/../out" "ref=$REF" "commit=$COMMIT" "prev_ref=$PREV_REF" "prev_commit=$PREV_COMMIT" "planck0=$(cat ../planck0.version)" "rounds=$ROUNDS" "summary=$GITHUB_STEP_SUMMARY" "results=$results" "results_md=$results_md"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samples
+          path: out
+          if-no-files-found: ignore
       - name: Open a pull request that records the result
         if: steps.refs.outputs.record == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           REF: ${{ steps.refs.outputs.ref }}
         run: |
-          cat this-run.pk >> main/bench/results.pk
-          (cd cur && ../planck0 bench/report.pk ../main/bench/results.pk ../main/bench/results.md)
           cd main
           branch=bench-result-$(echo "$REF" | tr -c 'A-Za-z0-9.\n' '-')-$GITHUB_RUN_ID
           git config user.name 'github-actions[bot]'

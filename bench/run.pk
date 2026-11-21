@@ -47,13 +47,8 @@ bench_run(name) := {
 
 for (name in bench_cases) bench_run(name)
 
-bench_uptime_ns(text) := {
-    parts := string.split(text, ".")
-    string.string_to_int(list.nth(parts, 0)) * 1000000000 + string.string_to_int(list.nth(parts, 1)) * 10000000
-}
-
 if (array_len(bench_args) > 2) {
-    startup := bench_first - bench_uptime_ns(bench_args[2])
+    startup := bench_first - string.string_to_int(bench_args[2])
     bench_lines = _strcat(bench_lines, f"sample(\"startup\", {startup}, 0, 0)\n")
 }
 
