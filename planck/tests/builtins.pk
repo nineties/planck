@@ -109,7 +109,7 @@ check(ord(text, 0), 0)
 check(ord(text, 3), 255)
 check(text[1], "A")
 
-write_file("tmp-builtins.bin", _strcat(_strcat("a", substr(read_file("tmp-builtins.bin"), 0, 1)), "z"))
+write_file("tmp-builtins.bin", str_cat(str_cat("a", substr(read_file("tmp-builtins.bin"), 0, 1)), "z"))
 back = read_bytes("tmp-builtins.bin")
 check(plain_len(back), 3)
 check(back[0], 97)

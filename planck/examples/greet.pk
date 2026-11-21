@@ -9,7 +9,7 @@ say(s) := { print(s) }
 spec := [Opt{"n", "times", true}, Opt{"s", "shout", false}, Opt{"h", "help", false}]
 
 greet(options, name) := {
-    text := _strcat(_strcat("Hello, ", name), if (table.has(options, "shout")) "!!" else ".")
+    text := str_cat(str_cat("Hello, ", name), if (table.has(options, "shout")) "!!" else ".")
     i := 0
     while (i < string.string_to_int(table.get(options, "times", "1"))) {
         say(text)
@@ -31,7 +31,7 @@ main(args) := {
             }
         }
     } else {
-        say(_strcat("error: ", pretty.show(r)))
+        say(str_cat("error: ", pretty.show(r)))
         exit(2)
     }
 }

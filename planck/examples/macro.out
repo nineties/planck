@@ -3,7 +3,7 @@
 81
 11
 Twice{1}
-Apply{_add, Tuple{Twice{1}, 4}}
+Apply{int_add, Tuple{Twice{1}, 4}}
 7
 30
 12

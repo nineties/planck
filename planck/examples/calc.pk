@@ -142,7 +142,7 @@ compile(stmts) := {
 show_operand(o) := if (type(o) == Int) string.int_to_string(o) else symname(o)
 show_instr(Bin{d, op, a, b, _}) := join(" ", [show_operand(d), "=", show_operand(a), op, show_operand(b)])
 show_instr(Copy{d, a}) := join(" ", [show_operand(d), "=", show_operand(a)])
-show_instr(Print{a}) := _strcat("print ", show_operand(a))
+show_instr(Print{a}) := str_cat("print ", show_operand(a))
 
 run_code(code) := {
     vars := table.new()

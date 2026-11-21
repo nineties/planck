@@ -9,6 +9,39 @@ Def{true, Quote{true}}
 Def{false, Quote{false}}
 Def{none, Quote{none}}
 
+Def{print, os_print}
+Def{println, os_println}
+Def{put, os_put}
+Def{read_file, os_read_file}
+Def{try_read_file, os_try_read_file}
+Def{write_file, os_write_file}
+Def{read_bytes, os_read_bytes}
+Def{chmod, os_chmod}
+Def{list_dir, os_list_dir}
+Def{argv, os_argv}
+Def{exit, os_exit}
+Def{time_ns, os_time_ns}
+Def{run_program, os_run}
+Def{head, expr_head}
+Def{arity, expr_arity}
+Def{arg, expr_arg}
+Def{mexpr, expr_new}
+Def{type, expr_type}
+Def{strlen, str_len}
+Def{ord, str_ord}
+Def{substr, str_sub}
+Def{hash, str_hash}
+Def{intern, sym_intern}
+Def{symname, sym_name}
+Def{array, array_new}
+Def{push, array_push}
+Def{u8_array, plain_u8}
+Def{u16_array, plain_u16}
+Def{i32_array, plain_i32}
+Def{heap_allocated, gc_heap_allocated}
+Def{expr_parse, parse}
+Def{expr_eval, eval}
+
 " === Types === "
 " The types Int, String, Symbol, Expr, Function, Array, Plain and Type are values of planck0, and type(x) gives the type of x. "
 
@@ -21,9 +54,9 @@ Def{_not, Fusion{
 " print(x) writes x as text for a person, and a new line. A string is written as its characters, without quotes. "
 " Until lib/pretty.pk is loaded, which is at the end of this file, any other value is written in one line by the primitive. lib/pretty.pk then sets print to write the value as pretty.text(x, 60) does, and takes the argument pretty, and sets repr. "
 " The primitive print of planck0 writes a string with quotes, so the characters of a string are written by put, the primitive of planck0 that only this definition uses. "
-Def{_print_value, print}
-Def{_put_value, Lambda{Tuple{x}, If{Apply{_eq, Tuple{Apply{type, Tuple{x}}, String}}, Apply{put, Tuple{x}}, Apply{_print_value, Tuple{x}}}}}
-Def{print, Lambda{Tuple{x}, Do{Apply{_put_value, Tuple{x}}, Apply{put, Tuple{"\n"}}}}}
+Def{_print_value, os_print}
+Def{_put_value, Lambda{Tuple{x}, If{Apply{expr_eq, Tuple{Apply{type, Tuple{x}}, String}}, Apply{os_put, Tuple{x}}, Apply{_print_value, Tuple{x}}}}}
+Def{print, Lambda{Tuple{x}, Do{Apply{_put_value, Tuple{x}}, Apply{os_put, Tuple{"\n"}}}}}
 " repr(x) is the text of x that reads back as the same value. lib/pretty.pk defines it. "
 Def{repr, none}
 
@@ -31,7 +64,7 @@ Def{repr, none}
 " A table is a Table, whose field is an array | buckets | number of entries |. Each bucket is a chain of entries "
 " | key | value | next entry or none | hash of the key |. Keys are compared by eq. "
 " The number of buckets doubles when there are more entries than buckets. "
-Def{_table_type, Apply{_record_new, Tuple{Quote{Table}, Quote{Tuple{a}}}}}
+Def{_table_type, Apply{expr_record, Tuple{Quote{Table}, Quote{Tuple{a}}}}}
 
 Def{Table, Apply{arg, Tuple{_table_type, 0}}}
 
@@ -45,10 +78,10 @@ Def{table_new, Lambda{Tuple{}, Do{
 
 Def{table_find, Lambda{Tuple{t, k, h}, Do{
     Def{b, Apply{array_get, Tuple{t, 0}}},
-    Def{e, Apply{array_get, Tuple{b, Apply{_mod, Tuple{h, Apply{array_len, Tuple{b}}}}}}},
-    While{If{Apply{_ne, Tuple{e, none}},
-            If{Apply{_eq, Tuple{Apply{array_get, Tuple{e, 3}}, h}},
-                Apply{_ne, Tuple{Apply{array_get, Tuple{e, 0}}, k}},
+    Def{e, Apply{array_get, Tuple{b, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}}}},
+    While{If{Apply{expr_ne, Tuple{e, none}},
+            If{Apply{expr_eq, Tuple{Apply{array_get, Tuple{e, 3}}, h}},
+                Apply{expr_ne, Tuple{Apply{array_get, Tuple{e, 0}}, k}},
                 true},
             false},
         Set{e, Apply{array_get, Tuple{e, 2}}}},
@@ -57,43 +90,43 @@ Def{table_find, Lambda{Tuple{t, k, h}, Do{
 Def{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
     Def{t, Apply{arg, Tuple{tb, 0}}},
     Def{e, Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}},
-    If{Apply{_eq, Tuple{e, none}}, default, Apply{array_get, Tuple{e, 1}}}}}}
+    If{Apply{expr_eq, Tuple{e, none}}, default, Apply{array_get, Tuple{e, 1}}}}}}
 
 Def{table_grow, Lambda{Tuple{t}, Do{
     Def{old, Apply{array_get, Tuple{t, 0}}},
-    Def{m, Apply{_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
+    Def{m, Apply{int_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
     Def{nb, Apply{array, Tuple{m}}},
     Def{i, 0},
     Def{e, none},
     Def{next, none},
     Def{j, 0},
-    While{Apply{_lt, Tuple{i, Apply{array_len, Tuple{old}}}}, Do{
+    While{Apply{int_lt, Tuple{i, Apply{array_len, Tuple{old}}}}, Do{
         Set{e, Apply{array_get, Tuple{old, i}}},
-        While{Apply{_ne, Tuple{e, none}}, Do{
+        While{Apply{expr_ne, Tuple{e, none}}, Do{
             Set{next, Apply{array_get, Tuple{e, 2}}},
-            Set{j, Apply{_mod, Tuple{Apply{array_get, Tuple{e, 3}}, m}}},
+            Set{j, Apply{int_mod, Tuple{Apply{array_get, Tuple{e, 3}}, m}}},
             Apply{array_set, Tuple{e, 2, Apply{array_get, Tuple{nb, j}}}},
             Apply{array_set, Tuple{nb, j, e}},
             Set{e, next}}},
-        Set{i, Apply{_add, Tuple{i, 1}}}}},
+        Set{i, Apply{int_add, Tuple{i, 1}}}}},
     Apply{array_set, Tuple{t, 0, nb}}}}}
 
 Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
     Def{t, Apply{arg, Tuple{tb, 0}}},
     Def{h, Apply{hash, Tuple{k}}},
     Def{e, Apply{table_find, Tuple{t, k, h}}},
-    If{Apply{_eq, Tuple{e, none}}, Do{
+    If{Apply{expr_eq, Tuple{e, none}}, Do{
         Def{b, Apply{array_get, Tuple{t, 0}}},
-        Def{i, Apply{_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
+        Def{i, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
         Def{n, Apply{array, Tuple{4}}},
         Apply{array_set, Tuple{n, 0, k}},
         Apply{array_set, Tuple{n, 1, v}},
         Apply{array_set, Tuple{n, 2, Apply{array_get, Tuple{b, i}}}},
         Apply{array_set, Tuple{n, 3, h}},
         Apply{array_set, Tuple{b, i, n}},
-        Def{c, Apply{_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
+        Def{c, Apply{int_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
         Apply{array_set, Tuple{t, 1, c}},
-        If{Apply{_gt, Tuple{c, Apply{array_len, Tuple{b}}}}, Apply{table_grow, Tuple{t}}, none}},
+        If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}}, Apply{table_grow, Tuple{t}}, none}},
         Apply{array_set, Tuple{e, 1, v}}},
     none}}}
 
@@ -106,18 +139,18 @@ Def{_parse0, parse}
 Def{load, Lambda{Tuple{path}, Do{
     Def{s, Apply{read_file, Tuple{path}}},
     Def{s0, s},
-    Def{prev, Apply{_set_file, Tuple{path}}},
+    Def{prev, Apply{os_set_file, Tuple{path}}},
     Def{r, none},
     Def{e, none},
     Def{go, true},
     While{go, Do{
         Set{r, Apply{parse, Tuple{s}}},
         Set{e, Apply{arg, Tuple{r, 0}}},
-        If{Apply{_eq, Tuple{e, Eof{}}}, Set{go, false},
-        If{If{Apply{_eq, Tuple{Apply{type, Tuple{e}}, Expr}}, Apply{_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
+        If{Apply{expr_eq, Tuple{e, Eof{}}}, Set{go, false},
+        If{If{Apply{expr_eq, Tuple{Apply{type, Tuple{e}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
             Do{
-                Def{text, If{Apply{_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, s}}, none}},
-                If{Apply{_eq, Tuple{text, none}},
+                Def{text, If{Apply{expr_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, s}}, none}},
+                If{Apply{expr_eq, Tuple{text, none}},
                     Do{
                         Apply{put, Tuple{path}},
                         Apply{put, Tuple{": syntax error: "}},
@@ -127,7 +160,7 @@ Def{load, Lambda{Tuple{path}, Do{
             Do{
                 Apply{eval, Tuple{e}},
                 Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
-    Apply{_set_file, Tuple{prev}},
+    Apply{os_set_file, Tuple{prev}},
     none}}}
 
 " === Syntax === "

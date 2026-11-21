@@ -102,7 +102,7 @@ dl_g(2) = "ext two"
 dl_g(n) = "ext n"
 check(Tuple{dl_g(0), dl_g(2), dl_g(5)}, Tuple{"loaded g zero", "loaded g two", "ext n"})
 foldl(f, acc, Tuple{a, b}) = f(f(acc, a), b)
-check(Tuple{foldl(_add, 0, [1, 2, 3]), foldl(_add, 0, Tuple{4, 5})}, Tuple{6, 9})
+check(Tuple{foldl(int_add, 0, [1, 2, 3]), foldl(int_add, 0, Tuple{4, 5})}, Tuple{6, 9})
 
 print(f"Tests passed {passed}/{passed + failed}")
 if (failed > 0) exit(1)

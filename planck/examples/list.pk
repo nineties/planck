@@ -20,7 +20,7 @@ reverse(xs) := foldl((acc, x) -> x :: acc, [], xs)
 
 length(xs) := foldl((n, _) -> n + 1, 0, xs)
 
-sum(xs) := foldl(_add, 0, xs)
+sum(xs) := foldl(int_add, 0, xs)
 
 fun qsort
 qsort = (Nil{}) -> []
