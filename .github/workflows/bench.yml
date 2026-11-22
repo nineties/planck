@@ -42,14 +42,14 @@ jobs:
           INPUT_PR: ${{ inputs.pr }}
         run: |
           ref=${INPUT_REF:-$GITHUB_REF_NAME}
-          commit=$(git rev-parse "$ref^{commit}" 2>/dev/null || git rev-parse "origin/$ref^{commit}")
+          commit=$(git rev-parse --verify -q "$ref^{commit}" || git rev-parse --verify -q "origin/$ref^{commit}")
           prev=$INPUT_PREV
           if [ -z "$prev" ]; then
             prev=$(git tag --merged "$commit" --sort=-v:refname | grep -vx "$ref" | head -1 || true)
           fi
           prev_commit=
           if [ -n "$prev" ]; then
-            prev_commit=$(git rev-parse "$prev^{commit}" 2>/dev/null || git rev-parse "origin/$prev^{commit}")
+            prev_commit=$(git rev-parse --verify -q "$prev^{commit}" || git rev-parse --verify -q "origin/$prev^{commit}")
           fi
           if [ "$prev_commit" = "$commit" ]; then
             prev=
