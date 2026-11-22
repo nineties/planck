@@ -61,8 +61,7 @@ for (line in cpuinfo) {
 memory_kib := 0
 meminfo_args := array(1)
 meminfo_args[0] = "/proc/meminfo"
-for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "
-")) {
+for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "\n")) {
     if (string.starts_with(line, "MemTotal:")) {
         memory_kib = string.string_to_int(list.nth(string.split(string.trim(list.nth(string.split(line, ":"), 1)), " "), 0))
     }
