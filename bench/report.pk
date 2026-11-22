@@ -17,7 +17,7 @@ commit_url := "https://github.com/nineties/planck/commit"
 short(commit) := substr(commit, 0, 7)
 version_label(ref, commit) := f"{ref} ({short(commit)})"
 commit_link(commit) := f"[{short(commit)}]({commit_url}/{commit})"
-or_dash(s) := if (s == "") "-" else s
+or_unrecorded(s) := if (s == "") "not recorded" else s
 
 result(name, ref, commit, planck0, nproc, os, cpu, date, rounds, t, heap, gcs) := {
     label := version_label(ref, commit)
@@ -58,8 +58,8 @@ cases_without_startup := list.filter(name -> name != "startup", case_names)
 
 run_line(label) := {
     r := table.get(ref_rows, label, none)
-    cores := if (arg(r, 3) == 0) "-" else f"{arg(r, 3)}"
-    f"| {label} | {commit_link(arg(r, 1))} | {or_dash(arg(r, 4))} | {or_dash(arg(r, 5))} | {cores} | {substr(arg(r, 6), 0, 10)} | {arg(r, 2)} |"
+    cores := if (arg(r, 3) == 0) "not recorded" else f"{arg(r, 3)}"
+    f"| {label} | {commit_link(arg(r, 1))} | {or_unrecorded(arg(r, 4))} | {or_unrecorded(arg(r, 5))} | {cores} | {substr(arg(r, 6), 0, 10)} | {arg(r, 2)} |"
 }
 
 runs := list.map(run_line, ref_names)
