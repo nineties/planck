@@ -4,7 +4,7 @@ Each column of the tables below is one measured version, named by its tag or bra
 
 | version | commit | OS | CPU | cores | date | planck0 |
 |---|---|---|---|---:|---|---|
-| main (e96e20c) | [e96e20c](https://github.com/nineties/planck/commit/e96e20ceb9efe222425dc6ad2dcdcb8d43e1d688) | - | - | - | 2026-11-22 | v0.1.1 |
+| main (e96e20c) | [e96e20c](https://github.com/nineties/planck/commit/e96e20ceb9efe222425dc6ad2dcdcb8d43e1d688) | not recorded | not recorded | not recorded | 2026-11-22 | v0.1.1 |
 
 ## Time per benchmark (seconds, median)
 
@@ -54,3 +54,4 @@ Each column of the tables below is one measured version, named by its tag or bra
 | loops_closures | 41.676 |
 | getopt | 4.987 |
 | syntax_extension | 11.393 |
+
