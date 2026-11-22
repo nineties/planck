@@ -49,7 +49,9 @@ module pretty {
             else str_cat(str_cat(str_cat(symname(head(x)), "{"), join(", ", map(show, args_of(x)))), "}")
         }
         else if (t == Array) "<array>"
-        else "<function>"
+        else if (t == Type) symname(typename(x))
+        else if (t == Function or t == Plain) "<function>"
+        else str_cat(str_cat(str_cat(symname(typename(t)), "{"), join(", ", map(show, args_of(x)))), "}")
     }
     export show := show
 
@@ -84,7 +86,7 @@ module pretty {
         t := type(x)
         if (t == String) write_text(x)
         else if (t == Int or t == Symbol or t == Expr) write_text(if (pretty) text(x, 60) else show(x))
-        else _print_value(x)
+        else write_text(_text(x))
         write_text(end)
     }
 }
