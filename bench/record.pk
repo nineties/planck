@@ -58,8 +58,8 @@ for (name in names) {
     prev_t := if (prev_samples == []) none else field_median(prev_samples, 0)
     ratio := if (prev_t == none) none else t * 1000 // prev_t
     line := f"result({q(name)}, {q(get_meta("ref"))}, {q(get_meta("commit"))}, {q(get_meta("prev_ref"))}, {q(get_meta("prev_commit"))}, {q(get_meta("planck0"))}, {string.string_to_int(get_meta("nproc"))}, {q(get_meta("cpu"))}, {q(get_meta("date"))}, {string.string_to_int(get_meta("rounds"))}, {t}, {opt(prev_t)}, {opt(ratio)}, {field_median(samples, 1)}, {field_median(samples, 2)})\n"
-    lines = _strcat(lines, line)
+    lines = str_cat(lines, line)
 }
 
 old := try_read_file(out_path)
-write_file(out_path, _strcat(if (old == none) "" else old, lines))
+write_file(out_path, str_cat(if (old == none) "" else old, lines))

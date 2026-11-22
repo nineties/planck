@@ -93,7 +93,7 @@ run_checked(measure_planck0, report_args, measure_cur)
 
 append_text(path, text) := {
     old := try_read_file(path)
-    write_file(path, _strcat(if (old == none) "" else old, text))
+    write_file(path, str_cat(if (old == none) "" else old, text))
 }
 
 if (option("summary") != "") {

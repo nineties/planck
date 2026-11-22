@@ -18,7 +18,7 @@ bench_lines := ""
 bench_put_saved := put
 
 bench_put(s) := {
-    bench_out = _strcat(bench_out, s)
+    bench_out = str_cat(bench_out, s)
 }
 
 bench_restore() := {
@@ -42,16 +42,16 @@ bench_run(name) := {
         print(f"{name}: output differs from the expected output")
         exit(1)
     }
-    bench_lines = _strcat(bench_lines, f"sample(\"{name}\", {t1 - t0}, {a1 - a0}, {g1 - g0})\n")
+    bench_lines = str_cat(bench_lines, f"sample(\"{name}\", {t1 - t0}, {a1 - a0}, {g1 - g0})\n")
 }
 
 for (name in bench_cases) bench_run(name)
 
 if (array_len(bench_args) > 2) {
     startup := bench_first - string.string_to_int(bench_args[2])
-    bench_lines = _strcat(bench_lines, f"sample(\"startup\", {startup}, 0, 0)\n")
+    bench_lines = str_cat(bench_lines, f"sample(\"startup\", {startup}, 0, 0)\n")
 }
 
 bench_path := bench_args[1]
 bench_old := try_read_file(bench_path)
-write_file(bench_path, _strcat(if (bench_old == none) "" else bench_old, bench_lines))
+write_file(bench_path, str_cat(if (bench_old == none) "" else bench_old, bench_lines))
