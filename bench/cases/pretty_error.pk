@@ -1,5 +1,5 @@
-use("pretty")
-use("error")
+import_lib("pretty")
+import_lib("error")
 
 tree(0) := Leaf{}
 tree(n) := Node{tree(n - 1), n, [n, f"s{n}", (n, 'sym)]}

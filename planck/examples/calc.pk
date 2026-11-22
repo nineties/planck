@@ -1,10 +1,10 @@
-use("list")
-use("vector")
-use("string")
-use("table")
-use("symbol")
-use("error")
-use("pretty")
+import_lib("list")
+import_lib("vector")
+import_lib("string")
+import_lib("table")
+import_lib("symbol")
+import_lib("error")
+import_lib("pretty")
 
 cur_file := ""
 cur_src := ""

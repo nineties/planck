@@ -1,4 +1,4 @@
-use("list")
+import_lib("list")
 
 r := 1..4
 print(r)

@@ -1,4 +1,4 @@
-use("list")
+import_lib("list")
 
 xs := list.range(0, 1500)
 ys := list.map(x -> x * 7 % 1009, xs)

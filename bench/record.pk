@@ -1,9 +1,9 @@
 # Copyright (C) 2026 nineties
 
-use("list")
-use("string")
-use("table")
-use("pretty")
+import_lib("list")
+import_lib("string")
+import_lib("table")
+import_lib("pretty")
 
 args := argv()
 out_path := args[1]

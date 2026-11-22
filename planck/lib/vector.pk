@@ -1,7 +1,7 @@
 # Copyright (C) 2026 nineties
 
-use("base")
-use("list")
+import_lib("base")
+import_lib("list")
 
 module vector {
     export record Vector(a) = make_vector

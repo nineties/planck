@@ -1,6 +1,6 @@
 # Copyright (C) 2026 nineties
 
-use("base")
+import_lib("base")
 
 module list {
     export foldl(f, acc, Nil{}) := acc

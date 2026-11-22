@@ -168,8 +168,8 @@ Def{load, Lambda{Tuple{path}, Do{
 Apply{load, Tuple{"planck/peg.pk"}}
 Apply{load, Tuple{"planck/syntax.pk"}}
 
-" planck/lib/use.pk defines use(name), which loads planck/lib/<name>.pk once. It is written in the syntax above. "
+" planck/lib/use.pk defines import_lib(name), which loads planck/lib/<name>.pk once. It is written in the syntax above. "
 Apply{load, Tuple{"planck/lib/use.pk"}}
 
 " planck/lib/pretty.pk defines show, repr and the print that takes pretty and end. It is loaded here, so that every program has them. "
-Apply{use, Tuple{"pretty"}}
+Apply{import_lib, Tuple{"pretty"}}
