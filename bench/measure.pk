@@ -55,7 +55,9 @@ while (r < rounds) {
     r = r + 1
 }
 
-cpuinfo := string.split(read_file("/proc/cpuinfo"), "\n")
+cat_args := array(1)
+cat_args[0] = "/proc/cpuinfo"
+cpuinfo := string.split(run_checked("/bin/cat", cat_args, "")[1], "\n")
 cpu_name := ""
 cpu_count := 0
 for (line in cpuinfo) {
@@ -65,13 +67,21 @@ for (line in cpuinfo) {
     }
 }
 
+os_name := ""
+for (line in string.split(read_file("/etc/os-release"), "\n")) {
+    if (string.starts_with(line, "PRETTY_NAME=")) {
+        value := string.trim(string.join("=", list.drop(string.split(line, "="), 1)))
+        os_name = substr(value, 1, strlen(value) - 1)
+    }
+}
+
 date_args := array(2)
 date_args[0] = "-u"
 date_args[1] = "+%Y-%m-%dT%H:%M:%SZ"
 date_text := run_checked("/bin/date", date_args, "")[1]
 measure_date := substr(date_text, 0, strlen(date_text) - 1)
 
-measure_meta := f"ref={option("ref")}\ncommit={option("commit")}\nprev_ref={option("prev_ref")}\nprev_commit={option("prev_commit")}\nplanck0={option("planck0")}\nnproc={cpu_count}\ncpu={cpu_name}\ndate={measure_date}\nrounds={rounds}\n"
+measure_meta := f"ref={option("ref")}\ncommit={option("commit")}\nprev_ref={option("prev_ref")}\nprev_commit={option("prev_commit")}\nplanck0={option("planck0")}\nnproc={cpu_count}\nos={os_name}\ncpu={cpu_name}\ndate={measure_date}\nrounds={rounds}\n"
 measure_meta_path := f"{measure_out}/meta.txt"
 write_file(measure_meta_path, measure_meta)
 

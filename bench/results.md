@@ -1,6 +1,14 @@
+## Versions and machines
+
+Each column of the tables below is one measured version, named by its tag or branch and the short commit. The commit, the previous version it was compared with, and the machine are in this table.
+
+| version | commit | previous version | OS | CPU | cores | date | planck0 |
+|---|---|---|---|---|---:|---|---|
+| main (e96e20c) | [e96e20c](https://github.com/nineties/planck/commit/e96e20ceb9efe222425dc6ad2dcdcb8d43e1d688) | - | - | - | - | 2026-11-22 | v0.1.1 |
+
 ## Time per benchmark (seconds, median)
 
-| benchmark | main |
+| benchmark | main (e96e20c) |
 |---|---:|
 | use_libs | 2.545 |
 | recursion | 0.187 |
@@ -25,7 +33,7 @@
 
 ## Ratio to the previous release in the same job (current / previous, below 1 is faster)
 
-| benchmark | main |
+| benchmark | main (e96e20c) |
 |---|---:|
 | use_libs | - |
 | recursion | - |
@@ -50,7 +58,7 @@
 
 ## Allocated memory per benchmark (MiB)
 
-| benchmark | main |
+| benchmark | main (e96e20c) |
 |---|---:|
 | use_libs | 55.060 |
 | recursion | 5.363 |
@@ -74,7 +82,7 @@
 
 ## Garbage collections per benchmark
 
-| benchmark | main |
+| benchmark | main (e96e20c) |
 |---|---:|
 | use_libs | 1 |
 | recursion | 0 |
@@ -96,8 +104,3 @@
 | getopt | 0 |
 | syntax_extension | 0 |
 
-## Runs
-
-| ref | commit | date | planck0 | CPU |
-|---|---|---|---|---|
-| main | e96e20c | 2026-11-22 | v0.1.1 |  |

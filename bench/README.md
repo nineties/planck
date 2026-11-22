@@ -52,11 +52,11 @@ The measuring programs need the builtins `time_ns`, `heap_allocated`, `gc_count`
 
 * `measure.pk KEY=VALUE...` runs `run.pk` in the order previous, current, current, previous for the given number of rounds, each in its own checkout, then runs `record.pk` and `report.pk`. The keys are `planck0_bin`, `cur`, `prev`, `out`, `ref`, `commit`, `prev_ref`, `prev_commit`, `planck0`, `rounds`, `summary` and, to record the result, `results` and `results_md`.
 * `run.pk SAMPLES [START]` measures every case once and appends the samples to `SAMPLES`.
-* `record.pk OUT CUR_SAMPLES PREV_SAMPLES META` takes the median of the samples of each case, the ratio to the previous version, and appends one `result(...)` line per case to `OUT`. `PREV_SAMPLES` may be `-`. `META` is a file of `key=value` lines: `ref`, `commit`, `prev_ref`, `prev_commit`, `planck0`, `nproc`, `cpu`, `date`, `rounds`.
+* `record.pk OUT CUR_SAMPLES PREV_SAMPLES META` takes the median of the samples of each case, the ratio to the previous version, and appends one `result(...)` line per case to `OUT`. `PREV_SAMPLES` may be `-`. `META` is a file of `key=value` lines: `ref`, `commit`, `prev_ref`, `prev_commit`, `planck0`, `nproc`, `os`, `cpu`, `date`, `rounds`.
 * `report.pk RESULTS OUT` writes the tables in Markdown from a file of `result(...)` lines.
 * `results.pk` is the record, one line per benchmark and release. `results.md` is the tables made from it.
 
-Fields of a `result` line: case, ref (tag), commit, prev_ref, prev_commit, planck0, nproc, cpu, date, rounds, time in ns (median), previous time in ns, ratio (current / previous, in thousandths), bytes allocated, garbage collections.
+Fields of a `result` line: case, ref (tag), commit, prev_ref, prev_commit, planck0, nproc, os, cpu, date, rounds, time in ns (median), previous time in ns, ratio (current / previous, in thousandths), bytes allocated, garbage collections.
 
 Memory is recorded as the bytes allocated and the garbage collections of each case. These two values do not depend on the speed of the machine.
 

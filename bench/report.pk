@@ -13,12 +13,19 @@ case_names := []
 ref_names := []
 ref_rows := table.new()
 
-result(name, ref, commit, prev_ref, prev_commit, planck0, nproc, cpu, date, rounds, t, prev_t, ratio, heap, gcs) := {
-    key := f"{name}/{ref}"
+commit_url := "https://github.com/nineties/planck/commit"
+short(commit) := substr(commit, 0, 7)
+version_label(ref, commit) := f"{ref} ({short(commit)})"
+commit_link(commit) := f"[{short(commit)}]({commit_url}/{commit})"
+or_dash(s) := if (s == "") "-" else s
+
+result(name, ref, commit, prev_ref, prev_commit, planck0, nproc, os, cpu, date, rounds, t, prev_t, ratio, heap, gcs) := {
+    label := version_label(ref, commit)
+    key := f"{name}/{label}"
     if (not list.member(name, case_names)) case_names = list.append(case_names, [name])
-    if (not list.member(ref, ref_names)) {
-        ref_names = list.append(ref_names, [ref])
-        table.set(ref_rows, ref, (commit, date, planck0, cpu))
+    if (not list.member(label, ref_names)) {
+        ref_names = list.append(ref_names, [label])
+        table.set(ref_rows, label, (ref, commit, prev_ref, prev_commit, planck0, nproc, os, cpu, date))
     }
     table.set(rows, key, (t, ratio, heap, gcs))
 }
@@ -49,22 +56,26 @@ table_lines(title, k, show, only_cases) := {
 
 cases_without_startup := list.filter(name -> name != "startup", case_names)
 
-run_line(ref) := {
-    r := table.get(ref_rows, ref, none)
-    f"| {ref} | {substr(arg(r, 0), 0, 7)} | {substr(arg(r, 1), 0, 10)} | {arg(r, 2)} | {arg(r, 3)} |"
+run_line(label) := {
+    r := table.get(ref_rows, label, none)
+    prev := if (arg(r, 3) == "") "-" else f"{arg(r, 2)} ({commit_link(arg(r, 3))})"
+    cores := if (arg(r, 5) == 0) "-" else f"{arg(r, 5)}"
+    f"| {label} | {commit_link(arg(r, 1))} | {prev} | {or_dash(arg(r, 6))} | {or_dash(arg(r, 7))} | {cores} | {substr(arg(r, 8), 0, 10)} | {arg(r, 4)} |"
 }
 
 runs := list.map(run_line, ref_names)
 
 text := string.join("\n", [
+    "## Versions and machines\n",
+    "Each column of the tables below is one measured version, named by its tag or branch and the short commit. The commit, the previous version it was compared with, and the machine are in this table.\n",
+    "| version | commit | previous version | OS | CPU | cores | date | planck0 |",
+    "|---|---|---|---|---|---:|---|---|",
+    string.join("\n", runs),
+    "",
     table_lines("Time per benchmark (seconds, median)", 0, seconds, case_names),
     table_lines("Ratio to the previous release in the same job (current / previous, below 1 is faster)", 1, milli, case_names),
     table_lines("Allocated memory per benchmark (MiB)", 2, mebibytes, cases_without_startup),
     table_lines("Garbage collections per benchmark", 3, n -> f"{n}", cases_without_startup),
-    "## Runs\n",
-    "| ref | commit | date | planck0 | CPU |",
-    "|---|---|---|---|---|",
-    string.join("\n", runs),
     ""
 ])
 write_file(out_path, text)
