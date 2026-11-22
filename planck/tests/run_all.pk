@@ -1,0 +1,68 @@
+# Copyright (C) 2026 nineties
+
+all_args := argv()
+all_planck0 := all_args[1]
+all_dir := if (array_len(all_args) > 2) all_args[2] else "planck/tests"
+all_skipped := array(3)
+all_skipped[0] = "run_all.pk"
+all_skipped[1] = "define_load.pk"
+all_skipped[2] = "lib.pk"
+all_names := list_dir(all_dir)
+all_total := 0
+all_passed := 0
+
+all_is_skipped(name) := {
+    skipped := false
+    j := 0
+    while (j < array_len(all_skipped)) {
+        if (all_skipped[j] == name) skipped = true
+        j = j + 1
+    }
+    skipped
+}
+
+all_is_test(name) := {
+    n := strlen(name)
+    n > 3 and substr(name, n - 3, n) == ".pk" and not all_is_skipped(name)
+}
+
+all_program(name) := {
+    path := f"{all_dir}/{name}"
+    if (name == "builtins.pk") {
+        program := array(3)
+        program[0] = path
+        program[1] = "one"
+        program[2] = "two words"
+        program
+    } else if (name == "run_errors.pk") {
+        program := array(2)
+        program[0] = path
+        program[1] = all_planck0
+        program
+    } else {
+        program := array(1)
+        program[0] = path
+        program
+    }
+}
+
+all_run(name) := {
+    all_total = all_total + 1
+    r := run_program(all_planck0, all_program(name), "", "")
+    if (r[0] == 0) {
+        all_passed = all_passed + 1
+        print(f"PASS {name}")
+    } else {
+        print(f"FAIL {name}")
+        print(r[1])
+        print(r[2])
+    }
+}
+
+i := 0
+while (i < array_len(all_names)) {
+    if (all_is_test(all_names[i])) all_run(all_names[i])
+    i = i + 1
+}
+print(f"Tests passed {all_passed}/{all_total}")
+if (all_passed != all_total) exit(1)

@@ -1,14 +1,6 @@
 # Copyright (C) 2026 nineties
 
-passed := 0
-failed := 0
-
-check(actual, expected) := if (actual == expected) {
-    passed = passed + 1
-} else {
-    failed = failed + 1
-    print(f"Test failed: expected {expected} but got {actual}")
-}
+import test (*)
 
 fact(n) := if (n == 0) 1 else n * fact(n - 1)
 pow(b, n) := if (n == 0) 1 else b * pow(b, n - 1)
@@ -318,4 +310,4 @@ check(5705259629236764 // 149366390864052834, 0)
 check(5705259629236764 % 149366390864052834, 5705259629236764)
 check(5705259629236764 / 149366390864052834, 0)
 check(5705259629236764 < 149366390864052834, true)
-print(f"Tests passed {passed}/{passed + failed}")
+finish()

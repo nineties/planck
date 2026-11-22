@@ -1,14 +1,6 @@
 # Copyright (C) 2026 nineties
 
-passed := 0
-failed := 0
-
-check(actual, expected) := if (actual == expected) {
-    passed = passed + 1
-} else {
-    failed = failed + 1
-    print(f"Test failed: expected {expected} but got {actual}")
-}
+import test (*)
 
 fib4(0) := 0
 fib4(1) := 1
@@ -104,5 +96,4 @@ check(Tuple{dl_g(0), dl_g(2), dl_g(5)}, Tuple{"loaded g zero", "loaded g two", "
 foldl(f, acc, Tuple{a, b}) = f(f(acc, a), b)
 check(Tuple{foldl(int_add, 0, [1, 2, 3]), foldl(int_add, 0, Tuple{4, 5})}, Tuple{6, 9})
 
-print(f"Tests passed {passed}/{passed + failed}")
-if (failed > 0) exit(1)
+finish()
