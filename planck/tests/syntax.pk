@@ -399,7 +399,7 @@ f := x -> x + 1
 check(f(2), 3)
 check(f(n) + 1, 9)
 check(f"{f(n)}", "8")
-use("pretty")
+import_lib("pretty")
 check(f"list {[1, 2]}", "list [1, 2]")
 check(f"sym {'a} tree {F{1, "s"}}", "sym a tree F{1, \"s\"}")
 
@@ -504,9 +504,9 @@ check(head(tree("for x in xs f(x)")), 'SyntaxError)
 check(head(tree("for (x in xs)")), 'SyntaxError)
 check(head(tree("for (x xs) x")), 'SyntaxError)
 
-use("list")
-use("vector")
-use("table")
+import_lib("list")
+import_lib("vector")
+import_lib("table")
 total := 0
 for (x in [1, 2, 3]) total = total + x
 check(total, 6)

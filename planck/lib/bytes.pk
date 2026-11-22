@@ -1,8 +1,8 @@
 # Copyright (C) 2026 nineties
 
-use("base")
-use("list")
-use("vector")
+import_lib("base")
+import_lib("list")
+import_lib("vector")
 
 module bytes {
     export new() := vector.new()

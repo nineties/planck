@@ -38,7 +38,7 @@ read_preprocessed(path, state, text) := {
     reverse_onto(arg(acc, 1), [])
 }
 
-use(name) := if (table_get(used_libs, name, false)) none else {
+import_lib(name) := if (table_get(used_libs, name, false)) none else {
     table_set(used_libs, name, true)
     path := f"planck/lib/{name}.pk"
     text := read_file(path)
@@ -60,7 +60,7 @@ use(name) := if (table_get(used_libs, name, false)) none else {
 
 " the module that import loads: use of the file loads it, and the module is the variable of the name m "
 _import_module(file, m) := {
-    use(file)
+    import_lib(file)
     eval(m)
 }
 

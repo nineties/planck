@@ -1,8 +1,8 @@
 # Copyright (C) 2026 nineties
 
-use("list")
-use("string")
-use("table")
+import_lib("list")
+import_lib("string")
+import_lib("table")
 
 args := argv()
 in_path := args[1]

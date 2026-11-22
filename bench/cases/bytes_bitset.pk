@@ -1,5 +1,5 @@
-use("bytes")
-use("bitset")
+import_lib("bytes")
+import_lib("bitset")
 
 b := bytes.new()
 i := 0

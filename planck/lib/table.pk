@@ -1,6 +1,6 @@
 # Copyright (C) 2026 nineties
 
-use("list")
+import_lib("list")
 
 module table {
     export new := table_new

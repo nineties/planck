@@ -2,15 +2,15 @@
 
 import test (*)
 
-use("base")
-use("list")
-use("vector")
-use("string")
-use("table")
-use("symbol")
-use("error")
-use("pretty")
-use("getopt")
+import_lib("base")
+import_lib("list")
+import_lib("vector")
+import_lib("string")
+import_lib("table")
+import_lib("symbol")
+import_lib("error")
+import_lib("pretty")
+import_lib("getopt")
 
 check(table.get(used_libs, "list", false), true)
 

@@ -1,5 +1,5 @@
-use("vector")
-use("table")
+import_lib("vector")
+import_lib("table")
 
 v := vector.new()
 i := 0

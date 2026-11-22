@@ -84,7 +84,7 @@ check(Tuple{dl_f(0), dl_f(1), dl_old(0)}, Tuple{"loaded zero", "loaded", "progra
 dl_f(2) := "again"
 dl_f(n) := "again n"
 check(Tuple{dl_f(2), dl_f(0)}, Tuple{"again", "again n"})
-use("list")
+import_lib("list")
 reverse(xs) := "mine"
 check(reverse([1, 2]), "mine")
 strlen(s) := 7

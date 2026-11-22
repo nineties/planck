@@ -1,6 +1,6 @@
 # Copyright (C) 2026 nineties
 
-use("string")
+import_lib("string")
 
 module symbol {
     gensym_count := 0

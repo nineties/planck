@@ -1,8 +1,8 @@
-use("list")
-use("table")
-use("getopt")
-use("string")
-use("pretty")
+import_lib("list")
+import_lib("table")
+import_lib("getopt")
+import_lib("string")
+import_lib("pretty")
 
 say(s) := { print(s) }
 

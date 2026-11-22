@@ -1,6 +1,6 @@
-use("getopt")
-use("table")
-use("list")
+import_lib("getopt")
+import_lib("table")
+import_lib("list")
 
 spec := [Opt{"a", "", false}, Opt{"b", "bold", false}, Opt{"o", "output", true}, Opt{"", "level", true}]
 args := list.list_to_array(["prog", "-ab", "--output=x", "-o", "y", "--level", "3", "f1", "--", "-f2"])

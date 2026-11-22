@@ -1,4 +1,4 @@
-use("string")
+import_lib("string")
 
 join(cs) := {
     r := ""
