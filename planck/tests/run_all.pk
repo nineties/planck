@@ -2,7 +2,10 @@
 
 all_planck0 := argv()[1]
 all_dir := "planck/tests"
-all_skipped := ["run_all.pk", "define_load.pk", "lib.pk"]
+all_skipped := array(3)
+all_skipped[0] = "run_all.pk"
+all_skipped[1] = "define_load.pk"
+all_skipped[2] = "lib.pk"
 all_names := list_dir(all_dir)
 all_total := 0
 all_passed := 0
