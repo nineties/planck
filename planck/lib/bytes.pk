@@ -24,7 +24,7 @@ module bytes {
 
     export u64(b, n) := {
         u32(b, n)
-        u32(b, if (n < 0) -1 else 0)
+        u32(b, bit_sar(n, 32))
     }
 
     export string(b, s) := {

@@ -1,2 +1,0 @@
-print("run")
-bit_shl(1, 30)

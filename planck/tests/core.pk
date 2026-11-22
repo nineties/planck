@@ -13,11 +13,11 @@ Def{check, Lambda{Tuple{e, expected}, Do{
         Do{
             Set{failed, Apply{int_add, Tuple{failed, 1}}},
             Apply{put, Tuple{"Test failed: expected "}},
-            Apply{_print_value, Tuple{expected}},
+            Apply{put, Tuple{Apply{show, Tuple{expected}}}},
             Apply{put, Tuple{" but got "}},
-            Apply{_print_value, Tuple{actual}},
+            Apply{put, Tuple{Apply{show, Tuple{actual}}}},
             Apply{put, Tuple{" for "}},
-            Apply{println, Tuple{e}}
+            Apply{print, Tuple{e}}
             }}
     }}}
 
@@ -419,7 +419,7 @@ Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Pair{1, 2}}}}, "long"}}
 Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Other{1, 2}}}}, "short"}}
 
 Apply{put, Tuple{"Tests passed "}}
-Apply{_print_value, Tuple{passed}}
+Apply{put, Tuple{Apply{_int_text, Tuple{passed}}}}
 Apply{put, Tuple{"/"}}
-Apply{println, Tuple{Apply{int_add, Tuple{passed, failed}}}}
+Apply{print, Tuple{Apply{int_add, Tuple{passed, failed}}}}
 If{Apply{expr_eq, Tuple{failed, 0}}, none, Apply{exit, Tuple{1}}}
