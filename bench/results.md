@@ -1,3 +1,103 @@
-# Benchmark results
+## Time per benchmark (seconds, median)
 
-No result is recorded yet. The workflow adds the tables here when a release tag is pushed.
+| benchmark | bench-strcat-rename |
+|---|---:|
+| use_libs | 2.904 |
+| recursion | 0.215 |
+| match | 0.799 |
+| partial_fusion | 1.107 |
+| list_lib | 2.655 |
+| vector_table | 0.431 |
+| strings | 0.655 |
+| bigint | 2.951 |
+| bytes_bitset | 0.451 |
+| effects_nondet | 0.420 |
+| effects_state | 0.304 |
+| exceptions | 1.306 |
+| macro | 1.040 |
+| gc_alloc | 37.704 |
+| pretty_error | 1.956 |
+| modules_records | 1.367 |
+| loops_closures | 2.991 |
+| getopt | 0.247 |
+| syntax_extension | 1.953 |
+| startup | 12.857 |
+
+## Ratio to the previous release in the same job (current / previous, below 1 is faster)
+
+| benchmark | bench-strcat-rename |
+|---|---:|
+| use_libs | - |
+| recursion | - |
+| match | - |
+| partial_fusion | - |
+| list_lib | - |
+| vector_table | - |
+| strings | - |
+| bigint | - |
+| bytes_bitset | - |
+| effects_nondet | - |
+| effects_state | - |
+| exceptions | - |
+| macro | - |
+| gc_alloc | - |
+| pretty_error | - |
+| modules_records | - |
+| loops_closures | - |
+| getopt | - |
+| syntax_extension | - |
+| startup | - |
+
+## Allocated memory per benchmark (MiB)
+
+| benchmark | bench-strcat-rename |
+|---|---:|
+| use_libs | 55.060 |
+| recursion | 5.363 |
+| match | 23.546 |
+| partial_fusion | 34.570 |
+| list_lib | 10.509 |
+| vector_table | 8.935 |
+| strings | 4.597 |
+| bigint | 57.911 |
+| bytes_bitset | 7.700 |
+| effects_nondet | 8.632 |
+| effects_state | 10.325 |
+| exceptions | 46.036 |
+| macro | 25.819 |
+| gc_alloc | 54.163 |
+| pretty_error | 30.995 |
+| modules_records | 26.064 |
+| loops_closures | 41.676 |
+| getopt | 4.987 |
+| syntax_extension | 11.393 |
+
+## Garbage collections per benchmark
+
+| benchmark | bench-strcat-rename |
+|---|---:|
+| use_libs | 1 |
+| recursion | 0 |
+| match | 0 |
+| partial_fusion | 1 |
+| list_lib | 0 |
+| vector_table | 0 |
+| strings | 0 |
+| bigint | 1 |
+| bytes_bitset | 0 |
+| effects_nondet | 0 |
+| effects_state | 0 |
+| exceptions | 1 |
+| macro | 0 |
+| gc_alloc | 1 |
+| pretty_error | 1 |
+| modules_records | 0 |
+| loops_closures | 1 |
+| getopt | 0 |
+| syntax_extension | 0 |
+
+## Runs
+
+| ref | commit | date | planck0 | CPU |
+|---|---|---|---|---|
+| bench-strcat-rename | 100bb2d | 2026-11-22 | v0.1.1 |  |
