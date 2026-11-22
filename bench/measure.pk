@@ -69,7 +69,7 @@ for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "\n")) {
 cpu_name = f"{cpu_name}, {(memory_kib * 10 // 1048576) // 10}.{(memory_kib * 10 // 1048576) % 10} GiB memory"
 
 os_name := ""
-for (line in string.split(read_file("/etc/os-release"), "\n")) {
+for (line in string.split(unwrap(read_file("/etc/os-release")), "\n")) {
     if (string.starts_with(line, "PRETTY_NAME=")) {
         value := string.trim(string.join("=", list.drop(string.split(line, "="), 1)))
         os_name = substr(value, 1, strlen(value) - 1)
@@ -102,16 +102,19 @@ report_args[2] = this_run_md
 run_checked(measure_planck0, report_args, measure_cur)
 
 append_text(path, text) := {
-    old := try_read_file(path)
+    old := match read_file(path) {
+        Ok{t} -> t
+      | Err{_} -> none
+    }
     write_file(path, str_cat(if (old == none) "" else old, text))
 }
 
 if (option("summary") != "") {
-    append_text(option("summary"), f"# Benchmark {option("ref")}\n{read_file(this_run_md)}")
+    append_text(option("summary"), f"# Benchmark {option("ref")}\n{unwrap(read_file(this_run_md))}")
 }
 
 if (option("results") != "") {
-    append_text(option("results"), read_file(this_run))
+    append_text(option("results"), unwrap(read_file(this_run)))
     report_all := array(3)
     report_all[0] = f"{measure_cur}/bench/report.pk"
     report_all[1] = option("results")

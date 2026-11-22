@@ -16,11 +16,11 @@ errors_check(name) := {
         if (r[0] == 0) {
             print(f"{base}.pk: should stop")
             errors_failed = errors_failed + 1
-        } else if (r[1] != read_file(f"{base}.out")) {
+        } else if (r[1] != unwrap(read_file(f"{base}.out"))) {
             print(f"{base}.pk: the output differs from {base}.out")
             print(r[1])
             errors_failed = errors_failed + 1
-        } else if (r[2] != read_file(f"{base}.err")) {
+        } else if (r[2] != unwrap(read_file(f"{base}.err"))) {
             print(f"{base}.pk: the error message differs from {base}.err")
             print(r[2])
             errors_failed = errors_failed + 1
