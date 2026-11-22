@@ -38,7 +38,7 @@ bench_run(name) := {
     a1 := heap_allocated()
     g1 := gc_count()
     bench_restore()
-    if (bench_out != read_file(f"{bench_dir}/cases/{name}.out")) {
+    if (bench_out != unwrap(read_file(f"{bench_dir}/cases/{name}.out"))) {
         print(f"{name}: output differs from the expected output")
         exit(1)
     }
@@ -53,5 +53,8 @@ if (array_len(bench_args) > 2) {
 }
 
 bench_path := bench_args[1]
-bench_old := try_read_file(bench_path)
+bench_old := match read_file(bench_path) {
+    Ok{t} -> t
+  | Err{_} -> none
+}
 write_file(bench_path, str_cat(if (bench_old == none) "" else bench_old, bench_lines))

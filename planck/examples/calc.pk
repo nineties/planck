@@ -185,7 +185,7 @@ calc(file, src, verbose) := {
 }
 
 print("--- planck/examples/calc.txt")
-src := read_file("planck/examples/calc.txt")
+src := unwrap(read_file("planck/examples/calc.txt"))
 print(src)
 calc("planck/examples/calc.txt", src, true)
 

@@ -11,7 +11,6 @@ Def{none, Quote{none}}
 
 Def{put, os_put}
 Def{read_file, os_read_file}
-Def{try_read_file, os_try_read_file}
 Def{write_file, os_write_file}
 Def{read_bytes, os_read_bytes}
 Def{chmod, os_chmod}
@@ -149,6 +148,13 @@ Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
         Apply{array_set, Tuple{e, 1, v}}},
     none}}}
 
+" === Results of files === "
+" unwrap(r) is x for Ok{x}, and performs Error{none, message} for Err{IoError{stage, path}}. "
+Def{unwrap, Lambda{Tuple{r}, If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quote{Err}}},
+    Perform{Error{none, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{symname, Tuple{Apply{arg, Tuple{Apply{arg, Tuple{r, 0}}, 0}}}}, ": "}},
+        Apply{arg, Tuple{Apply{arg, Tuple{r, 0}}, 1}}}}}},
+    Apply{arg, Tuple{r, 0}}}}}
+
 " === Loading files === "
 " load(path) parses and evaluates the file by the current parse and eval. "
 " The top-level definitions of the file are made while path is the file being loaded. "
@@ -156,7 +162,7 @@ Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
 Def{peg_file_error_text, none}
 Def{_parse0, parse}
 Def{load, Lambda{Tuple{path}, Do{
-    Def{s, Apply{read_file, Tuple{path}}},
+    Def{s, Apply{unwrap, Tuple{Apply{read_file, Tuple{path}}}}},
     Def{s0, s},
     Def{prev, Apply{os_set_file, Tuple{path}}},
     Def{r, none},
