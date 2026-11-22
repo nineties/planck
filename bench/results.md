@@ -54,28 +54,3 @@ Each column of the tables below is one measured version, named by its tag or bra
 | loops_closures | 41.676 |
 | getopt | 4.987 |
 | syntax_extension | 11.393 |
-
-## Garbage collections per benchmark
-
-| benchmark | main (e96e20c) |
-|---|---:|
-| use_libs | 1 |
-| recursion | 0 |
-| match | 0 |
-| partial_fusion | 1 |
-| list_lib | 0 |
-| vector_table | 0 |
-| strings | 0 |
-| bigint | 1 |
-| bytes_bitset | 0 |
-| effects_nondet | 0 |
-| effects_state | 0 |
-| exceptions | 1 |
-| macro | 0 |
-| gc_alloc | 1 |
-| pretty_error | 1 |
-| modules_records | 0 |
-| loops_closures | 1 |
-| getopt | 0 |
-| syntax_extension | 0 |
-
