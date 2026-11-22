@@ -1,8 +1,7 @@
 name: runtests
 on:
-  push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 jobs:
   runtests:
     runs-on: ubuntu-latest
