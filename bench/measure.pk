@@ -17,10 +17,8 @@ option(key) := table.get(measure_options, key, "")
 
 measure_planck0 := option("planck0_bin")
 measure_cur := option("cur")
-measure_prev := option("prev")
 measure_out := option("out")
 measure_samples_cur := f"{measure_out}/samples-cur.pk"
-measure_samples_prev := f"{measure_out}/samples-prev.pk"
 
 run_checked(program, args, dir) := {
     r := run_program(program, args, "", dir)
@@ -41,21 +39,16 @@ measure_once(dir, samples) := {
     run_checked(measure_planck0, args, dir)
 }
 
-measure_round() := {
-    if (measure_prev != "") measure_once(measure_prev, measure_samples_prev)
-    measure_once(measure_cur, measure_samples_cur)
-    measure_once(measure_cur, measure_samples_cur)
-    if (measure_prev != "") measure_once(measure_prev, measure_samples_prev)
-}
-
 rounds := string.string_to_int(option("rounds"))
 r := 0
 while (r < rounds) {
-    measure_round()
+    measure_once(measure_cur, measure_samples_cur)
     r = r + 1
 }
 
-cpuinfo := string.split(read_file("/proc/cpuinfo"), "\n")
+cat_args := array(1)
+cat_args[0] = "/proc/cpuinfo"
+cpuinfo := string.split(run_checked("/bin/cat", cat_args, "")[1], "\n")
 cpu_name := ""
 cpu_count := 0
 for (line in cpuinfo) {
@@ -65,24 +58,31 @@ for (line in cpuinfo) {
     }
 }
 
+os_name := ""
+for (line in string.split(read_file("/etc/os-release"), "\n")) {
+    if (string.starts_with(line, "PRETTY_NAME=")) {
+        value := string.trim(string.join("=", list.drop(string.split(line, "="), 1)))
+        os_name = substr(value, 1, strlen(value) - 1)
+    }
+}
+
 date_args := array(2)
 date_args[0] = "-u"
 date_args[1] = "+%Y-%m-%dT%H:%M:%SZ"
 date_text := run_checked("/bin/date", date_args, "")[1]
 measure_date := substr(date_text, 0, strlen(date_text) - 1)
 
-measure_meta := f"ref={option("ref")}\ncommit={option("commit")}\nprev_ref={option("prev_ref")}\nprev_commit={option("prev_commit")}\nplanck0={option("planck0")}\nnproc={cpu_count}\ncpu={cpu_name}\ndate={measure_date}\nrounds={rounds}\n"
+measure_meta := f"ref={option("ref")}\ncommit={option("commit")}\nplanck0={option("planck0")}\nnproc={cpu_count}\nos={os_name}\ncpu={cpu_name}\ndate={measure_date}\nrounds={rounds}\n"
 measure_meta_path := f"{measure_out}/meta.txt"
 write_file(measure_meta_path, measure_meta)
 
 this_run := f"{measure_out}/this-run.pk"
 this_run_md := f"{measure_out}/this-run.md"
-record_args := array(5)
+record_args := array(4)
 record_args[0] = f"{measure_cur}/bench/record.pk"
 record_args[1] = this_run
 record_args[2] = measure_samples_cur
-record_args[3] = if (measure_prev == "") "-" else measure_samples_prev
-record_args[4] = measure_meta_path
+record_args[3] = measure_meta_path
 run_checked(measure_planck0, record_args, measure_cur)
 
 report_args := array(3)
@@ -97,7 +97,7 @@ append_text(path, text) := {
 }
 
 if (option("summary") != "") {
-    append_text(option("summary"), f"# Benchmark {option("ref")} against {option("prev_ref")}\n{read_file(this_run_md)}")
+    append_text(option("summary"), f"# Benchmark {option("ref")}\n{read_file(this_run_md)}")
 }
 
 if (option("results") != "") {

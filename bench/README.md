@@ -50,20 +50,20 @@ The measuring programs need the builtins `time_ns`, `heap_allocated`, `gc_count`
 
 ## Files
 
-* `measure.pk KEY=VALUE...` runs `run.pk` in the order previous, current, current, previous for the given number of rounds, each in its own checkout, then runs `record.pk` and `report.pk`. The keys are `planck0_bin`, `cur`, `prev`, `out`, `ref`, `commit`, `prev_ref`, `prev_commit`, `planck0`, `rounds`, `summary` and, to record the result, `results` and `results_md`.
+* `measure.pk KEY=VALUE...` runs `run.pk` on the checkout of the measured version for the given number of rounds, then runs `record.pk` and `report.pk`. The keys are `planck0_bin`, `cur`, `out`, `ref`, `commit`, `planck0`, `rounds`, `summary` and, to record the result, `results` and `results_md`.
 * `run.pk SAMPLES [START]` measures every case once and appends the samples to `SAMPLES`.
-* `record.pk OUT CUR_SAMPLES PREV_SAMPLES META` takes the median of the samples of each case, the ratio to the previous version, and appends one `result(...)` line per case to `OUT`. `PREV_SAMPLES` may be `-`. `META` is a file of `key=value` lines: `ref`, `commit`, `prev_ref`, `prev_commit`, `planck0`, `nproc`, `cpu`, `date`, `rounds`.
+* `record.pk OUT CUR_SAMPLES META` takes the median of the samples of each case and appends one `result(...)` line per case to `OUT`. `META` is a file of `key=value` lines: `ref`, `commit`, `planck0`, `nproc`, `os`, `cpu`, `date`, `rounds`.
 * `report.pk RESULTS OUT` writes the tables in Markdown from a file of `result(...)` lines.
 * `results.pk` is the record, one line per benchmark and release. `results.md` is the tables made from it.
 
-Fields of a `result` line: case, ref (tag), commit, prev_ref, prev_commit, planck0, nproc, cpu, date, rounds, time in ns (median), previous time in ns, ratio (current / previous, in thousandths), bytes allocated, garbage collections.
+Fields of a `result` line: case, ref (tag or branch), commit, planck0, nproc, os, cpu, date, rounds, time in ns (median), bytes allocated, garbage collections.
 
 Memory is recorded as the bytes allocated and the garbage collections of each case. These two values do not depend on the speed of the machine.
 
 ## Recording
 
-The workflow `.github/workflows/bench.yml` runs on GitHub Actions. Shared runners differ in speed from one run to the next, so the workflow never compares numbers from different jobs. Inside one job, the previous release and the measured version run alternately (previous, current, current, previous) for the number of rounds, and the ratio of the medians is recorded together with the CPU name of the runner. Compare ratios between releases; absolute seconds are only comparable between rows that share a CPU name.
+The workflow `.github/workflows/bench.yml` runs on GitHub Actions. Shared runners differ in speed from one run to the next, so the record keeps the OS, the CPU name and the number of cores of the runner and the commit of the measured version next to every column. Seconds are only comparable between columns that share a CPU name.
 
-* A push of a tag `v*` measures that tag against the release before it and opens a pull request that adds the lines to `results.pk` and regenerates `results.md`. Merging the pull request is a human decision.
-* A manual run (`workflow_dispatch`) takes the version to measure (branch, tag or commit), the version to compare with (empty means the release before the measured one), the number of rounds, and whether to open the pull request (default: no). The tables always appear in the summary of the run.
+* A push of a tag `v*` measures that tag and opens a pull request that adds the lines to `results.pk` and regenerates `results.md`. Merging the pull request is a human decision.
+* A manual run (`workflow_dispatch`) takes the version to measure (branch, tag or commit), the number of runs, and whether to open the pull request (default: no). The tables always appear in the summary of the run.
 * The repository setting "Allow GitHub Actions to create and approve pull requests" has to be on for the pull request.
