@@ -1,0 +1,25 @@
+# Copyright (C) 2026 nineties
+
+module test {
+    passed := 0
+    failed := 0
+    current := ""
+
+    export section(name) := {
+        current = name
+        print(f"== {name}")
+    }
+
+    export check(actual, expected) := if (actual == expected) {
+        passed = passed + 1
+    } else {
+        failed = failed + 1
+        if (current == "") print(f"Test failed: expected {expected} but got {actual}")
+        else print(f"Test failed in {current}: expected {expected} but got {actual}")
+    }
+
+    export finish() := {
+        print(f"Tests passed {passed}/{passed + failed}")
+        if (failed > 0) exit(1)
+    }
+}

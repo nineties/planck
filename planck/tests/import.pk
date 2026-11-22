@@ -1,14 +1,6 @@
 # Copyright (C) 2026 nineties
 
-passed := 0
-failed := 0
-
-check(actual, expected) := if (actual == expected) {
-    passed = passed + 1
-} else {
-    failed = failed + 1
-    print(f"Test failed: expected {expected} but got {actual}")
-}
+import test (*)
 
 import bitset
 b := bitset.new(40)
@@ -45,5 +37,4 @@ b2 := new(40)
 add(b2, 5)
 check(to_list(b2), [5])
 
-print(f"Tests passed {passed}/{passed + failed}")
-if (failed > 0) exit(1)
+finish()

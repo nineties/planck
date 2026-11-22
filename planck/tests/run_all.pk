@@ -1,7 +1,8 @@
 # Copyright (C) 2026 nineties
 
-all_planck0 := argv()[1]
-all_dir := "planck/tests"
+all_args := argv()
+all_planck0 := all_args[1]
+all_dir := if (array_len(all_args) > 2) all_args[2] else "planck/tests"
 all_skipped := array(3)
 all_skipped[0] = "run_all.pk"
 all_skipped[1] = "define_load.pk"

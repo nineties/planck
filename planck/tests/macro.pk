@@ -1,14 +1,6 @@
 # Copyright (C) 2026 nineties
 
-passed := 0
-failed := 0
-
-check(actual, expected) := if (actual == expected) {
-    passed = passed + 1
-} else {
-    failed = failed + 1
-    print(f"Test failed: expected {expected} but got {actual}")
-}
+import test (*)
 
 tree(s) := arg(peg_parse('toplevel, s), 0)
 
@@ -110,5 +102,4 @@ module p {
 check(p.get(), 9)
 check(expand_macro('Deep{1}, 0), 'Deep{1})
 
-print(f"passed {passed}, failed {failed}")
-if (failed > 0) exit(1)
+finish()
