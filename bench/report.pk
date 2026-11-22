@@ -73,7 +73,6 @@ text := string.join("\n", [
     "",
     table_lines("Time per benchmark (seconds, median)", 0, seconds, case_names),
     table_lines("Allocated memory per benchmark (MiB)", 1, mebibytes, cases_without_startup),
-    table_lines("Garbage collections per benchmark", 2, n -> f"{n}", cases_without_startup),
     ""
 ])
 write_file(out_path, text)

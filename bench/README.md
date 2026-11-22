@@ -56,9 +56,9 @@ The measuring programs need the builtins `time_ns`, `heap_allocated`, `gc_count`
 * `report.pk RESULTS OUT` writes the tables in Markdown from a file of `result(...)` lines.
 * `results.pk` is the record, one line per benchmark and release. `results.md` is the tables made from it.
 
-Fields of a `result` line: case, ref (tag or branch), commit, planck0, nproc, os, cpu, date, rounds, time in ns (median), bytes allocated, garbage collections.
+Fields of a `result` line: case, ref (tag or branch), commit, planck0, nproc, os, cpu (with the memory size), date, rounds, time in ns (median), bytes allocated, garbage collections.
 
-Memory is recorded as the bytes allocated and the garbage collections of each case. These two values do not depend on the speed of the machine.
+Memory is recorded as the bytes allocated and the garbage collections of each case. These two values do not depend on the speed of the machine. The tables show the bytes allocated only.
 
 ## Recording
 
