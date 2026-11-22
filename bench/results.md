@@ -1,10 +1,10 @@
 ## Versions and machines
 
-Each column of the tables below is one measured version, named by its tag or branch and the short commit. The commit, the previous version it was compared with, and the machine are in this table.
+Each column of the tables below is one measured version, named by its tag or branch and the short commit. The commit and the machine are in this table.
 
-| version | commit | previous version | OS | CPU | cores | date | planck0 |
-|---|---|---|---|---|---:|---|---|
-| main (e96e20c) | [e96e20c](https://github.com/nineties/planck/commit/e96e20ceb9efe222425dc6ad2dcdcb8d43e1d688) | - | - | - | - | 2026-11-22 | v0.1.1 |
+| version | commit | OS | CPU | cores | date | planck0 |
+|---|---|---|---|---:|---|---|
+| main (e96e20c) | [e96e20c](https://github.com/nineties/planck/commit/e96e20ceb9efe222425dc6ad2dcdcb8d43e1d688) | - | - | - | 2026-11-22 | v0.1.1 |
 
 ## Time per benchmark (seconds, median)
 
@@ -30,31 +30,6 @@ Each column of the tables below is one measured version, named by its tag or bra
 | getopt | 0.214 |
 | syntax_extension | 2.055 |
 | startup | 11.184 |
-
-## Ratio to the previous release in the same job (current / previous, below 1 is faster)
-
-| benchmark | main (e96e20c) |
-|---|---:|
-| use_libs | - |
-| recursion | - |
-| match | - |
-| partial_fusion | - |
-| list_lib | - |
-| vector_table | - |
-| strings | - |
-| bigint | - |
-| bytes_bitset | - |
-| effects_nondet | - |
-| effects_state | - |
-| exceptions | - |
-| macro | - |
-| gc_alloc | - |
-| pretty_error | - |
-| modules_records | - |
-| loops_closures | - |
-| getopt | - |
-| syntax_extension | - |
-| startup | - |
 
 ## Allocated memory per benchmark (MiB)
 

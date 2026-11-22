@@ -8,14 +8,10 @@ on:
         description: Version to measure (branch, tag or commit)
         required: true
         default: main
-      prev_ref:
-        description: Version to compare with (empty means the release before the measured one)
-        required: false
-        default: ''
       rounds:
-        description: Rounds of previous, current, current, previous runs
+        description: Number of runs of the measured version
         required: false
-        default: '3'
+        default: '5'
       pr:
         description: Open a pull request that records the result in bench/results.md
         type: boolean
@@ -37,43 +33,23 @@ jobs:
         working-directory: repo
         env:
           INPUT_REF: ${{ inputs.ref }}
-          INPUT_PREV: ${{ inputs.prev_ref }}
           INPUT_ROUNDS: ${{ inputs.rounds }}
           INPUT_PR: ${{ inputs.pr }}
         run: |
           ref=${INPUT_REF:-$GITHUB_REF_NAME}
           commit=$(git rev-parse --verify -q "$ref^{commit}" || git rev-parse --verify -q "origin/$ref^{commit}")
-          prev=$INPUT_PREV
-          if [ -z "$prev" ]; then
-            prev=$(git tag --merged "$commit" --sort=-v:refname | grep -vx "$ref" | head -1 || true)
-          fi
-          prev_commit=
-          if [ -n "$prev" ]; then
-            prev_commit=$(git rev-parse --verify -q "$prev^{commit}" || git rev-parse --verify -q "origin/$prev^{commit}")
-          fi
-          if [ "$prev_commit" = "$commit" ]; then
-            prev=
-            prev_commit=
-          fi
           if [ "$GITHUB_EVENT_NAME" = push ] || [ "$INPUT_PR" = true ]; then record=true; else record=false; fi
           git show "$commit:bench/run.pk" > /dev/null
           {
             echo "ref=$ref"
             echo "commit=$commit"
-            echo "prev_ref=$prev"
-            echo "prev_commit=$prev_commit"
-            echo "rounds=${INPUT_ROUNDS:-3}"
+            echo "rounds=${INPUT_ROUNDS:-5}"
             echo "record=$record"
           } >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           ref: ${{ steps.refs.outputs.commit }}
           path: cur
-      - uses: actions/checkout@v4
-        if: steps.refs.outputs.prev_commit != ''
-        with:
-          ref: ${{ steps.refs.outputs.prev_commit }}
-          path: prev
       - name: Download the latest planck0
         run: |
           gh release download --repo nineties/hex-to-compiler --pattern "planck0*"
@@ -91,19 +67,15 @@ jobs:
         env:
           REF: ${{ steps.refs.outputs.ref }}
           COMMIT: ${{ steps.refs.outputs.commit }}
-          PREV_REF: ${{ steps.refs.outputs.prev_ref }}
-          PREV_COMMIT: ${{ steps.refs.outputs.prev_commit }}
           ROUNDS: ${{ steps.refs.outputs.rounds }}
           RECORD: ${{ steps.refs.outputs.record }}
         run: |
           mkdir out
-          prev=
-          if [ -d prev ]; then prev=$PWD/prev; fi
           results=
           results_md=
           if [ "$RECORD" = true ]; then results=$PWD/main/bench/results.pk; results_md=$PWD/main/bench/results.md; fi
           cd cur
-          ../planck0 bench/measure.pk "planck0_bin=$PWD/../planck0" "cur=$PWD" "prev=$prev" "out=$PWD/../out" "ref=$REF" "commit=$COMMIT" "prev_ref=$PREV_REF" "prev_commit=$PREV_COMMIT" "planck0=$(cat ../planck0.version)" "rounds=$ROUNDS" "summary=$GITHUB_STEP_SUMMARY" "results=$results" "results_md=$results_md"
+          ../planck0 bench/measure.pk "planck0_bin=$PWD/../planck0" "cur=$PWD" "out=$PWD/../out" "ref=$REF" "commit=$COMMIT" "planck0=$(cat ../planck0.version)" "rounds=$ROUNDS" "summary=$GITHUB_STEP_SUMMARY" "results=$results" "results_md=$results_md"
       - uses: actions/upload-artifact@v4
         with:
           name: samples

@@ -8,10 +8,9 @@ use("pretty")
 args := argv()
 out_path := args[1]
 cur_path := args[2]
-prev_path := args[3]
 
 meta := table.new()
-for (line in string.split(read_file(args[4]), "\n")) {
+for (line in string.split(read_file(args[3]), "\n")) {
     parts := string.split(line, "=")
     if (list.length(parts) > 1) table.set(meta, list.nth(parts, 0), string.join("=", list.drop(parts, 1)))
 }
@@ -42,22 +41,17 @@ median(xs) := {
 field_median(samples, k) := median(list.map(s -> arg(s, k), samples))
 
 q(s) := pretty.quote_string(s)
-opt(x) := if (x == none) "none" else f"{x}"
 get_meta(k) := table.get(meta, k, "")
 
 cur := collect(cur_path)
 cur_table := arg(cur, 0)
 names := arg(cur, 1)
-prev_table := if (prev_path == "-") none else arg(collect(prev_path), 0)
 
 lines := ""
 for (name in names) {
     samples := table.get(cur_table, name, [])
     t := field_median(samples, 0)
-    prev_samples := if (prev_table == none) [] else table.get(prev_table, name, [])
-    prev_t := if (prev_samples == []) none else field_median(prev_samples, 0)
-    ratio := if (prev_t == none) none else t * 1000 // prev_t
-    line := f"result({q(name)}, {q(get_meta("ref"))}, {q(get_meta("commit"))}, {q(get_meta("prev_ref"))}, {q(get_meta("prev_commit"))}, {q(get_meta("planck0"))}, {string.string_to_int(get_meta("nproc"))}, {q(get_meta("os"))}, {q(get_meta("cpu"))}, {q(get_meta("date"))}, {string.string_to_int(get_meta("rounds"))}, {t}, {opt(prev_t)}, {opt(ratio)}, {field_median(samples, 1)}, {field_median(samples, 2)})\n"
+    line := f"result({q(name)}, {q(get_meta("ref"))}, {q(get_meta("commit"))}, {q(get_meta("planck0"))}, {string.string_to_int(get_meta("nproc"))}, {q(get_meta("os"))}, {q(get_meta("cpu"))}, {q(get_meta("date"))}, {string.string_to_int(get_meta("rounds"))}, {t}, {field_median(samples, 1)}, {field_median(samples, 2)})\n"
     lines = str_cat(lines, line)
 }
 
