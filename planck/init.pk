@@ -123,22 +123,28 @@ Def{unwrap, Lambda{Tuple{r}, If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quot
 " The top-level definitions of the file are made while path is the file being loaded. "
 " A syntax error is printed as file:line:column: syntax error: message, once planck/syntax.pk has replaced parse and planck/peg.pk has defined peg_file_error_text. "
 Def{peg_file_error_text, none}
+" parse_from(s, pos) is the parse of the text s from the byte position pos: Tuple{value, next position}. planck/syntax.pk defines it. "
+Def{parse_from, none}
 Def{load, Apply{Lambda{Tuple{}, Do{
     Def{_parse0, parse},
     Lambda{Tuple{path}, Do{
         Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
         Def{s0, s},
+        Def{pos, 0},
+        Def{next, 0},
         Def{prev, Apply{os_set_file, Tuple{path}}},
         Def{r, none},
         Def{e, none},
         Def{go, true},
         While{go, Do{
-            Set{r, Apply{parse, Tuple{s}}},
+            Def{by_pos, Apply{expr_ne, Tuple{parse, _parse0}}},
+            Set{r, If{by_pos, Apply{parse_from, Tuple{s0, pos}}, Apply{parse, Tuple{s}}}},
             Set{e, Apply{arg, Tuple{r, 0}}},
+            Set{next, If{by_pos, Apply{arg, Tuple{r, 1}}, Apply{int_sub, Tuple{Apply{str_len, Tuple{s0}}, Apply{str_len, Tuple{Apply{arg, Tuple{r, 1}}}}}}}},
             If{Apply{expr_eq, Tuple{e, Eof{}}}, Set{go, false},
             If{If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
                 Do{
-                    Def{text, If{Apply{expr_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, s}}, none}},
+                    Def{text, If{Apply{expr_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, pos}}, none}},
                     If{Apply{expr_eq, Tuple{text, none}},
                         Do{
                             Apply{os_put, Tuple{path}},
@@ -148,7 +154,8 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                     Apply{os_exit, Tuple{1}}},
                 Do{
                     Apply{eval, Tuple{e}},
-                    Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
+                    Set{pos, next},
+                    Set{s, If{Apply{expr_ne, Tuple{parse, _parse0}}, s0, Apply{arg, Tuple{r, 1}}}}}}}}},
         Apply{os_set_file, Tuple{prev}},
         none}}}}, Tuple{}}}
 
