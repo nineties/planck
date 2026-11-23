@@ -12,6 +12,11 @@ rows := table.new()
 case_names := []
 ref_names := []
 ref_rows := table.new()
+machine_text := ""
+
+machine(os, cpu, nproc) := {
+    machine_text = f"{os}, {cpu}, {nproc} cores"
+}
 
 commit_url := "https://github.com/nineties/planck/commit"
 short(commit) := str_sub(commit, 0, 7)
@@ -19,13 +24,13 @@ version_label(ref, commit) := f"{ref} ({short(commit)})"
 commit_link(commit) := f"[{short(commit)}]({commit_url}/{commit})"
 or_dash(s) := if (s == "") "-" else s
 
-result(name, ref, commit, planck0, nproc, os, cpu, date, rounds, t, heap, gcs) := {
+result(name, ref, commit, planck0, date, rounds, t, heap, gcs) := {
     label := version_label(ref, commit)
     key := f"{name}/{label}"
     if (not list.member(name, case_names)) case_names = list.append(case_names, [name])
     if (not list.member(label, ref_names)) {
         ref_names = list.append(ref_names, [label])
-        table.set(ref_rows, label, (ref, commit, planck0, nproc, os, cpu, date))
+        table.set(ref_rows, label, (ref, commit, planck0, date))
     }
     table.set(rows, key, (t, heap, gcs))
 }
@@ -58,17 +63,18 @@ cases_without_startup := list.filter(name -> name != "startup", case_names)
 
 run_line(label) := {
     r := table.get(ref_rows, label, none)
-    cores := if (arg(r, 3) == 0) "-" else f"{arg(r, 3)}"
-    f"| {label} | {commit_link(arg(r, 1))} | {or_dash(arg(r, 4))} | {or_dash(arg(r, 5))} | {cores} | {str_sub(arg(r, 6), 0, 10)} | {arg(r, 2)} |"
+    f"| {label} | {commit_link(arg(r, 1))} | {str_sub(arg(r, 3), 0, 10)} | {arg(r, 2)} |"
 }
 
 runs := list.map(run_line, ref_names)
 
 text := string.join("\n", [
-    "## Versions and machines\n",
-    "Each column of the tables below is one measured version, named by its tag or branch and the short commit. The commit and the machine are in this table.\n",
-    "| version | commit | OS | CPU | cores | date | planck0 |",
-    "|---|---|---|---|---:|---|---|",
+    "## Machine\n",
+    f"Every version is measured on the same machine: {or_dash(machine_text)}.\n",
+    "## Versions\n",
+    "Each column of the tables below is one measured version, named by its tag or branch and the short commit. The commit is in this table.\n",
+    "| version | commit | date | planck0 |",
+    "|---|---|---|---|",
     string.join("\n", runs),
     "",
     table_lines("Time per benchmark (seconds, median)", 0, seconds, case_names),

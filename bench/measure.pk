@@ -114,7 +114,13 @@ if (option("summary") != "") {
 }
 
 if (option("results") != "") {
-    append_text(option("results"), unwrap(os_read_file(this_run)))
+    results_old := match os_read_file(option("results")) {
+        Ok{t} -> t
+      | Err{_} -> ""
+    }
+    run_lines := string.split(unwrap(os_read_file(this_run)), "\n")
+    recorded := if (string.starts_with(results_old, "machine(")) list.drop(run_lines, 1) else run_lines
+    append_text(option("results"), string.join("\n", recorded))
     report_all := array_new(3)
     report_all[0] = f"{measure_cur}/bench/report.pk"
     report_all[1] = option("results")

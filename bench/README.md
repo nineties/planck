@@ -52,17 +52,17 @@ The measuring programs need the builtins `os_time_ns`, `gc_heap_allocated`, `gc_
 
 * `measure.pk KEY=VALUE...` runs `run.pk` on the checkout of the measured version for the given number of rounds, then runs `record.pk` and `report.pk`. The keys are `planck0_bin`, `cur`, `out`, `ref`, `commit`, `planck0`, `rounds`, `summary` and, to record the result, `results` and `results_md`.
 * `run.pk SAMPLES [START]` measures every case once and appends the samples to `SAMPLES`.
-* `record.pk OUT CUR_SAMPLES META` takes the median of the samples of each case and appends one `result(...)` line per case to `OUT`. `META` is a file of `key=value` lines: `ref`, `commit`, `planck0`, `nproc`, `os`, `cpu`, `date`, `rounds`.
+* `record.pk OUT CUR_SAMPLES META` takes the median of the samples of each case and appends one `machine(...)` line and one `result(...)` line per case to `OUT`. `META` is a file of `key=value` lines: `ref`, `commit`, `planck0`, `nproc`, `os`, `cpu`, `date`, `rounds`.
 * `report.pk RESULTS OUT` writes the tables in Markdown from a file of `result(...)` lines.
 * `results.pk` is the record, one line per benchmark and release. `results.md` is the tables made from it.
 
-Fields of a `result` line: case, ref (tag or branch), commit, planck0, nproc, os, cpu (with the memory size), date, rounds, time in ns (median), bytes allocated, garbage collections.
+Fields of a `result` line: case, ref (tag or branch), commit, planck0, date, rounds, time in ns (median), bytes allocated, garbage collections. The machine is not repeated in them. `results.pk` starts with one `machine(os, cpu with the memory size, nproc)` line, which is written by the first recorded run.
 
 Memory is recorded as the bytes allocated and the garbage collections of each case. These two values do not depend on the speed of the machine. The tables show the bytes allocated only.
 
 ## Recording
 
-The workflow `.github/workflows/bench.yml` runs on GitHub Actions. Shared runners differ in speed from one run to the next, so the record keeps the OS, the CPU name and the number of cores of the runner and the commit of the measured version next to every column. Seconds are only comparable between columns that share a CPU name.
+The workflow `.github/workflows/bench.yml` runs on GitHub Actions. The job runs on the dedicated VM `benchmark` (runner label `planck-bench`), which is started for the run and stopped after it. Every version is measured on this one machine, so the record keeps the OS, the CPU name and the number of cores once, in the `machine` line, and the commit of the measured version next to every column.
 
 * A push of a tag `v*` measures that tag and opens a pull request that adds the lines to `results.pk` and regenerates `results.md`. Merging the pull request is a human decision.
 * A manual run (`workflow_dispatch`) takes the version to measure (branch, tag or commit), the number of runs, and whether to open the pull request (default: no). The tables always appear in the summary of the run.
