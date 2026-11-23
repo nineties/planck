@@ -26,17 +26,17 @@ Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 " === Output === "
 " text(x) is the text of x on one line. A string is its characters, an integer is its decimal digits, a symbol is its name, an expression is its head and its arguments in braces. An array and a function are <array> and <function>. "
 Def{_int_text, none}
-Def{_args_text, none}
 Def{text, none}
 Set{_int_text, Lambda{Tuple{n}, If{Apply{int_lt, Tuple{n, 0}}, Apply{str_cat, Tuple{"-", Apply{_int_text, Tuple{Apply{int_sub, Tuple{0, n}}}}}},
     If{Apply{int_lt, Tuple{n, 10}}, Apply{str_sub, Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
         Apply{str_cat, Tuple{Apply{_int_text, Tuple{Apply{int_div, Tuple{n, 10}}}}, Apply{_int_text, Tuple{Apply{int_mod, Tuple{n, 10}}}}}}}}}}
+Set{text, Apply{Lambda{Tuple{}, Do{
+Def{_args_text, none},
 Set{_args_text, Lambda{Tuple{e, i}, If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
     Apply{str_cat, Tuple{Apply{text, Tuple{Apply{arg, Tuple{e, i}}}},
         If{Apply{int_lt, Tuple{Apply{int_add, Tuple{i, 1}}, Apply{arity, Tuple{e}}}},
             Apply{str_cat, Tuple{", ", Apply{_args_text, Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
-            ""}}}}}}
-Set{text,
+            ""}}}}}},
 Fusion{Lambda{Tuple{_TypeOf{x, String}}, x},
     Fusion{Lambda{Tuple{_TypeOf{x, Int}}, Apply{_int_text, Tuple{x}}},
         Fusion{Lambda{Tuple{_TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
@@ -45,7 +45,7 @@ Fusion{Lambda{Tuple{_TypeOf{x, String}}, x},
                     Fusion{Lambda{Tuple{_TypeOf{x, Type}}, Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}}},
                         Fusion{Lambda{Tuple{_TypeOf{x, Function}}, "<function>"},
                             Fusion{Lambda{Tuple{_TypeOf{x, Plain}}, "<function>"},
-                                Lambda{Tuple{x}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{expr_type, Tuple{x}}}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}}}}}}}}}}}
+                                Lambda{Tuple{x}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{expr_type, Tuple{x}}}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}}}}}}}}}}}}, Tuple{}}}
 Def{_put_value, Lambda{Tuple{x}, Apply{os_put, Tuple{Apply{text, Tuple{x}}}}}}
 " print(x) writes text(x) and a new line. Until lib/pretty.pk is loaded, which is at the end of this file, this is the print. lib/pretty.pk then sets print to write the value as pretty.text(x, 60) does, and takes the argument pretty, and sets repr. "
 Def{print, Lambda{Tuple{x}, Do{Apply{_put_value, Tuple{x}}, Apply{os_put, Tuple{"\n"}}}}}
@@ -56,17 +56,17 @@ Def{repr, none}
 " A table is a Table, whose field is an array | buckets | number of entries |. Each bucket is a chain of entries "
 " | key | value | next entry or none | hash of the key |. Keys are compared by eq. "
 " The number of buckets doubles when there are more entries than buckets. "
-Def{_table_type, Apply{expr_record, Tuple{Quote{Table}, Quote{Tuple{a}}}}}
+Def{Table, none}
 
-Def{Table, Apply{arg, Tuple{_table_type, 0}}}
-
-Def{_make_table, Apply{arg, Tuple{_table_type, 1}}}
-
-Def{table_new, Lambda{Tuple{}, Do{
+Def{table_new, Apply{Lambda{Tuple{}, Do{
+    Def{_table_type, Apply{expr_record, Tuple{Quote{Table}, Quote{Tuple{a}}}}},
+    Set{Table, Apply{arg, Tuple{_table_type, 0}}},
+    Def{_make_table, Apply{arg, Tuple{_table_type, 1}}},
+    Lambda{Tuple{}, Do{
     Def{t, Apply{array_new, Tuple{2}}},
     Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
     Apply{array_set, Tuple{t, 1, 0}},
-    Apply{_make_table, Tuple{t}}}}}
+    Apply{_make_table, Tuple{t}}}}}}, Tuple{}}}
 
 Def{table_find, Lambda{Tuple{t, k, h}, Do{
     Def{b, Apply{array_get, Tuple{t, 0}}},
@@ -84,6 +84,7 @@ Def{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
     Def{e, Apply{table_find, Tuple{t, k, Apply{expr_hash, Tuple{k}}}}},
     If{Apply{expr_eq, Tuple{e, none}}, default, Apply{array_get, Tuple{e, 1}}}}}}
 
+Def{table_set, Apply{Lambda{Tuple{}, Do{
 Def{table_grow, Lambda{Tuple{t}, Do{
     Def{old, Apply{array_get, Tuple{t, 0}}},
     Def{m, Apply{int_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
@@ -101,9 +102,8 @@ Def{table_grow, Lambda{Tuple{t}, Do{
             Apply{array_set, Tuple{nb, j, e}},
             Set{e, next}}},
         Set{i, Apply{int_add, Tuple{i, 1}}}}},
-    Apply{array_set, Tuple{t, 0, nb}}}}}
-
-Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
+    Apply{array_set, Tuple{t, 0, nb}}}}},
+Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
     Def{t, Apply{arg, Tuple{tb, 0}}},
     Def{h, Apply{expr_hash, Tuple{k}}},
     Def{e, Apply{table_find, Tuple{t, k, h}}},
@@ -120,7 +120,7 @@ Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
         Apply{array_set, Tuple{t, 1, c}},
         If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}}, Apply{table_grow, Tuple{t}}, none}},
         Apply{array_set, Tuple{e, 1, v}}},
-    none}}}
+    none}}}}, Tuple{}}}
 
 " === Results of files === "
 " unwrap(r) is x for Ok{x}, and performs Error{none, message} for Err{IoError{stage, path}}. "
@@ -134,8 +134,9 @@ Def{unwrap, Lambda{Tuple{r}, If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quot
 " The top-level definitions of the file are made while path is the file being loaded. "
 " A syntax error is printed as file:line:column: syntax error: message, once planck/syntax.pk has replaced parse and planck/peg.pk has defined peg_file_error_text. "
 Def{peg_file_error_text, none}
-Def{_parse0, parse}
-Def{load, Lambda{Tuple{path}, Do{
+Def{load, Apply{Lambda{Tuple{}, Do{
+Def{_parse0, parse},
+Lambda{Tuple{path}, Do{
     Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
     Def{s0, s},
     Def{prev, Apply{os_set_file, Tuple{path}}},
@@ -160,7 +161,7 @@ Def{load, Lambda{Tuple{path}, Do{
                 Apply{eval, Tuple{e}},
                 Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
     Apply{os_set_file, Tuple{prev}},
-    none}}}
+    none}}}}, Tuple{}}}
 
 " === Syntax === "
 " planck/syntax.pk replaces parse. The files after it are read by the new syntax. "
