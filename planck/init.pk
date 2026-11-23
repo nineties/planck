@@ -20,21 +20,21 @@ Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 " text(x) is the text of x on one line. A string is its characters, an integer is its decimal digits, a symbol is its name, an expression is its head and its arguments in braces. An array and a function are <array> and <function>. "
 Def{text, none}
 Set{text, Apply{Lambda{Tuple{}, Do{
-Def{_args_text, none},
-Set{_args_text, Lambda{Tuple{e, i}, If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
-    Apply{str_cat, Tuple{Apply{text, Tuple{Apply{arg, Tuple{e, i}}}},
-        If{Apply{int_lt, Tuple{Apply{int_add, Tuple{i, 1}}, Apply{arity, Tuple{e}}}},
-            Apply{str_cat, Tuple{", ", Apply{_args_text, Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
-            ""}}}}}},
-Fusion{Lambda{Tuple{_TypeOf{x, String}}, x},
-Fusion{Lambda{Tuple{_TypeOf{x, Int}}, Apply{int_to_string, Tuple{x}}},
-Fusion{Lambda{Tuple{_TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
-Fusion{Lambda{Tuple{_TypeOf{x, Expr}}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{head, Tuple{x}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}},
-Fusion{Lambda{Tuple{_TypeOf{x, Array}}, "<array>"},
-Fusion{Lambda{Tuple{_TypeOf{x, Type}}, Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}}},
-Fusion{Lambda{Tuple{_TypeOf{x, Function}}, "<function>"},
-Fusion{Lambda{Tuple{_TypeOf{x, Plain}}, "<function>"},
-Lambda{Tuple{x}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{expr_type, Tuple{x}}}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}}}}}}}}}}}}, Tuple{}}}
+    Def{_args_text, none},
+    Set{_args_text, Lambda{Tuple{e, i}, If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
+        Apply{str_cat, Tuple{Apply{text, Tuple{Apply{arg, Tuple{e, i}}}},
+            If{Apply{int_lt, Tuple{Apply{int_add, Tuple{i, 1}}, Apply{arity, Tuple{e}}}},
+                Apply{str_cat, Tuple{", ", Apply{_args_text, Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
+                ""}}}}}},
+    Fusion{Lambda{Tuple{_TypeOf{x, String}}, x},
+    Fusion{Lambda{Tuple{_TypeOf{x, Int}}, Apply{int_to_string, Tuple{x}}},
+    Fusion{Lambda{Tuple{_TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
+    Fusion{Lambda{Tuple{_TypeOf{x, Expr}}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{head, Tuple{x}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}},
+    Fusion{Lambda{Tuple{_TypeOf{x, Array}}, "<array>"},
+    Fusion{Lambda{Tuple{_TypeOf{x, Type}}, Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}}},
+    Fusion{Lambda{Tuple{_TypeOf{x, Function}}, "<function>"},
+    Fusion{Lambda{Tuple{_TypeOf{x, Plain}}, "<function>"},
+    Lambda{Tuple{x}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{expr_type, Tuple{x}}}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}}}}}}}}}}}}, Tuple{}}}
 Def{_put_value, Lambda{Tuple{x}, Apply{os_put, Tuple{Apply{text, Tuple{x}}}}}}
 " print(x) writes text(x) and a new line. Until lib/pretty.pk is loaded, which is at the end of this file, this is the print. lib/pretty.pk then sets print to write the value as pretty.text(x, 60) does, and takes the argument pretty, and sets repr. "
 Def{print, Lambda{Tuple{x}, Do{Apply{_put_value, Tuple{x}}, Apply{os_put, Tuple{"\n"}}}}}
@@ -74,42 +74,42 @@ Def{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
     If{Apply{expr_eq, Tuple{e, none}}, default, Apply{array_get, Tuple{e, 1}}}}}}
 
 Def{table_set, Apply{Lambda{Tuple{}, Do{
-Def{table_grow, Lambda{Tuple{t}, Do{
-    Def{old, Apply{array_get, Tuple{t, 0}}},
-    Def{m, Apply{int_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
-    Def{nb, Apply{array_new, Tuple{m}}},
-    Def{i, 0},
-    Def{e, none},
-    Def{next, none},
-    Def{j, 0},
-    While{Apply{int_lt, Tuple{i, Apply{array_len, Tuple{old}}}}, Do{
-        Set{e, Apply{array_get, Tuple{old, i}}},
-        While{Apply{expr_ne, Tuple{e, none}}, Do{
-            Set{next, Apply{array_get, Tuple{e, 2}}},
-            Set{j, Apply{int_mod, Tuple{Apply{array_get, Tuple{e, 3}}, m}}},
-            Apply{array_set, Tuple{e, 2, Apply{array_get, Tuple{nb, j}}}},
-            Apply{array_set, Tuple{nb, j, e}},
-            Set{e, next}}},
-        Set{i, Apply{int_add, Tuple{i, 1}}}}},
-    Apply{array_set, Tuple{t, 0, nb}}}}},
-Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
-    Def{t, Apply{arg, Tuple{tb, 0}}},
-    Def{h, Apply{expr_hash, Tuple{k}}},
-    Def{e, Apply{table_find, Tuple{t, k, h}}},
-    If{Apply{expr_eq, Tuple{e, none}}, Do{
-        Def{b, Apply{array_get, Tuple{t, 0}}},
-        Def{i, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
-        Def{n, Apply{array_new, Tuple{4}}},
-        Apply{array_set, Tuple{n, 0, k}},
-        Apply{array_set, Tuple{n, 1, v}},
-        Apply{array_set, Tuple{n, 2, Apply{array_get, Tuple{b, i}}}},
-        Apply{array_set, Tuple{n, 3, h}},
-        Apply{array_set, Tuple{b, i, n}},
-        Def{c, Apply{int_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
-        Apply{array_set, Tuple{t, 1, c}},
-        If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}}, Apply{table_grow, Tuple{t}}, none}},
-        Apply{array_set, Tuple{e, 1, v}}},
-    none}}}}, Tuple{}}}
+    Def{table_grow, Lambda{Tuple{t}, Do{
+        Def{old, Apply{array_get, Tuple{t, 0}}},
+        Def{m, Apply{int_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
+        Def{nb, Apply{array_new, Tuple{m}}},
+        Def{i, 0},
+        Def{e, none},
+        Def{next, none},
+        Def{j, 0},
+        While{Apply{int_lt, Tuple{i, Apply{array_len, Tuple{old}}}}, Do{
+            Set{e, Apply{array_get, Tuple{old, i}}},
+            While{Apply{expr_ne, Tuple{e, none}}, Do{
+                Set{next, Apply{array_get, Tuple{e, 2}}},
+                Set{j, Apply{int_mod, Tuple{Apply{array_get, Tuple{e, 3}}, m}}},
+                Apply{array_set, Tuple{e, 2, Apply{array_get, Tuple{nb, j}}}},
+                Apply{array_set, Tuple{nb, j, e}},
+                Set{e, next}}},
+            Set{i, Apply{int_add, Tuple{i, 1}}}}},
+        Apply{array_set, Tuple{t, 0, nb}}}}},
+    Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
+        Def{t, Apply{arg, Tuple{tb, 0}}},
+        Def{h, Apply{expr_hash, Tuple{k}}},
+        Def{e, Apply{table_find, Tuple{t, k, h}}},
+        If{Apply{expr_eq, Tuple{e, none}}, Do{
+            Def{b, Apply{array_get, Tuple{t, 0}}},
+            Def{i, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
+            Def{n, Apply{array_new, Tuple{4}}},
+            Apply{array_set, Tuple{n, 0, k}},
+            Apply{array_set, Tuple{n, 1, v}},
+            Apply{array_set, Tuple{n, 2, Apply{array_get, Tuple{b, i}}}},
+            Apply{array_set, Tuple{n, 3, h}},
+            Apply{array_set, Tuple{b, i, n}},
+            Def{c, Apply{int_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
+            Apply{array_set, Tuple{t, 1, c}},
+            If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}}, Apply{table_grow, Tuple{t}}, none}},
+            Apply{array_set, Tuple{e, 1, v}}},
+        none}}}}, Tuple{}}}
 
 " === Results of files === "
 " unwrap(r) is x for Ok{x}, and performs Error{none, message} for Err{IoError{stage, path}}. "
@@ -124,33 +124,33 @@ Def{unwrap, Lambda{Tuple{r}, If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quot
 " A syntax error is printed as file:line:column: syntax error: message, once planck/syntax.pk has replaced parse and planck/peg.pk has defined peg_file_error_text. "
 Def{peg_file_error_text, none}
 Def{load, Apply{Lambda{Tuple{}, Do{
-Def{_parse0, parse},
-Lambda{Tuple{path}, Do{
-    Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
-    Def{s0, s},
-    Def{prev, Apply{os_set_file, Tuple{path}}},
-    Def{r, none},
-    Def{e, none},
-    Def{go, true},
-    While{go, Do{
-        Set{r, Apply{parse, Tuple{s}}},
-        Set{e, Apply{arg, Tuple{r, 0}}},
-        If{Apply{expr_eq, Tuple{e, Eof{}}}, Set{go, false},
-        If{If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
-            Do{
-                Def{text, If{Apply{expr_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, s}}, none}},
-                If{Apply{expr_eq, Tuple{text, none}},
-                    Do{
-                        Apply{os_put, Tuple{path}},
-                        Apply{os_put, Tuple{": syntax error: "}},
-                        Apply{print, Tuple{e}}},
-                    Apply{print, Tuple{text}}},
-                Apply{os_exit, Tuple{1}}},
-            Do{
-                Apply{eval, Tuple{e}},
-                Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
-    Apply{os_set_file, Tuple{prev}},
-    none}}}}, Tuple{}}}
+    Def{_parse0, parse},
+    Lambda{Tuple{path}, Do{
+        Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
+        Def{s0, s},
+        Def{prev, Apply{os_set_file, Tuple{path}}},
+        Def{r, none},
+        Def{e, none},
+        Def{go, true},
+        While{go, Do{
+            Set{r, Apply{parse, Tuple{s}}},
+            Set{e, Apply{arg, Tuple{r, 0}}},
+            If{Apply{expr_eq, Tuple{e, Eof{}}}, Set{go, false},
+            If{If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
+                Do{
+                    Def{text, If{Apply{expr_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, s}}, none}},
+                    If{Apply{expr_eq, Tuple{text, none}},
+                        Do{
+                            Apply{os_put, Tuple{path}},
+                            Apply{os_put, Tuple{": syntax error: "}},
+                            Apply{print, Tuple{e}}},
+                        Apply{print, Tuple{text}}},
+                    Apply{os_exit, Tuple{1}}},
+                Do{
+                    Apply{eval, Tuple{e}},
+                    Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
+        Apply{os_set_file, Tuple{prev}},
+        none}}}}, Tuple{}}}
 
 " === Syntax === "
 " planck/syntax.pk replaces parse. The files after it are read by the new syntax. "
