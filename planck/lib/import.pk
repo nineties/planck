@@ -2,7 +2,7 @@
 
 used_libs := table_new()
 
-grammar_chain := f"{hash(unwrap(read_file("planck/init.pk")))}.{hash(unwrap(read_file("planck/peg.pk")))}.{hash(unwrap(read_file("planck/syntax.pk")))}"
+grammar_chain := f"{expr_hash(unwrap(os_read_file("planck/init.pk")))}.{expr_hash(unwrap(os_read_file("planck/peg.pk")))}.{expr_hash(unwrap(os_read_file("planck/syntax.pk")))}"
 grammar_state() := f"{grammar_chain}@{peg_version}"
 
 preprocess_hook := none
@@ -11,14 +11,14 @@ reverse_onto(Nil{}, acc) := acc
 reverse_onto(x :: xs, acc) := reverse_onto(xs, x :: acc)
 
 read_preprocessed(path, state, text) := {
-    s := match read_file(path) {
+    s := match os_read_file(path) {
         Ok{text} -> text
       | Err{_} -> none
     }
     if (s == none) return none
     r := parse_mexpr(s)
     h := arg(r, 0)
-    if (type(h) != Expr or head(h) != 'Preprocessed or arity(h) != 2) return none
+    if (expr_type(h) != Expr or head(h) != 'Preprocessed or arity(h) != 2) return none
     if (arg(h, 0) != state or arg(h, 1) != text) return none
     s = arg(r, 1)
     acc := []
@@ -28,7 +28,7 @@ read_preprocessed(path, state, text) := {
         r = parse_mexpr(s)
         e := arg(r, 0)
         if (e == Eof{}) go = false
-        else if (type(e) == Expr and head(e) == 'SyntaxError) return none
+        else if (expr_type(e) == Expr and head(e) == 'SyntaxError) return none
         else {
             acc = e :: acc
             n = n + 1
@@ -37,14 +37,14 @@ read_preprocessed(path, state, text) := {
     }
     if (acc == []) return none
     last := arg(acc, 0)
-    if (type(last) != Expr or head(last) != 'PreprocessEnd or arity(last) != 1 or arg(last, 0) != n - 1) return none
+    if (expr_type(last) != Expr or head(last) != 'PreprocessEnd or arity(last) != 1 or arg(last, 0) != n - 1) return none
     reverse_onto(arg(acc, 1), [])
 }
 
 import_lib(name) := if (table_get(used_libs, name, false)) none else {
     table_set(used_libs, name, true)
     path := f"planck/lib/{name}.pk"
-    text := unwrap(read_file(path))
+    text := unwrap(os_read_file(path))
     state := grammar_state()
     declared := peg_version
     if (preprocess_hook != none) preprocess_hook(name, path, state, text)
@@ -57,7 +57,7 @@ import_lib(name) := if (table_get(used_libs, name, false)) none else {
             os_set_file(prev)
         }
     }
-    if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
+    if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={expr_hash(text)}"
     none
 }
 
@@ -85,11 +85,11 @@ _import_defs(m @ Module, hidden) := {
             }
             if (not skip) {
                 v := array_get(e, 1)
-                ds = push(ds, `Def{!k, Quote{!v}})
+                ds = array_push(ds, `Def{!k, Quote{!v}})
             }
             e = array_get(e, 2)
         }
         i = i + 1
     }
-    mexpr('Do, push(ds, none))
+    expr('Do, array_push(ds, none))
 }

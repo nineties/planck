@@ -4,18 +4,18 @@ import test (*)
 
 tree(s) := arg(peg_parse('toplevel, s), 0)
 tree_at(s, loc) := arg(parse_at(s, loc), 0)
-at(l, c, e) := mexpr('At, Tuple{Loc{"f.pk", l, c}, e})
+at(l, c, e) := expr('At, Tuple{Loc{"f.pk", l, c}, e})
 rest(s) := arg(peg_parse('toplevel, s), 1)
 
 check(tree_at("f(x)", Loc{"f.pk", 1, 1}), at(1, 1, 'Apply{f, Tuple{x}}))
 check(tree_at("  f(x)", Loc{"f.pk", 3, 5}), at(3, 7, 'Apply{f, Tuple{x}}))
-check(tree_at("g(1,\n  f(2))", Loc{"f.pk", 7, 10}), at(7, 10, mexpr('Apply, Tuple{'g, mexpr('Tuple, Tuple{1, at(8, 3, 'Apply{f, Tuple{2}})})})))
-check(tree_at("f(x)(y)", Loc{"f.pk", 1, 1}), at(1, 1, mexpr('Apply, Tuple{at(1, 1, 'Apply{f, Tuple{x}}), 'Tuple{y}})))
+check(tree_at("g(1,\n  f(2))", Loc{"f.pk", 7, 10}), at(7, 10, expr('Apply, Tuple{'g, expr('Tuple, Tuple{1, at(8, 3, 'Apply{f, Tuple{2}})})})))
+check(tree_at("f(x)(y)", Loc{"f.pk", 1, 1}), at(1, 1, expr('Apply, Tuple{at(1, 1, 'Apply{f, Tuple{x}}), 'Tuple{y}})))
 check(tree_at("a + b", Loc{"f.pk", 1, 1}), 'Apply{int_add, Tuple{a, b}})
 check(tree_at("a.b", Loc{"f.pk", 1, 1}), 'Apply{_record_get, Tuple{a, Quote{b}}})
 check(tree_at("a[1]", Loc{"f.pk", 1, 1}), 'Apply{_index_get, Tuple{a, 1}})
 check(tree_at("'f(x)", Loc{"f.pk", 1, 1}), 'Quote{Apply{f, Tuple{x}}})
-check(tree_at("`f(x, !g(y))", Loc{"f.pk", 1, 1}), mexpr('QuasiQuote, Tuple{mexpr('Apply, Tuple{'f, mexpr('Tuple, Tuple{'x, mexpr('UnQuote, Tuple{at(1, 8, 'Apply{g, Tuple{y}})})})})}))
+check(tree_at("`f(x, !g(y))", Loc{"f.pk", 1, 1}), expr('QuasiQuote, Tuple{expr('Apply, Tuple{'f, expr('Tuple, Tuple{'x, expr('UnQuote, Tuple{at(1, 8, 'Apply{g, Tuple{y}})})})})}))
 check(tree_at("(f(p)) -> p", Loc{"f.pk", 1, 1}), 'Lambda{Tuple{Apply{Quote{f}, Tuple{p}}}, p})
 check(arg(parse_at("f(x)\ng(y)", Loc{"f.pk", 1, 1}), 1), "g(y)")
 check(tree("g(1, f(2))"), 'Apply{g, Tuple{1, Apply{f, Tuple{2}}}})
@@ -51,9 +51,9 @@ check(tree("0b1000000000000000000000000000000"), 'Apply{int_parse, Tuple{"0b1000
 check(tree("2 * 123456789012345678901234567890"), 'Apply{int_mul, Tuple{2, Apply{int_parse, Tuple{"123456789012345678901234567890"}}}})
 check(rest("123456789012345678901234567890 x"), "x")
 check(tree("\"a\\tb\\n\""), "a\tb\n")
-check(strlen(tree("\"a\\0b\"")), 3)
-check(ord(tree("\"a\\0b\""), 1), 0)
-check(tree("\"\\0\""), substr("a\0b", 1, 2))
+check(str_len(tree("\"a\\0b\"")), 3)
+check(str_ord(tree("\"a\\0b\""), 1), 0)
+check(tree("\"\\0\""), str_sub("a\0b", 1, 2))
 check(tree("f\"a\\0b\""), tree("\"a\\0b\""))
 check(tree("\"\\\"q\\\"\""), "\"q\"")
 check(tree("F{1, x}"), 'F{1, x})
@@ -435,8 +435,8 @@ check(nd.op, "+")
 check(nd.left.op, "*")
 check(nd.left.right, 2)
 check(nd.right, 3)
-check(type(tk) == Token, true)
-check(type(nd) == Token, false)
+check(expr_type(tk) == Token, true)
+check(expr_type(nd) == Token, false)
 check(rev(1, 2, 3).a, 3)
 check(fwd(1, 2, 3).a, 1)
 getv(t) := t.value
@@ -445,8 +445,8 @@ check(getv(token('num, 7, 0)), 7)
 check((match tk { t @ Token -> t.kind }), 'id)
 record Token(value, kind) = tok2
 check(tok2(1, 2).kind, 2)
-check(type(tok2(1, 2)) == Token, true)
-check(type(tk) == Token, false)
+check(expr_type(tok2(1, 2)) == Token, true)
+check(expr_type(tk) == Token, false)
 check(_record_index(tok2(1, 2), 'kind), 1)
 check(_record_index(tok2(1, 2), 'value), 0)
 check(_record_index(tk, 'pos), 2)
@@ -467,7 +467,7 @@ check(tk2.kind, 'num)
 check(tk2.pos, 9)
 check(tk2.value, "abc")
 check(tk.pos, 3)
-check(type(tk2) == Token, false)
+check(expr_type(tk2) == Token, false)
 check((tk with { pos = tk.pos + 1 }).pos, 4)
 
 rh := 'Lambda{Tuple{Return{v}, k}, v}
@@ -531,15 +531,15 @@ check(collect([5, 6]), [5, 6])
 check(collect([]), [])
 check(collect([none, false, 0]), [none, false, 0])
 check(collect([() -> 1])[0](), 1)
-av := array(3)
+av := array_new(3)
 av[0] = 7
 av[2] = 9
 check(collect(av), [7, none, 9])
-check(collect(array(0)), [])
-pv := u8_array(3)
+check(collect(array_new(0)), [])
+pv := plain_u8(3)
 pv[1] = 200
 check(collect(pv), [0, 200, 0])
-check(collect(u16_array(0)), [])
+check(collect(plain_u16(0)), [])
 tv := table.new()
 tv["a"] = 1
 tv["b"] = 2
@@ -1148,15 +1148,15 @@ check(rest("a [1]"), "[1]")
 check(tree("{ a\n[1] }"), 'Do{a, Cons{1, Nil{}}})
 check(head(tree("f(a [1])")), 'SyntaxError)
 
-ia := array(3)
+ia := array_new(3)
 ia[0] = 5
 check(ia[0], 5)
 check(ia[1] = 7, none)
 ia[2] = ia[0] + ia[1]
 check(ia[2], 12)
 check(array_get(ia, 2), 12)
-ib := array(2)
-ib[1] = array(2)
+ib := array_new(2)
+ib[1] = array_new(2)
 ib[1][0] = "x"
 check(ib[1][0], "x")
 it := table.new()
@@ -1178,7 +1178,7 @@ check(F{1, 2}[1], 2)
 check(('(f(x, y)))[1][0], 'x)
 _index_get = (Matrix{w, _, d}, (i, j)) -> d[i * w + j] | _index_get
 _index_set = (Matrix{w, _, d}, (i, j), v) -> { d[i * w + j] = v } | _index_set
-im := Matrix{3, 2, array(6)}
+im := Matrix{3, 2, array_new(6)}
 im[(1, 2)] = 8
 check(im[(1, 2)], 8)
 check(array_get(arg(im, 2), 5), 8)
@@ -1189,7 +1189,7 @@ index_var_test() := {
     index_set := 7
     xs := [10, 20, 30]
     check(xs[index], 30)
-    ys := array(3)
+    ys := array_new(3)
     ys[index] = index_set
     check(ys[index], 7)
     check(ys[index_set - 6], none)
@@ -1265,7 +1265,7 @@ drop_first(t) := {
     r := Tuple{}
     i := 1
     while (i < arity(t)) {
-        r = push(r, arg(t, i))
+        r = array_push(r, arg(t, i))
         i = i + 1
     }
     r

@@ -9,36 +9,11 @@ Def{true, Quote{true}}
 Def{false, Quote{false}}
 Def{none, Quote{none}}
 
-Def{put, os_put}
-Def{read_file, os_read_file}
-Def{write_file, os_write_file}
-Def{read_bytes, os_read_bytes}
-Def{chmod, os_chmod}
-Def{list_dir, os_list_dir}
-Def{argv, os_argv}
-Def{exit, os_exit}
-Def{time_ns, os_time_ns}
-Def{run_program, os_run}
 Def{head, expr_head}
 Def{arity, expr_arity}
 Def{arg, expr_arg}
-Def{mexpr, expr_new}
-Def{type, expr_type}
+Def{expr, expr_new}
 Def{typename, expr_type_name}
-Def{strlen, str_len}
-Def{ord, str_ord}
-Def{substr, str_sub}
-Def{hash, expr_hash}
-Def{intern, sym_intern}
-Def{symname, sym_name}
-Def{array, array_new}
-Def{push, array_push}
-Def{u8_array, plain_u8}
-Def{u16_array, plain_u16}
-Def{i32_array, plain_i32}
-Def{heap_allocated, gc_heap_allocated}
-Def{expr_parse, parse}
-Def{expr_eval, eval}
 
 " === Types === "
 " The types Int, String, Symbol, Expr, Function, Array, Plain and Type are values of planck0, and type(x) gives the type of x. "
@@ -62,16 +37,16 @@ Set{_args_text, Lambda{Tuple{e, i}, If{Apply{int_ge, Tuple{i, Apply{arity, Tuple
             Apply{str_cat, Tuple{", ", Apply{_args_text, Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
             ""}}}}}}
 Set{_text, Lambda{Tuple{x}, Do{
-    Def{t, Apply{type, Tuple{x}}},
+    Def{t, Apply{expr_type, Tuple{x}}},
     If{Apply{expr_eq, Tuple{t, String}}, x,
     If{Apply{expr_eq, Tuple{t, Int}}, Apply{_int_text, Tuple{x}},
-    If{Apply{expr_eq, Tuple{t, Symbol}}, Apply{symname, Tuple{x}},
-    If{Apply{expr_eq, Tuple{t, Expr}}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{symname, Tuple{Apply{head, Tuple{x}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}},
+    If{Apply{expr_eq, Tuple{t, Symbol}}, Apply{sym_name, Tuple{x}},
+    If{Apply{expr_eq, Tuple{t, Expr}}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{head, Tuple{x}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}},
     If{Apply{expr_eq, Tuple{t, Array}}, "<array>",
-    If{Apply{expr_eq, Tuple{t, Type}}, Apply{symname, Tuple{Apply{typename, Tuple{x}}}},
+    If{Apply{expr_eq, Tuple{t, Type}}, Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}},
     If{Apply{expr_eq, Tuple{t, Function}}, "<function>",
     If{Apply{expr_eq, Tuple{t, Plain}}, "<function>",
-    Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{symname, Tuple{Apply{typename, Tuple{t}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}}}}}}}}}}}}
+    Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{typename, Tuple{t}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}}}}}}}}}}}}
 Def{_put_value, Lambda{Tuple{x}, Apply{os_put, Tuple{Apply{_text, Tuple{x}}}}}}
 " print(x) writes _text(x) and a new line. Until lib/pretty.pk is loaded, which is at the end of this file, this is the print. lib/pretty.pk then sets print to write the value as pretty.text(x, 60) does, and takes the argument pretty, and sets repr. "
 Def{print, Lambda{Tuple{x}, Do{Apply{_put_value, Tuple{x}}, Apply{os_put, Tuple{"\n"}}}}}
@@ -89,8 +64,8 @@ Def{Table, Apply{arg, Tuple{_table_type, 0}}}
 Def{_make_table, Apply{arg, Tuple{_table_type, 1}}}
 
 Def{table_new, Lambda{Tuple{}, Do{
-    Def{t, Apply{array, Tuple{2}}},
-    Apply{array_set, Tuple{t, 0, Apply{array, Tuple{16}}}},
+    Def{t, Apply{array_new, Tuple{2}}},
+    Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
     Apply{array_set, Tuple{t, 1, 0}},
     Apply{_make_table, Tuple{t}}}}}
 
@@ -107,13 +82,13 @@ Def{table_find, Lambda{Tuple{t, k, h}, Do{
 
 Def{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
     Def{t, Apply{arg, Tuple{tb, 0}}},
-    Def{e, Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}},
+    Def{e, Apply{table_find, Tuple{t, k, Apply{expr_hash, Tuple{k}}}}},
     If{Apply{expr_eq, Tuple{e, none}}, default, Apply{array_get, Tuple{e, 1}}}}}}
 
 Def{table_grow, Lambda{Tuple{t}, Do{
     Def{old, Apply{array_get, Tuple{t, 0}}},
     Def{m, Apply{int_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
-    Def{nb, Apply{array, Tuple{m}}},
+    Def{nb, Apply{array_new, Tuple{m}}},
     Def{i, 0},
     Def{e, none},
     Def{next, none},
@@ -131,12 +106,12 @@ Def{table_grow, Lambda{Tuple{t}, Do{
 
 Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
     Def{t, Apply{arg, Tuple{tb, 0}}},
-    Def{h, Apply{hash, Tuple{k}}},
+    Def{h, Apply{expr_hash, Tuple{k}}},
     Def{e, Apply{table_find, Tuple{t, k, h}}},
     If{Apply{expr_eq, Tuple{e, none}}, Do{
         Def{b, Apply{array_get, Tuple{t, 0}}},
         Def{i, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
-        Def{n, Apply{array, Tuple{4}}},
+        Def{n, Apply{array_new, Tuple{4}}},
         Apply{array_set, Tuple{n, 0, k}},
         Apply{array_set, Tuple{n, 1, v}},
         Apply{array_set, Tuple{n, 2, Apply{array_get, Tuple{b, i}}}},
@@ -151,7 +126,7 @@ Def{table_set, Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
 " === Results of files === "
 " unwrap(r) is x for Ok{x}, and performs Error{none, message} for Err{IoError{stage, path}}. "
 Def{unwrap, Lambda{Tuple{r}, If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quote{Err}}},
-    Perform{Error{none, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{symname, Tuple{Apply{arg, Tuple{Apply{arg, Tuple{r, 0}}, 0}}}}, ": "}},
+    Perform{Error{none, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{arg, Tuple{Apply{arg, Tuple{r, 0}}, 0}}}}, ": "}},
         Apply{arg, Tuple{Apply{arg, Tuple{r, 0}}, 1}}}}}},
     Apply{arg, Tuple{r, 0}}}}}
 
@@ -162,7 +137,7 @@ Def{unwrap, Lambda{Tuple{r}, If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quot
 Def{peg_file_error_text, none}
 Def{_parse0, parse}
 Def{load, Lambda{Tuple{path}, Do{
-    Def{s, Apply{unwrap, Tuple{Apply{read_file, Tuple{path}}}}},
+    Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
     Def{s0, s},
     Def{prev, Apply{os_set_file, Tuple{path}}},
     Def{r, none},
@@ -172,16 +147,16 @@ Def{load, Lambda{Tuple{path}, Do{
         Set{r, Apply{parse, Tuple{s}}},
         Set{e, Apply{arg, Tuple{r, 0}}},
         If{Apply{expr_eq, Tuple{e, Eof{}}}, Set{go, false},
-        If{If{Apply{expr_eq, Tuple{Apply{type, Tuple{e}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
+        If{If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
             Do{
                 Def{text, If{Apply{expr_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, s}}, none}},
                 If{Apply{expr_eq, Tuple{text, none}},
                     Do{
-                        Apply{put, Tuple{path}},
-                        Apply{put, Tuple{": syntax error: "}},
+                        Apply{os_put, Tuple{path}},
+                        Apply{os_put, Tuple{": syntax error: "}},
                         Apply{print, Tuple{e}}},
                     Apply{print, Tuple{text}}},
-                Apply{exit, Tuple{1}}},
+                Apply{os_exit, Tuple{1}}},
             Do{
                 Apply{eval, Tuple{e}},
                 Set{s, Apply{arg, Tuple{r, 1}}}}}}}},

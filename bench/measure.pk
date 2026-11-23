@@ -5,7 +5,7 @@ import_lib("string")
 import_lib("table")
 
 measure_options := table.new()
-measure_args := argv()
+measure_args := os_argv()
 measure_i := 1
 while (measure_i < array_len(measure_args)) {
     parts := string.split(measure_args[measure_i], "=")
@@ -21,21 +21,21 @@ measure_out := option("out")
 measure_samples_cur := f"{measure_out}/samples-cur.pk"
 
 run_checked(program, args, dir) := {
-    r := run_program(program, args, "", dir)
+    r := os_run(program, args, "", dir)
     if (r[0] != 0) {
         print(r[1])
         print(r[2])
         print(f"{program} stopped with status {r[0]}")
-        exit(1)
+        os_exit(1)
     }
     r
 }
 
 measure_once(dir, samples) := {
-    args := array(3)
+    args := array_new(3)
     args[0] = f"{measure_cur}/bench/run.pk"
     args[1] = samples
-    args[2] = f"{time_ns()}"
+    args[2] = f"{os_time_ns()}"
     run_checked(measure_planck0, args, dir)
 }
 
@@ -46,7 +46,7 @@ while (r < rounds) {
     r = r + 1
 }
 
-cat_args := array(1)
+cat_args := array_new(1)
 cat_args[0] = "/proc/cpuinfo"
 cpuinfo := string.split(run_checked("/bin/cat", cat_args, "")[1], "\n")
 cpu_name := ""
@@ -59,7 +59,7 @@ for (line in cpuinfo) {
 }
 
 memory_kib := 0
-meminfo_args := array(1)
+meminfo_args := array_new(1)
 meminfo_args[0] = "/proc/meminfo"
 for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "\n")) {
     if (string.starts_with(line, "MemTotal:")) {
@@ -69,53 +69,53 @@ for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "\n")) {
 cpu_name = f"{cpu_name}, {(memory_kib * 10 // 1048576) // 10}.{(memory_kib * 10 // 1048576) % 10} GiB memory"
 
 os_name := ""
-for (line in string.split(unwrap(read_file("/etc/os-release")), "\n")) {
+for (line in string.split(unwrap(os_read_file("/etc/os-release")), "\n")) {
     if (string.starts_with(line, "PRETTY_NAME=")) {
         value := string.trim(string.join("=", list.drop(string.split(line, "="), 1)))
-        os_name = substr(value, 1, strlen(value) - 1)
+        os_name = str_sub(value, 1, str_len(value) - 1)
     }
 }
 
-date_args := array(2)
+date_args := array_new(2)
 date_args[0] = "-u"
 date_args[1] = "+%Y-%m-%dT%H:%M:%SZ"
 date_text := run_checked("/bin/date", date_args, "")[1]
-measure_date := substr(date_text, 0, strlen(date_text) - 1)
+measure_date := str_sub(date_text, 0, str_len(date_text) - 1)
 
 measure_meta := f"ref={option("ref")}\ncommit={option("commit")}\nplanck0={option("planck0")}\nnproc={cpu_count}\nos={os_name}\ncpu={cpu_name}\ndate={measure_date}\nrounds={rounds}\n"
 measure_meta_path := f"{measure_out}/meta.txt"
-write_file(measure_meta_path, measure_meta)
+os_write_file(measure_meta_path, measure_meta)
 
 this_run := f"{measure_out}/this-run.pk"
 this_run_md := f"{measure_out}/this-run.md"
-record_args := array(4)
+record_args := array_new(4)
 record_args[0] = f"{measure_cur}/bench/record.pk"
 record_args[1] = this_run
 record_args[2] = measure_samples_cur
 record_args[3] = measure_meta_path
 run_checked(measure_planck0, record_args, measure_cur)
 
-report_args := array(3)
+report_args := array_new(3)
 report_args[0] = f"{measure_cur}/bench/report.pk"
 report_args[1] = this_run
 report_args[2] = this_run_md
 run_checked(measure_planck0, report_args, measure_cur)
 
 append_text(path, text) := {
-    old := match read_file(path) {
+    old := match os_read_file(path) {
         Ok{t} -> t
       | Err{_} -> none
     }
-    write_file(path, str_cat(if (old == none) "" else old, text))
+    os_write_file(path, str_cat(if (old == none) "" else old, text))
 }
 
 if (option("summary") != "") {
-    append_text(option("summary"), f"# Benchmark {option("ref")}\n{unwrap(read_file(this_run_md))}")
+    append_text(option("summary"), f"# Benchmark {option("ref")}\n{unwrap(os_read_file(this_run_md))}")
 }
 
 if (option("results") != "") {
-    append_text(option("results"), unwrap(read_file(this_run)))
-    report_all := array(3)
+    append_text(option("results"), unwrap(os_read_file(this_run)))
+    report_all := array_new(3)
     report_all[0] = f"{measure_cur}/bench/report.pk"
     report_all[1] = option("results")
     report_all[2] = option("results_md")

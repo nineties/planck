@@ -1,8 +1,8 @@
 import_lib("pretty")
 
 s := "a\0b"
-print(strlen(s))
-print(ord(s, 1))
+print(str_len(s))
+print(str_ord(s, 1))
 print(s)
 print(s == "a\0b")
 print(s == "a")

@@ -14,10 +14,10 @@ record Token(kind, value, pos) = token
 
 lex(src) := {
     toks := vector.new()
-    n := strlen(src)
+    n := str_len(src)
     i := 0
     while (i < n) {
-        c := ord(src, i)
+        c := str_ord(src, i)
         match c {
             10 -> {
                 vector.push(toks, token('nl, "\n", i))
@@ -26,14 +26,14 @@ lex(src) := {
           | c if string.is_space(c) -> { i = i + 1 }
           | c if string.is_digit(c) -> {
                 j := i
-                while (j < n and string.is_digit(ord(src, j))) j = j + 1
-                vector.push(toks, token('num, string.string_to_int(substr(src, i, j)), i))
+                while (j < n and string.is_digit(str_ord(src, j))) j = j + 1
+                vector.push(toks, token('num, string.string_to_int(str_sub(src, i, j)), i))
                 i = j
             }
           | c if string.is_ident_start(c) -> {
                 j := i
-                while (j < n and string.is_ident_char(ord(src, j))) j = j + 1
-                vector.push(toks, token('id, substr(src, i, j), i))
+                while (j < n and string.is_ident_char(str_ord(src, j))) j = j + 1
+                vector.push(toks, token('id, str_sub(src, i, j), i))
                 i = j
             }
           | c if string.index_of_string("+-*/()=", string.char(c), 0) >= 0 -> {
@@ -115,8 +115,8 @@ compile(stmts) := {
     fun operand
     operand = (Num{n}) -> n
              | (Var{x, p}) -> {
-                   if (not set.has(defined, intern(x))) error.at(here(p), f"undefined variable {x}")
-                   intern(x)
+                   if (not set.has(defined, sym_intern(x))) error.at(here(p), f"undefined variable {x}")
+                   sym_intern(x)
                }
              | (Neg{e}) -> {
                    a := operand(e)
@@ -133,13 +133,13 @@ compile(stmts) := {
                }
     each((Let{x, e, p}) -> {
              a := operand(e)
-             set.add(defined, intern(x))
-             vector.push(code, Copy{intern(x), a})
+             set.add(defined, sym_intern(x))
+             vector.push(code, Copy{sym_intern(x), a})
          } | (Expr{e}) -> vector.push(code, Print{operand(e)}), stmts)
     vector.to_list(code)
 }
 
-show_operand(o) := if (type(o) == Int) string.int_to_string(o) else symname(o)
+show_operand(o) := if (expr_type(o) == Int) string.int_to_string(o) else sym_name(o)
 show_instr(Bin{d, op, a, b, _}) := join(" ", [show_operand(d), "=", show_operand(a), op, show_operand(b)])
 show_instr(Copy{d, a}) := join(" ", [show_operand(d), "=", show_operand(a)])
 show_instr(Print{a}) := str_cat("print ", show_operand(a))
@@ -151,7 +151,7 @@ run_code(code) := {
     table.set(ops, "-", (a, b) -> a - b)
     table.set(ops, "*", (a, b) -> a * b)
     table.set(ops, "/", (a, b) -> a / b)
-    value(o) := if (type(o) == Int) o else table.get(vars, o, none)
+    value(o) := if (expr_type(o) == Int) o else table.get(vars, o, none)
     each((Bin{d, op, a, b, p}) -> {
              y := value(b)
              if (op == "/" and y == 0) error.at(here(p), "division by zero")
@@ -185,7 +185,7 @@ calc(file, src, verbose) := {
 }
 
 print("--- planck/examples/calc.txt")
-src := unwrap(read_file("planck/examples/calc.txt"))
+src := unwrap(os_read_file("planck/examples/calc.txt"))
 print(src)
 calc("planck/examples/calc.txt", src, true)
 

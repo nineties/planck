@@ -4,7 +4,7 @@ import_lib("list")
 import_lib("string")
 import_lib("table")
 
-args := argv()
+args := os_argv()
 in_path := args[1]
 out_path := args[2]
 
@@ -14,7 +14,7 @@ ref_names := []
 ref_rows := table.new()
 
 commit_url := "https://github.com/nineties/planck/commit"
-short(commit) := substr(commit, 0, 7)
+short(commit) := str_sub(commit, 0, 7)
 version_label(ref, commit) := f"{ref} ({short(commit)})"
 commit_link(commit) := f"[{short(commit)}]({commit_url}/{commit})"
 or_dash(s) := if (s == "") "-" else s
@@ -59,7 +59,7 @@ cases_without_startup := list.filter(name -> name != "startup", case_names)
 run_line(label) := {
     r := table.get(ref_rows, label, none)
     cores := if (arg(r, 3) == 0) "-" else f"{arg(r, 3)}"
-    f"| {label} | {commit_link(arg(r, 1))} | {or_dash(arg(r, 4))} | {or_dash(arg(r, 5))} | {cores} | {substr(arg(r, 6), 0, 10)} | {arg(r, 2)} |"
+    f"| {label} | {commit_link(arg(r, 1))} | {or_dash(arg(r, 4))} | {or_dash(arg(r, 5))} | {cores} | {str_sub(arg(r, 6), 0, 10)} | {arg(r, 2)} |"
 }
 
 runs := list.map(run_line, ref_names)
@@ -75,4 +75,4 @@ text := string.join("\n", [
     table_lines("Allocated memory per benchmark (MiB)", 1, mebibytes, cases_without_startup),
     ""
 ])
-write_file(out_path, text)
+os_write_file(out_path, text)

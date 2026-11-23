@@ -4,7 +4,7 @@ import_lib("base")
 import_lib("list")
 
 module bitset {
-    export new(n) := i32_array(n / 30 + 1)
+    export new(n) := plain_i32(n / 30 + 1)
 
     export add(s, i) := {
         w := i / 30
@@ -19,7 +19,7 @@ module bitset {
     export has(s, i) := bit_and(s[i / 30], bit_shl(1, i % 30)) != 0
 
     export copy(s) := {
-        r := i32_array(plain_len(s))
+        r := plain_i32(plain_len(s))
         plain_copy(r, 0, s, 0, plain_len(s))
         r
     }

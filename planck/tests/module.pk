@@ -3,7 +3,7 @@
 import test (*)
 
 module bitset {
-    export new(n) := array(n)
+    export new(n) := array_new(n)
     helper(i) := i + 1
     export next(i) := helper(i)
     export size := 3
@@ -139,7 +139,7 @@ module probe {
         check(1, 2)
     }
 }
-check(type(probe), Module)
+check(expr_type(probe), Module)
 check(_testing, false)
 
 finish()

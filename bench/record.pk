@@ -5,12 +5,12 @@ import_lib("string")
 import_lib("table")
 import_lib("pretty")
 
-args := argv()
+args := os_argv()
 out_path := args[1]
 cur_path := args[2]
 
 meta := table.new()
-for (line in string.split(unwrap(read_file(args[3])), "\n")) {
+for (line in string.split(unwrap(os_read_file(args[3])), "\n")) {
     parts := string.split(line, "=")
     if (list.length(parts) > 1) table.set(meta, list.nth(parts, 0), string.join("=", list.drop(parts, 1)))
 }
@@ -55,8 +55,8 @@ for (name in names) {
     lines = str_cat(lines, line)
 }
 
-old := match read_file(out_path) {
+old := match os_read_file(out_path) {
     Ok{t} -> t
   | Err{_} -> none
 }
-write_file(out_path, str_cat(if (old == none) "" else old, lines))
+os_write_file(out_path, str_cat(if (old == none) "" else old, lines))

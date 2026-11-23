@@ -17,7 +17,7 @@ print(total)
 arrs := 0
 i = 0
 while (i < 100000) {
-    a := array(100)
+    a := array_new(100)
     a[0] = i % 7
     arrs = arrs + a[0]
     i = i + 1

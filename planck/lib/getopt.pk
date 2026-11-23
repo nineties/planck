@@ -35,23 +35,23 @@ module getopt {
             else if (a == "--") only_rest = true
             else if (string.starts_with(a, "--")) {
                 eq := string.index_of_string(a, "=", 2)
-                name := if (eq >= 0) substr(a, 2, eq) else substr(a, 2, strlen(a))
+                name := if (eq >= 0) str_sub(a, 2, eq) else str_sub(a, 2, str_len(a))
                 o := if (name == "") none else by_long(name)
                 shown := str_cat("--", name)
                 if (o == none) error = Unknown{shown}
                 else if (eq >= 0 and not arg(o, 2)) error = NoValue{shown}
-                else take(o, shown, if (eq >= 0) substr(a, eq + 1, strlen(a)) else none)
+                else take(o, shown, if (eq >= 0) str_sub(a, eq + 1, str_len(a)) else none)
             } else {
                 j := 1
-                while (j < strlen(a) and error == none) {
-                    c := substr(a, j, j + 1)
+                while (j < str_len(a) and error == none) {
+                    c := str_sub(a, j, j + 1)
                     j = j + 1
                     shown := str_cat("-", c)
                     o := by_short(c)
                     if (c == "" or o == none) error = Unknown{shown}
-                    else if (arg(o, 2) and j < strlen(a)) {
-                        v := substr(a, j, strlen(a))
-                        j = strlen(a)
+                    else if (arg(o, 2) and j < str_len(a)) {
+                        v := str_sub(a, j, str_len(a))
+                        j = str_len(a)
                         take(o, shown, v)
                     } else take(o, shown, none)
                 }
