@@ -369,13 +369,13 @@ Def{peg_nbrk, 0}
 
 Def{peg_ncnt, 0}
 
-Def{peg_parse_plain, peg_parse_at}
+Def{peg_parse_plain, peg_parse_from}
 
 Set{
-    peg_parse_at,
+    peg_parse_from,
     Lambda{
-        Tuple{r, s, loc},
-        Do{Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0}, Apply{peg_parse_plain, Tuple{r, s, loc}}}
+        Tuple{r, s, pos, loc},
+        Do{Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0}, Apply{peg_parse_plain, Tuple{r, s, pos, loc}}}
     }}
 
 Def{
@@ -1460,6 +1460,7 @@ Apply{_define_rule, Tuple{Quote{block}, Quote{
 " === Switch to the grammar read by the rules above === "
 " The rest of the file is read by them. The M-expression reader remains as parse_mexpr. "
 Def{parse_mexpr, parse}
+Set{parse_from, Lambda{Tuple{s, pos}, Apply{peg_parse_from, Tuple{Quote{toplevel}, s, pos, none}}}}
 Set{parse, Lambda{Tuple{s}, Apply{peg_parse, Tuple{Quote{toplevel}, s}}}}
 Def{parse_at, Lambda{Tuple{s, loc}, Apply{peg_parse_at, Tuple{Quote{toplevel}, s, loc}}}}
 
