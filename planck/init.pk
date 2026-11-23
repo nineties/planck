@@ -18,7 +18,7 @@ Def{expr_parse, parse}
 Def{expr_eval, eval}
 
 " === Types === "
-" The types Int, String, Symbol, Expr, Function, Array, Plain and Type are values of planck0, and type(x) gives the type of x. "
+" The types Int, String, Symbol, Expr, Function, Array, Plain and Type are values of planck, and expr_type(x) gives the type of x. "
 
 " === Basic Functions === "
 Def{_not, Fusion{
