@@ -20,9 +20,25 @@ on:
 permissions:
   contents: write
   pull-requests: write
+concurrency:
+  group: planck-bench
+  cancel-in-progress: false
+env:
+  BENCH_VM: benchmark
+  BENCH_ZONE: us-central1-b
+  BENCH_PROJECT: personal-use-257811
 jobs:
-  bench:
+  start-vm:
     runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_BENCH_VM_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud compute instances start "$BENCH_VM" --zone "$BENCH_ZONE" --project "$BENCH_PROJECT"
+  bench:
+    needs: start-vm
+    runs-on: [self-hosted, planck-bench]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,6 +68,7 @@ jobs:
           path: cur
       - name: Download the latest planck0
         run: |
+          rm -f planck0 planck0.sha256 planck0.version
           gh release download --repo nineties/hex-to-compiler --pattern "planck0*"
           sha256sum -c planck0.sha256
           chmod +x planck0
@@ -70,6 +87,7 @@ jobs:
           ROUNDS: ${{ steps.refs.outputs.rounds }}
           RECORD: ${{ steps.refs.outputs.record }}
         run: |
+          rm -rf out
           mkdir out
           results=
           results_md=
@@ -96,3 +114,13 @@ jobs:
           git commit -m "bench: record the result of $REF"
           git push origin "$branch"
           gh pr create --base main --head "$branch" --title "bench: record the result of $REF" --body "Result of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+  stop-vm:
+    needs: [start-vm, bench]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_BENCH_VM_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud compute instances stop "$BENCH_VM" --zone "$BENCH_ZONE" --project "$BENCH_PROJECT"
