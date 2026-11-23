@@ -21,9 +21,7 @@ Def{expr_eval, eval}
 " The types Int, String, Symbol, Expr, Function, Array, Plain and Type are values of planck, and expr_type(x) gives the type of x. "
 
 " === Basic Functions === "
-Def{_not, Fusion{
-    Lambda{Tuple{Quote{false}}, true},
-    Lambda{Tuple{_}, false}}}
+Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 
 " === Output === "
 " _text(x) is the text of x on one line. A string is its characters, an integer is its decimal digits, a symbol is its name, an expression is its head and its arguments in braces. An array and a function are <array> and <function>. "
