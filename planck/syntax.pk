@@ -1215,7 +1215,7 @@ Def{
         }
     }}
 
-" a plain array (u8_array, u16_array, i32_array) is indexed like an array "
+" a plain array (plain_u8, plain_u16, plain_i32) is indexed like an array "
 Set{
     _index_get,
     Fusion{
