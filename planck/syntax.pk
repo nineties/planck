@@ -952,9 +952,9 @@ Def{
                     Apply{expr_eq, Tuple{i, none}},
                     Do{
                         Apply{os_put, Tuple{"no field "}},
-                        Apply{_put_value, Tuple{Apply{sym_name, Tuple{name}}}},
+                        Apply{print, Tuple{Apply{sym_name, Tuple{name}}, _Kw{Quote{end}, ""}}},
                         Apply{os_put, Tuple{" in "}},
-                        Apply{_put_value, Tuple{t}},
+                        Apply{print, Tuple{t, _Kw{Quote{end}, ""}}},
                         Apply{os_put, Tuple{"\n"}},
                         Apply{os_exit, Tuple{1}}
                     },
@@ -1061,9 +1061,9 @@ Def{
         Tuple{a, i},
         Do{
             Apply{os_put, Tuple{"index out of range: "}},
-            Apply{_put_value, Tuple{i}},
+            Apply{print, Tuple{i, _Kw{Quote{end}, ""}}},
             Apply{os_put, Tuple{" in "}},
-            Apply{_put_value, Tuple{a}},
+            Apply{print, Tuple{a, _Kw{Quote{end}, ""}}},
             Apply{os_put, Tuple{"\n"}},
             Apply{os_exit, Tuple{1}}
         }
@@ -1200,9 +1200,9 @@ Def{
                                         Tuple{a, i},
                                         Do{
                                             Apply{os_put, Tuple{"no index for "}},
-                                            Apply{_put_value, Tuple{a}},
+                                            Apply{print, Tuple{a, _Kw{Quote{end}, ""}}},
                                             Apply{os_put, Tuple{" and "}},
-                                            Apply{_put_value, Tuple{i}},
+                                            Apply{print, Tuple{i, _Kw{Quote{end}, ""}}},
                                             Apply{os_put, Tuple{"\n"}},
                                             Apply{os_exit, Tuple{1}}
                                         }
@@ -1233,11 +1233,11 @@ Def{
         Tuple{kind, a, i},
         Do{
             Apply{os_put, Tuple{"cannot assign to an element of "}},
-            Apply{_put_value, Tuple{kind}},
+            Apply{print, Tuple{kind, _Kw{Quote{end}, ""}}},
             Apply{os_put, Tuple{", which is immutable: "}},
-            Apply{_put_value, Tuple{a}},
+            Apply{print, Tuple{a, _Kw{Quote{end}, ""}}},
             Apply{os_put, Tuple{" at "}},
-            Apply{_put_value, Tuple{i}},
+            Apply{print, Tuple{i, _Kw{Quote{end}, ""}}},
             Apply{os_put, Tuple{"\n"}},
             Apply{os_exit, Tuple{1}}
         }
@@ -1284,9 +1284,9 @@ Def{
                                 Tuple{a, i, v},
                                 Do{
                                     Apply{os_put, Tuple{"no index assignment for "}},
-                                    Apply{_put_value, Tuple{a}},
+                                    Apply{print, Tuple{a, _Kw{Quote{end}, ""}}},
                                     Apply{os_put, Tuple{" and "}},
-                                    Apply{_put_value, Tuple{i}},
+                                    Apply{print, Tuple{i, _Kw{Quote{end}, ""}}},
                                     Apply{os_put, Tuple{"\n"}},
                                     Apply{os_exit, Tuple{1}}
                                 }
@@ -2072,7 +2072,7 @@ _record_with_error(t, name) := {
     os_put("no field ")
     os_put(sym_name(name))
     os_put(" in ")
-    _put_value(t)
+    print(t, end = "")
     os_put("\n")
     os_exit(1)
 }
