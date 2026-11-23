@@ -14,6 +14,8 @@ Def{arity, expr_arity}
 Def{arg, expr_arg}
 Def{expr, expr_new}
 Def{typename, expr_type_name}
+Def{expr_parse, parse}
+Def{expr_eval, eval}
 
 " === Types === "
 " The types Int, String, Symbol, Expr, Function, Array, Plain and Type are values of planck0, and type(x) gives the type of x. "
