@@ -4,6 +4,7 @@ import_lib("list")
 import_lib("string")
 
 write_text := os_put
+line_text := text
 
 module pretty {
     export quote_string(s) := {
@@ -86,7 +87,7 @@ module pretty {
         t := expr_type(x)
         if (t == String) write_text(x)
         else if (t == Int or t == Symbol or t == Expr) write_text(if (pretty) text(x, 60) else show(x))
-        else write_text(_text(x))
+        else write_text(line_text(x))
         write_text(end)
     }
 }
