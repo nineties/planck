@@ -29,8 +29,8 @@ module bytes {
 
     export string(b, s) := {
         i := 0
-        while (i < strlen(s)) {
-            u8(b, ord(s, i))
+        while (i < str_len(s)) {
+            u8(b, str_ord(s, i))
             i = i + 1
         }
     }
@@ -66,7 +66,7 @@ module bytes {
 
     export to_u8(b) := {
         n := len(b)
-        a := u8_array(n)
+        a := plain_u8(n)
         i := 0
         while (i < n) {
             a[i] = vector.get(b, i)

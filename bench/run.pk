@@ -1,46 +1,46 @@
 # Copyright (C) 2026 nineties
 
-bench_first := time_ns()
+bench_first := os_time_ns()
 
 bench_cases := ["use_libs", "recursion", "match", "partial_fusion", "list_lib", "vector_table", "strings", "bigint", "bytes_bitset", "effects_nondet", "effects_state", "exceptions", "macro", "gc_alloc", "pretty_error", "modules_records", "loops_closures", "getopt", "syntax_extension"]
 
-bench_args := argv()
+bench_args := os_argv()
 
 bench_dirname(path) := {
-    i := strlen(path) - 1
-    while (i >= 0 and ord(path, i) != 47) i = i - 1
-    if (i < 0) "." else substr(path, 0, i)
+    i := str_len(path) - 1
+    while (i >= 0 and str_ord(path, i) != 47) i = i - 1
+    if (i < 0) "." else str_sub(path, 0, i)
 }
 
 bench_dir := bench_dirname(bench_args[0])
 bench_out := ""
 bench_lines := ""
-bench_put_saved := put
+bench_put_saved := os_put
 
 bench_put(s) := {
     bench_out = str_cat(bench_out, s)
 }
 
 bench_restore() := {
-    put = bench_put_saved
+    os_put = bench_put_saved
     write_text = bench_put_saved
 }
 
 bench_run(name) := {
     bench_out = ""
-    put = bench_put
+    os_put = bench_put
     write_text = bench_put
-    a0 := heap_allocated()
+    a0 := gc_heap_allocated()
     g0 := gc_count()
-    t0 := time_ns()
+    t0 := os_time_ns()
     load(f"{bench_dir}/cases/{name}.pk")
-    t1 := time_ns()
-    a1 := heap_allocated()
+    t1 := os_time_ns()
+    a1 := gc_heap_allocated()
     g1 := gc_count()
     bench_restore()
-    if (bench_out != unwrap(read_file(f"{bench_dir}/cases/{name}.out"))) {
+    if (bench_out != unwrap(os_read_file(f"{bench_dir}/cases/{name}.out"))) {
         print(f"{name}: output differs from the expected output")
-        exit(1)
+        os_exit(1)
     }
     bench_lines = str_cat(bench_lines, f"sample(\"{name}\", {t1 - t0}, {a1 - a0}, {g1 - g0})\n")
 }
@@ -53,8 +53,8 @@ if (array_len(bench_args) > 2) {
 }
 
 bench_path := bench_args[1]
-bench_old := match read_file(bench_path) {
+bench_old := match os_read_file(bench_path) {
     Ok{t} -> t
   | Err{_} -> none
 }
-write_file(bench_path, str_cat(if (bench_old == none) "" else bench_old, bench_lines))
+os_write_file(bench_path, str_cat(if (bench_old == none) "" else bench_old, bench_lines))

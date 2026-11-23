@@ -10,10 +10,10 @@ while (i < 150) {
 }
 text := strbuf.string(b)
 parts := string.split(text, ",")
-print(strlen(text))
+print(str_len(text))
 print(string.string_to_int(string.trim("  4242  ")))
 print(string.starts_with(text, "0,1,2"))
 print(string.index_of_string(text, "149", 0))
-print(strlen(string.join("-", parts)))
-print(strlen(string.string_repeat("ab", 1000)))
+print(str_len(string.join("-", parts)))
+print(str_len(string.string_repeat("ab", 1000)))
 print(string.string_less("abc", "abd"))

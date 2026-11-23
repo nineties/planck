@@ -7,8 +7,8 @@ module vector {
     export record Vector(a) = make_vector
 
     export new() := {
-        v := array(2)
-        array_set(v, 0, array(4))
+        v := array_new(2)
+        array_set(v, 0, array_new(4))
         array_set(v, 1, 0)
         make_vector(v)
     }
@@ -20,7 +20,7 @@ module vector {
         n := array_get(v, 1)
         d := array_get(v, 0)
         if (n == array_len(d)) {
-            nd := array(n * 2)
+            nd := array_new(n * 2)
             i := 0
             while (i < n) {
                 array_set(nd, i, array_get(d, i))

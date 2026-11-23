@@ -43,17 +43,17 @@ Def{peg_pv, none}
 Def{peg_inc, Lambda{Tuple{n}, Apply{int_add, Tuple{n, 1}}}}
 
 Def{peg_is_head, Lambda{Tuple{e, h},
-    If{Apply{expr_eq, Tuple{Apply{type, Tuple{e}}, Expr}},
+    If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}},
         Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, h}},
         false}}}
 
 " peg_map_args(f, Head{a, ...}) = Head{f(a), ...} "
 Def{peg_map_args, Lambda{Tuple{f, m}, Do{
-    Def{r, Apply{mexpr, Tuple{Apply{head, Tuple{m}}, Tuple{}}}},
+    Def{r, Apply{expr, Tuple{Apply{head, Tuple{m}}, Tuple{}}}},
     Def{i, 0},
     Def{n, Apply{arity, Tuple{m}}},
     While{Apply{int_lt, Tuple{i, n}}, Do{
-        Set{r, Apply{push, Tuple{r, Apply{f, Tuple{Apply{arg, Tuple{m, i}}}}}}},
+        Set{r, Apply{array_push, Tuple{r, Apply{f, Tuple{Apply{arg, Tuple{m, i}}}}}}},
         Set{i, Apply{peg_inc, Tuple{i}}}}},
     r}}}
 
@@ -61,7 +61,7 @@ Def{peg_fail, Lambda{Tuple{p}, Do{
     If{Apply{int_gt, Tuple{p, peg_far}}, Set{peg_far, p}, none},
     -1}}}
 
-Def{peg_char_at, Lambda{Tuple{p}, Apply{ord, Tuple{peg_src, p}}}}
+Def{peg_char_at, Lambda{Tuple{p}, Apply{str_ord, Tuple{peg_src, p}}}}
 
 Def{peg_is_blank, Lambda{Tuple{c},
     If{Apply{expr_eq, Tuple{c, 32}}, true,
@@ -103,10 +103,10 @@ Def{peg_same_line, Lambda{Tuple{p}, Do{
 
 " match the text s at p "
 Def{peg_literal, Lambda{Tuple{s, p}, Do{
-    Def{n, Apply{strlen, Tuple{s}}},
+    Def{n, Apply{str_len, Tuple{s}}},
     Def{i, 0},
     While{If{Apply{int_lt, Tuple{i, n}},
-            Apply{expr_eq, Tuple{Apply{ord, Tuple{s, i}}, Apply{peg_char_at, Tuple{Apply{int_add, Tuple{p, i}}}}}},
+            Apply{expr_eq, Tuple{Apply{str_ord, Tuple{s, i}}, Apply{peg_char_at, Tuple{Apply{int_add, Tuple{p, i}}}}}},
             false},
         Set{i, Apply{peg_inc, Tuple{i}}}},
     If{Apply{expr_eq, Tuple{i, n}},
@@ -129,20 +129,20 @@ Def{peg_escape_code, Lambda{Tuple{c},
 " A letter, a digit or _ followed by - and a character is a range. "
 Def{peg_charset, Lambda{Tuple{s}, Do{
     Def{t, Apply{table_new, Tuple{}}},
-    Def{n, Apply{strlen, Tuple{s}}},
+    Def{n, Apply{str_len, Tuple{s}}},
     Def{i, 0},
     Def{c, 0},
     Def{d, 0},
     Def{ok, true},
     While{If{ok, Apply{int_lt, Tuple{i, n}}, false}, Do{
-        Set{c, Apply{ord, Tuple{s, i}}},
+        Set{c, Apply{str_ord, Tuple{s, i}}},
         If{Apply{expr_eq, Tuple{c, 92}},
             If{Apply{expr_eq, Tuple{Apply{peg_inc, Tuple{i}}, n}}, Set{ok, false}, Do{
-                Apply{table_set, Tuple{t, Apply{peg_escape_code, Tuple{Apply{ord, Tuple{s, Apply{peg_inc, Tuple{i}}}}}}, true}},
+                Apply{table_set, Tuple{t, Apply{peg_escape_code, Tuple{Apply{str_ord, Tuple{s, Apply{peg_inc, Tuple{i}}}}}}, true}},
                 Set{i, Apply{int_add, Tuple{i, 2}}}}},
-        If{If{Apply{peg_is_alnum, Tuple{c}}, Apply{expr_eq, Tuple{Apply{ord, Tuple{s, Apply{peg_inc, Tuple{i}}}}, 45}}, false},
+        If{If{Apply{peg_is_alnum, Tuple{c}}, Apply{expr_eq, Tuple{Apply{str_ord, Tuple{s, Apply{peg_inc, Tuple{i}}}}, 45}}, false},
             If{Apply{int_ge, Tuple{Apply{int_add, Tuple{i, 2}}, n}}, Set{ok, false}, Do{
-                Set{d, Apply{ord, Tuple{s, Apply{int_add, Tuple{i, 2}}}}},
+                Set{d, Apply{str_ord, Tuple{s, Apply{int_add, Tuple{i, 2}}}}},
                 If{Apply{int_gt, Tuple{c, d}}, Set{ok, false}, Do{
                     While{Apply{int_le, Tuple{c, d}}, Do{
                         Apply{table_set, Tuple{t, c, true}},
@@ -159,7 +159,7 @@ Def{peg_px_char, Lambda{Tuple{t, want, p}, Do{
     Def{c, Apply{peg_char_at, Tuple{q}}},
     If{Apply{int_lt, Tuple{c, 0}}, Apply{peg_fail, Tuple{q}},
     If{If{want, Apply{table_get, Tuple{t, c, false}}, If{Apply{table_get, Tuple{t, c, false}}, false, true}},
-        Do{Set{peg_pv, Apply{substr, Tuple{peg_src, q, Apply{peg_inc, Tuple{q}}}}}, Apply{peg_inc, Tuple{q}}},
+        Do{Set{peg_pv, Apply{str_sub, Tuple{peg_src, q, Apply{peg_inc, Tuple{q}}}}}, Apply{peg_inc, Tuple{q}}},
         Apply{peg_fail, Tuple{q}}}}}}}
 
 " === Interpreter of parsing expressions === "
@@ -176,7 +176,7 @@ Def{peg_px_seq, Lambda{Tuple{e, p}, Do{
     Def{vs, Tuple{}},
     While{If{Apply{int_lt, Tuple{i, n}}, Apply{int_ge, Tuple{p, 0}}, false}, Do{
         Set{p, Apply{peg_px, Tuple{Apply{arg, Tuple{e, i}}, p}}},
-        If{Apply{int_ge, Tuple{p, 0}}, Set{vs, Apply{push, Tuple{vs, peg_pv}}}, none},
+        If{Apply{int_ge, Tuple{p, 0}}, Set{vs, Apply{array_push, Tuple{vs, peg_pv}}}, none},
         Set{i, Apply{peg_inc, Tuple{i}}}}},
     If{Apply{int_ge, Tuple{p, 0}}, Set{peg_pv, vs}, none},
     p}}}
@@ -195,7 +195,7 @@ Def{peg_px_many, Lambda{Tuple{e, p}, Do{
     Def{vs, Tuple{}},
     Def{q, Apply{peg_px, Tuple{e, p}}},
     While{Apply{int_gt, Tuple{q, p}}, Do{
-        Set{vs, Apply{push, Tuple{vs, peg_pv}}},
+        Set{vs, Apply{array_push, Tuple{vs, peg_pv}}},
         Set{p, q},
         Set{q, Apply{peg_px, Tuple{e, p}}}}},
     Set{peg_pv, vs},
@@ -210,7 +210,7 @@ Def{peg_px_delimited, Lambda{Tuple{e, sep, p}, Do{
         Set{r, Apply{peg_px, Tuple{sep, q}}},
         If{Apply{int_ge, Tuple{r, 0}}, Set{r, Apply{peg_px, Tuple{e, r}}}, none},
         While{Apply{int_ge, Tuple{r, 0}}, Do{
-            Set{vs, Apply{push, Tuple{vs, peg_pv}}},
+            Set{vs, Apply{array_push, Tuple{vs, peg_pv}}},
             Set{q, r},
             Set{r, Apply{peg_px, Tuple{sep, q}}},
             If{Apply{int_ge, Tuple{r, 0}}, Set{r, Apply{peg_px, Tuple{e, r}}}, none}}},
@@ -263,13 +263,13 @@ Apply{table_set, Tuple{peg_handlers, Quote{Fail}, Lambda{Tuple{e, p}, Apply{peg_
 Apply{table_set, Tuple{peg_handlers, Quote{Any}, Lambda{Tuple{e, p}, Do{
         Def{q, Apply{peg_skip_ws, Tuple{p}}},
         If{Apply{int_lt, Tuple{Apply{peg_char_at, Tuple{q}}, 0}}, Apply{peg_fail, Tuple{q}}, Do{
-            Set{peg_pv, Apply{substr, Tuple{peg_src, q, Apply{peg_inc, Tuple{q}}}}},
+            Set{peg_pv, Apply{str_sub, Tuple{peg_src, q, Apply{peg_inc, Tuple{q}}}}},
             Apply{peg_inc, Tuple{q}}}}}}}}
 Apply{table_set, Tuple{peg_handlers, Quote{OneOf}, Lambda{Tuple{e, p}, Apply{peg_px_char, Tuple{Apply{arg, Tuple{e, 0}}, true, p}}}}}
 Apply{table_set, Tuple{peg_handlers, Quote{NoneOf}, Lambda{Tuple{e, p}, Apply{peg_px_char, Tuple{Apply{arg, Tuple{e, 0}}, false, p}}}}}
 
 Set{peg_px, Lambda{Tuple{e, p}, Do{
-    Def{t, Apply{type, Tuple{e}}},
+    Def{t, Apply{expr_type, Tuple{e}}},
     If{Apply{expr_eq, Tuple{t, String}}, Apply{peg_literal, Tuple{e, Apply{peg_skip_ws, Tuple{p}}}},
     If{Apply{expr_eq, Tuple{t, Symbol}}, Apply{peg_call_rule, Tuple{e, p}},
     If{Apply{expr_eq, Tuple{t, Function}}, Apply{e, Tuple{p}},
@@ -286,16 +286,16 @@ Set{peg_px, Lambda{Tuple{e, p}, Do{
 Def{peg_row, Lambda{Tuple{p}, Do{
     Def{row, Apply{array_get, Tuple{peg_memo, p}}},
     If{Apply{expr_eq, Tuple{row, none}}, Do{
-        Set{row, Apply{array, Tuple{peg_memo_w}}},
+        Set{row, Apply{array_new, Tuple{peg_memo_w}}},
         Apply{array_set, Tuple{peg_memo, p, row}}}, none},
     row}}}
 
 Set{peg_call_rule, Lambda{Tuple{r, p}, Do{
     Def{id, Apply{table_get, Tuple{peg_ids, r, none}}},
     If{Apply{expr_eq, Tuple{id, none}}, Do{
-        Apply{put, Tuple{"undefined rule: "}},
+        Apply{os_put, Tuple{"undefined rule: "}},
         Apply{print, Tuple{r}},
-        Apply{exit, Tuple{1}}}, none},
+        Apply{os_exit, Tuple{1}}}, none},
     Def{row, Apply{peg_row, Tuple{p}}},
     Def{b, Apply{int_mul, Tuple{id, 3}}},
     Def{m, Apply{array_get, Tuple{row, b}}},
@@ -334,16 +334,16 @@ Def{peg_prepare, none}
 Def{peg_prepare_set, Lambda{Tuple{e}, Do{
     Def{t, Apply{peg_charset, Tuple{Apply{arg, Tuple{e, 0}}}}},
     If{Apply{expr_eq, Tuple{t, none}}, Do{
-        Apply{put, Tuple{"invalid character set: "}},
+        Apply{os_put, Tuple{"invalid character set: "}},
         Apply{print, Tuple{Apply{arg, Tuple{e, 0}}}},
-        Apply{exit, Tuple{1}}}, none},
-    Apply{mexpr, Tuple{Apply{head, Tuple{e}}, Tuple{t}}}}}}
+        Apply{os_exit, Tuple{1}}}, none},
+    Apply{expr, Tuple{Apply{head, Tuple{e}}, Tuple{t}}}}}}
 Set{peg_prepare, Lambda{Tuple{e},
     If{If{Apply{peg_is_head, Tuple{e, Quote{OneOf}}}, true, Apply{peg_is_head, Tuple{e, Quote{NoneOf}}}},
         Apply{peg_prepare_set, Tuple{e}},
     If{Apply{peg_is_head, Tuple{e, Quote{Act}}},
         Act{Apply{peg_prepare, Tuple{Apply{arg, Tuple{e, 0}}}}, Apply{eval, Tuple{Apply{arg, Tuple{e, 1}}}}},
-    If{Apply{expr_eq, Tuple{Apply{type, Tuple{e}}, Expr}},
+    If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}},
         Apply{peg_map_args, Tuple{peg_prepare, e}},
         e}}}}}
 
@@ -370,7 +370,7 @@ Def{peg_line_at, Lambda{Tuple{p}, Do{
     Def{q, p},
     While{If{Apply{int_ge, Tuple{Apply{peg_char_at, Tuple{q}}, 0}}, Apply{expr_ne, Tuple{Apply{peg_char_at, Tuple{q}}, 10}}, false},
         Set{q, Apply{peg_inc, Tuple{q}}}},
-    Apply{substr, Tuple{peg_src, p, q}}}}}
+    Apply{str_sub, Tuple{peg_src, p, q}}}}}
 
 " the position of the start of peg_src: Loc{file, line, column}. peg_lp is a position of the text that peg_ll and peg_lc are the line and the column of, "
 " so that the positions after it are counted from there. "
@@ -392,11 +392,11 @@ Def{peg_loc_at, Lambda{Tuple{p0}, Do{
             Do{Set{peg_ll, Apply{int_add, Tuple{peg_ll, 1}}}, Set{peg_lc, 1}},
             Set{peg_lc, Apply{int_add, Tuple{peg_lc, 1}}}},
         Set{peg_lp, Apply{int_add, Tuple{peg_lp, 1}}}}},
-    Apply{mexpr, Tuple{Quote{Loc}, Tuple{Apply{arg, Tuple{peg_loc0, 0}}, peg_ll, peg_lc}}}}}}
+    Apply{expr, Tuple{Quote{Loc}, Tuple{Apply{arg, Tuple{peg_loc0, 0}}, peg_ll, peg_lc}}}}}}
 
 " peg_at(l, e) is e wrapped in At{loc, e} with the position of the token at l, when the text is parsed with a position (peg_loc0 is not none) "
 Def{peg_at, Lambda{Tuple{l, e}, If{Apply{expr_ne, Tuple{peg_loc0, none}},
-    Apply{mexpr, Tuple{Quote{At}, Tuple{Apply{peg_loc_at, Tuple{l}}, e}}}, e}}}
+    Apply{expr, Tuple{Quote{At}, Tuple{Apply{peg_loc_at, Tuple{l}}, e}}}, e}}}
 
 " peg_count_loc(s, n, loc) is the position after the first n bytes of s, when s starts at the position loc: Loc{file, line, column}. "
 Def{peg_count_loc, Lambda{Tuple{s, n, loc}, Do{
@@ -404,11 +404,11 @@ Def{peg_count_loc, Lambda{Tuple{s, n, loc}, Do{
     Def{c, Apply{arg, Tuple{loc, 2}}},
     Def{i, 0},
     While{Apply{int_lt, Tuple{i, n}}, Do{
-        If{Apply{expr_eq, Tuple{Apply{ord, Tuple{s, i}}, 10}},
+        If{Apply{expr_eq, Tuple{Apply{str_ord, Tuple{s, i}}, 10}},
             Do{Set{l, Apply{int_add, Tuple{l, 1}}}, Set{c, 1}},
             Set{c, Apply{int_add, Tuple{c, 1}}}},
         Set{i, Apply{int_add, Tuple{i, 1}}}}},
-    Apply{mexpr, Tuple{Quote{Loc}, Tuple{Apply{arg, Tuple{loc, 0}}, l, c}}}}}}
+    Apply{expr, Tuple{Quote{Loc}, Tuple{Apply{arg, Tuple{loc, 0}}, l, c}}}}}}
 
 " the byte position in peg_src where the parse stopped: the token at the farthest failure, or the end of the text "
 Def{peg_error_pos, Lambda{Tuple{}, Do{
@@ -420,16 +420,16 @@ Def{peg_error_pos, Lambda{Tuple{}, Do{
 " SyntaxError{message, loc} or SyntaxError{message, text, loc} with the Loc{file, line, column} of the error. "
 Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
     Def{e, If{Apply{int_ge, Tuple{peg_far, peg_srclen}},
-        Apply{mexpr, Tuple{Quote{SyntaxError}, Tuple{"unexpected end of input"}}},
-        Apply{mexpr, Tuple{Quote{SyntaxError}, Tuple{"unexpected input", Apply{peg_line_at, Tuple{peg_far}}}}}}},
+        Apply{expr, Tuple{Quote{SyntaxError}, Tuple{"unexpected end of input"}}},
+        Apply{expr, Tuple{Quote{SyntaxError}, Tuple{"unexpected input", Apply{peg_line_at, Tuple{peg_far}}}}}}},
     If{Apply{expr_eq, Tuple{loc0, none}}, e,
-        Apply{push, Tuple{e, Apply{peg_count_loc, Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}}}}}}
+        Apply{array_push, Tuple{e, Apply{peg_count_loc, Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}}}}}}
 
 " the decimal text of a natural number "
 Def{peg_dec, none}
 Set{peg_dec, Lambda{Tuple{n},
     If{Apply{int_lt, Tuple{n, 10}},
-        Apply{substr, Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
+        Apply{str_sub, Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
         Apply{str_cat, Tuple{Apply{peg_dec, Tuple{Apply{int_div, Tuple{n, 10}}}}, Apply{peg_dec, Tuple{Apply{int_mod, Tuple{n, 10}}}}}}}}}
 
 " the position that SyntaxError e has as its last argument, or none "
@@ -459,8 +459,8 @@ Def{peg_parse_at, Lambda{Tuple{r, s, loc}, Do{
     Set{peg_lp, 0},
     Set{peg_ll, If{Apply{expr_eq, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 1}}}},
     Set{peg_lc, If{Apply{expr_eq, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 2}}}},
-    Set{peg_srclen, Apply{strlen, Tuple{s}}},
-    Set{peg_memo, Apply{array, Tuple{Apply{peg_inc, Tuple{Apply{strlen, Tuple{s}}}}}}},
+    Set{peg_srclen, Apply{str_len, Tuple{s}}},
+    Set{peg_memo, Apply{array_new, Tuple{Apply{peg_inc, Tuple{Apply{str_len, Tuple{s}}}}}}},
     Set{peg_memo_w, Apply{int_mul, Tuple{peg_nrules, 3}}},
     Set{peg_far, 0},
     Def{p, Apply{peg_skip_ws, Tuple{0}}},
@@ -468,7 +468,7 @@ Def{peg_parse_at, Lambda{Tuple{r, s, loc}, Do{
         Def{q, Apply{peg_call_rule, Tuple{r, p}}},
         If{Apply{int_lt, Tuple{q, 0}},
             Tuple{Apply{peg_syntax_error, Tuple{loc}}, ""},
-            Tuple{peg_pv, Apply{substr, Tuple{s, Apply{peg_skip_ws, Tuple{q}}, peg_srclen}}}}}}}}}
+            Tuple{peg_pv, Apply{str_sub, Tuple{s, Apply{peg_skip_ws, Tuple{q}}, peg_srclen}}}}}}}}}
 
 " peg_parse(rule, s) is peg_parse_at(rule, s, none) "
 Def{peg_parse, Lambda{Tuple{r, s}, Apply{peg_parse_at, Tuple{r, s, none}}}}
@@ -476,7 +476,7 @@ Def{peg_parse, Lambda{Tuple{r, s}, Apply{peg_parse_at, Tuple{r, s, none}}}}
 " peg_file_error_text(path, s0, s) is the text of the syntax error that parse(s) returned, or none when there is none. "
 " s is the end of the text s0 of the file path, so the position of the error is counted from the start of s0. "
 Set{peg_file_error_text, Lambda{Tuple{path, s0, s}, Do{
-    Def{start, Apply{peg_count_loc, Tuple{s0, Apply{int_sub, Tuple{Apply{strlen, Tuple{s0}}, Apply{strlen, Tuple{s}}}},
-        Apply{mexpr, Tuple{Quote{Loc}, Tuple{path, 1, 1}}}}}},
+    Def{start, Apply{peg_count_loc, Tuple{s0, Apply{int_sub, Tuple{Apply{str_len, Tuple{s0}}, Apply{str_len, Tuple{s}}}},
+        Apply{expr, Tuple{Quote{Loc}, Tuple{path, 1, 1}}}}}},
     Def{e, Apply{arg, Tuple{Apply{peg_parse_at, Tuple{Quote{toplevel}, s, start}}, 0}}},
     If{Apply{peg_is_head, Tuple{e, Quote{SyntaxError}}}, Apply{peg_error_text, Tuple{e}}, none}}}}

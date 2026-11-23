@@ -8,8 +8,8 @@ module error {
         line := 1
         col := 1
         i := 0
-        while (i < pos and i < strlen(src)) {
-            if (ord(src, i) == 10) {
+        while (i < pos and i < str_len(src)) {
+            if (str_ord(src, i) == 10) {
                 line = line + 1
                 col = 1
             } else col = col + 1
@@ -21,13 +21,13 @@ module error {
     export line_text(src, line) := {
         i := 0
         l := 1
-        while (l < line and i < strlen(src)) {
-            if (ord(src, i) == 10) l = l + 1
+        while (l < line and i < str_len(src)) {
+            if (str_ord(src, i) == 10) l = l + 1
             i = i + 1
         }
         j := i
-        while (j < strlen(src) and ord(src, j) != 10) j = j + 1
-        substr(src, i, j)
+        while (j < str_len(src) and str_ord(src, j) != 10) j = j + 1
+        str_sub(src, i, j)
     }
 
     export loc_at(file, src, pos) := {

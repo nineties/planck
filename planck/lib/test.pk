@@ -20,6 +20,6 @@ module test {
 
     export finish() := {
         print(f"Tests passed {passed}/{passed + failed}")
-        if (failed > 0) exit(1)
+        if (failed > 0) os_exit(1)
     }
 }

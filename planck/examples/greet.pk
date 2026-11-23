@@ -32,8 +32,8 @@ main(args) := {
         }
     } else {
         say(str_cat("error: ", pretty.show(r)))
-        exit(2)
+        os_exit(2)
     }
 }
 
-main(if (array_len(argv()) > 1) argv() else list.list_to_array(["greet.pk", "-sn", "2", "Ann", "--", "-Bob"]))
+main(if (array_len(os_argv()) > 1) os_argv() else list.list_to_array(["greet.pk", "-sn", "2", "Ann", "--", "-Bob"]))

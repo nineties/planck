@@ -1,26 +1,26 @@
 # Copyright (C) 2026 nineties
 
-errors_args := argv()
+errors_args := os_argv()
 errors_planck0 := errors_args[1]
 errors_dir := "planck/tests/errors"
-errors_names := list_dir(errors_dir)
+errors_names := os_list_dir(errors_dir)
 errors_failed := 0
 
 errors_check(name) := {
-    n := strlen(name)
-    if (n > 3 and substr(name, n - 3, n) == ".pk") {
-        base := f"{errors_dir}/{substr(name, 0, n - 3)}"
-        program := array(1)
+    n := str_len(name)
+    if (n > 3 and str_sub(name, n - 3, n) == ".pk") {
+        base := f"{errors_dir}/{str_sub(name, 0, n - 3)}"
+        program := array_new(1)
         program[0] = f"{base}.pk"
-        r := run_program(errors_planck0, program, "", "")
+        r := os_run(errors_planck0, program, "", "")
         if (r[0] == 0) {
             print(f"{base}.pk: should stop")
             errors_failed = errors_failed + 1
-        } else if (r[1] != unwrap(read_file(f"{base}.out"))) {
+        } else if (r[1] != unwrap(os_read_file(f"{base}.out"))) {
             print(f"{base}.pk: the output differs from {base}.out")
             print(r[1])
             errors_failed = errors_failed + 1
-        } else if (r[2] != unwrap(read_file(f"{base}.err"))) {
+        } else if (r[2] != unwrap(os_read_file(f"{base}.err"))) {
             print(f"{base}.pk: the error message differs from {base}.err")
             print(r[2])
             errors_failed = errors_failed + 1
@@ -35,4 +35,4 @@ while (i < array_len(errors_names)) {
     errors_check(errors_names[i])
     i = i + 1
 }
-if (errors_failed > 0) exit(1)
+if (errors_failed > 0) os_exit(1)

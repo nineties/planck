@@ -10,7 +10,7 @@ print(x)
 x %= 4
 print(x)
 
-a := array(3)
+a := array_new(3)
 a[0] = 1
 a[1] = 2
 a[2] = 3

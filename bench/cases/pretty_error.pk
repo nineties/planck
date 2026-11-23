@@ -7,7 +7,7 @@ tree(n) := Node{tree(n - 1), n, [n, f"s{n}", (n, 'sym)]}
 i := 0
 t := 0
 while (i < 20) {
-    t = t + strlen(pretty.text(tree(12), 60))
+    t = t + str_len(pretty.text(tree(12), 60))
     i = i + 1
 }
 print(t)

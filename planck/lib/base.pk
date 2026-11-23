@@ -3,7 +3,7 @@
 module base {
     export panic(msg) := {
         print(f"{msg}")
-        exit(1)
+        os_exit(1)
     }
 
     export assert(c, msg) := if (not c) panic(msg)

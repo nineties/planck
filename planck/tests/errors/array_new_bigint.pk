@@ -1,2 +1,2 @@
 print(1)
-print(array(10000000000))
+print(array_new(10000000000))
