@@ -25,11 +25,7 @@ Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 
 " === Output === "
 " text(x) is the text of x on one line. A string is its characters, an integer is its decimal digits, a symbol is its name, an expression is its head and its arguments in braces. An array and a function are <array> and <function>. "
-Def{_int_text, none}
 Def{text, none}
-Set{_int_text, Lambda{Tuple{n}, If{Apply{int_lt, Tuple{n, 0}}, Apply{str_cat, Tuple{"-", Apply{_int_text, Tuple{Apply{int_sub, Tuple{0, n}}}}}},
-    If{Apply{int_lt, Tuple{n, 10}}, Apply{str_sub, Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
-        Apply{str_cat, Tuple{Apply{_int_text, Tuple{Apply{int_div, Tuple{n, 10}}}}, Apply{_int_text, Tuple{Apply{int_mod, Tuple{n, 10}}}}}}}}}}
 Set{text, Apply{Lambda{Tuple{}, Do{
 Def{_args_text, none},
 Set{_args_text, Lambda{Tuple{e, i}, If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
@@ -38,7 +34,7 @@ Set{_args_text, Lambda{Tuple{e, i}, If{Apply{int_ge, Tuple{i, Apply{arity, Tuple
             Apply{str_cat, Tuple{", ", Apply{_args_text, Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
             ""}}}}}},
 Fusion{Lambda{Tuple{_TypeOf{x, String}}, x},
-    Fusion{Lambda{Tuple{_TypeOf{x, Int}}, Apply{_int_text, Tuple{x}}},
+    Fusion{Lambda{Tuple{_TypeOf{x, Int}}, Apply{int_to_string, Tuple{x}}},
         Fusion{Lambda{Tuple{_TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
             Fusion{Lambda{Tuple{_TypeOf{x, Expr}}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{head, Tuple{x}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}},
                 Fusion{Lambda{Tuple{_TypeOf{x, Array}}, "<array>"},
