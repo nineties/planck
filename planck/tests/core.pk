@@ -419,7 +419,7 @@ Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Pair{1, 2}}}}, "long"}}
 Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Other{1, 2}}}}, "short"}}
 
 Apply{os_put, Tuple{"Tests passed "}}
-Apply{os_put, Tuple{Apply{_int_text, Tuple{passed}}}}
+Apply{os_put, Tuple{Apply{int_to_string, Tuple{passed}}}}
 Apply{os_put, Tuple{"/"}}
 Apply{print, Tuple{Apply{int_add, Tuple{passed, failed}}}}
 If{Apply{expr_eq, Tuple{failed, 0}}, none, Apply{os_exit, Tuple{1}}}
