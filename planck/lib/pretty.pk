@@ -91,7 +91,7 @@ module pretty {
         write_text(end)
     }
 }
-repr = (x) -> pretty.repr_show(x)
+repr := (x) -> pretty.repr_show(x)
 
 _print_repr(x) := {
     t := expr_type(x)
