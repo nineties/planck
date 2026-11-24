@@ -14,8 +14,10 @@ module test {
         passed = passed + 1
     } else {
         failed = failed + 1
-        if (current == "") print(f"Test failed: expected {expected} but got {actual}")
-        else print(f"Test failed in {current}: expected {expected} but got {actual}")
+        if (current ==
+            "") print(f"Test failed: expected {expected} but got {actual}")
+        else print(
+            f"Test failed in {current}: expected {expected} but got {actual}")
     }
 
     export finish() := {

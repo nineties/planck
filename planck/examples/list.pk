@@ -24,7 +24,9 @@ sum(xs) := foldl(int_add, 0, xs)
 
 fun qsort
 qsort = (Nil{}) -> []
-      | (p :: xs) -> append(qsort(filter(x -> x < p, xs)), p :: qsort(filter(x -> x >= p, xs)))
+      | (p :: xs) ->
+          append(qsort(filter(x -> x < p, xs)), p ::
+          qsort(filter(x -> x >= p, xs)))
 
 fun print_elems
 print_elems = (Nil{}) -> none

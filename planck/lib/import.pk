@@ -19,7 +19,8 @@ module _importer {
         if (s == none) return none
         r := parse_mexpr(s)
         h := arg(r, 0)
-        if (expr_type(h) != Expr or head(h) != 'Preprocessed or arity(h) != 2) return none
+        if (expr_type(h) != Expr or head(h) != 'Preprocessed or
+            arity(h) != 2) return none
         if (arg(h, 0) != state or arg(h, 1) != text) return none
         s = arg(r, 1)
         acc := []
@@ -29,7 +30,8 @@ module _importer {
             r = parse_mexpr(s)
             e := arg(r, 0)
             if (e == Eof{}) go = false
-            else if (expr_type(e) == Expr and head(e) == 'SyntaxError) return none
+            else if (expr_type(e) == Expr and
+                head(e) == 'SyntaxError) return none
             else {
                 acc = e :: acc
                 n = n + 1
@@ -38,11 +40,13 @@ module _importer {
         }
         if (acc == []) return none
         last := arg(acc, 0)
-        if (expr_type(last) != Expr or head(last) != 'PreprocessEnd or arity(last) != 1 or arg(last, 0) != n - 1) return none
+        if (expr_type(last) != Expr or head(last) != 'PreprocessEnd or
+            arity(last) != 1 or arg(last, 0) != n - 1) return none
         reverse_onto(arg(acc, 1), [])
     }
 
-    export import_lib(name) := if (table_get(used_libs, name, false)) none else {
+    export import_lib(name) :=
+        if (table_get(used_libs, name, false)) none else {
         table_set(used_libs, name, true)
         path := f"planck/lib/{name}.pk"
         text := unwrap(os_read_file(path))
@@ -65,13 +69,15 @@ module _importer {
 
 import_lib := _importer.import_lib
 
-" the module that import loads: use of the file loads it, and the module is the variable of the name m "
+" the module that import loads: use of the file loads it, and the module is "
+"   the variable of the name m "
 _import_module(file, m) := {
     import_lib(file)
     eval(m)
 }
 
-" the definitions of the fields of the module that are not in hidden, which import runs by eval "
+" the definitions of the fields of the module that are not in hidden, which "
+"   import runs by eval "
 _import_defs(m @ Module, hidden) := {
     a := arg(arg(m, 0), 0)
     ds := Tuple{}

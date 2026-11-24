@@ -9,14 +9,28 @@ rest(s) := arg(peg_parse('toplevel, s), 1)
 
 check(tree_at("f(x)", Loc{"f.pk", 1, 1}), at(1, 1, 'Apply{f, Tuple{x}}))
 check(tree_at("  f(x)", Loc{"f.pk", 3, 5}), at(3, 7, 'Apply{f, Tuple{x}}))
-check(tree_at("g(1,\n  f(2))", Loc{"f.pk", 7, 10}), at(7, 10, expr('Apply, Tuple{'g, expr('Tuple, Tuple{1, at(8, 3, 'Apply{f, Tuple{2}})})})))
-check(tree_at("f(x)(y)", Loc{"f.pk", 1, 1}), at(1, 1, expr('Apply, Tuple{at(1, 1, 'Apply{f, Tuple{x}}), 'Tuple{y}})))
+check(tree_at("g(1,\n  f(2))", Loc{"f.pk", 7, 10}),
+    at(7, 10,
+        expr('Apply,
+            Tuple{'g, expr('Tuple, Tuple{1, at(8, 3, 'Apply{f, Tuple{2}})})})))
+check(tree_at("f(x)(y)", Loc{"f.pk", 1, 1}),
+    at(1, 1, expr('Apply, Tuple{at(1, 1, 'Apply{f, Tuple{x}}), 'Tuple{y}})))
 check(tree_at("a + b", Loc{"f.pk", 1, 1}), 'Apply{int_add, Tuple{a, b}})
-check(tree_at("a.b", Loc{"f.pk", 1, 1}), 'Apply{_record_get, Tuple{a, Quote{b}}})
+check(tree_at("a.b", Loc{"f.pk", 1, 1}),
+    'Apply{_record_get, Tuple{a, Quote{b}}})
 check(tree_at("a[1]", Loc{"f.pk", 1, 1}), 'Apply{_index_get, Tuple{a, 1}})
 check(tree_at("'f(x)", Loc{"f.pk", 1, 1}), 'Quote{Apply{f, Tuple{x}}})
-check(tree_at("`f(x, !g(y))", Loc{"f.pk", 1, 1}), expr('QuasiQuote, Tuple{expr('Apply, Tuple{'f, expr('Tuple, Tuple{'x, expr('UnQuote, Tuple{at(1, 8, 'Apply{g, Tuple{y}})})})})}))
-check(tree_at("(f(p)) -> p", Loc{"f.pk", 1, 1}), 'Lambda{Tuple{Apply{Quote{f}, Tuple{p}}}, p})
+check(tree_at("`f(x, !g(y))", Loc{"f.pk", 1, 1}),
+    expr('QuasiQuote,
+        Tuple{
+            expr('Apply,
+                Tuple{'f,
+                    expr('Tuple,
+                        Tuple{'x,
+                            expr('UnQuote,
+                                Tuple{at(1, 8, 'Apply{g, Tuple{y}})})})})}))
+check(tree_at("(f(p)) -> p", Loc{"f.pk", 1, 1}),
+    'Lambda{Tuple{Apply{Quote{f}, Tuple{p}}}, p})
 check(arg(parse_at("f(x)\ng(y)", Loc{"f.pk", 1, 1}), 1), "g(y)")
 check(tree("g(1, f(2))"), 'Apply{g, Tuple{1, Apply{f, Tuple{2}}}})
 check(arg(parse("f(x)"), 0), 'Apply{f, Tuple{x}})
@@ -34,7 +48,8 @@ check(tree("-1.5"), 'Apply{float_parse, Tuple{"-1.5"}})
 check(tree("1.5e-3"), 'Apply{float_parse, Tuple{"1.5e-3"}})
 check(tree("1.5E3"), 'Apply{float_parse, Tuple{"1.5E3"}})
 check(tree("2.0e10"), 'Apply{float_parse, Tuple{"2.0e10"}})
-check(tree("1.5 + 2"), 'Apply{int_add, Tuple{Apply{float_parse, Tuple{"1.5"}}, 2}})
+check(tree("1.5 + 2"),
+    'Apply{int_add, Tuple{Apply{float_parse, Tuple{"1.5"}}, 2}})
 check(tree("f(1.5, x)"), 'Apply{f, Tuple{Apply{float_parse, Tuple{"1.5"}}, x}})
 check(rest("1.5 x"), "x")
 check(head(tree("1.5e x")), 'SyntaxError)
@@ -45,10 +60,15 @@ check(tree("0x3fffffff"), 1073741823)
 check(tree("-0"), 0)
 check(tree("1073741824"), 'Apply{int_parse, Tuple{"1073741824"}})
 check(tree("-1073741825"), 'Apply{int_parse, Tuple{"-1073741825"}})
-check(tree("123456789012345678901234567890"), 'Apply{int_parse, Tuple{"123456789012345678901234567890"}})
-check(tree("0xCBF29CE484222325"), 'Apply{int_parse, Tuple{"0xCBF29CE484222325"}})
-check(tree("0b1000000000000000000000000000000"), 'Apply{int_parse, Tuple{"0b1000000000000000000000000000000"}})
-check(tree("2 * 123456789012345678901234567890"), 'Apply{int_mul, Tuple{2, Apply{int_parse, Tuple{"123456789012345678901234567890"}}}})
+check(tree("123456789012345678901234567890"),
+    'Apply{int_parse, Tuple{"123456789012345678901234567890"}})
+check(tree("0xCBF29CE484222325"),
+    'Apply{int_parse, Tuple{"0xCBF29CE484222325"}})
+check(tree("0b1000000000000000000000000000000"),
+    'Apply{int_parse, Tuple{"0b1000000000000000000000000000000"}})
+check(tree("2 * 123456789012345678901234567890"),
+    'Apply{int_mul,
+        Tuple{2, Apply{int_parse, Tuple{"123456789012345678901234567890"}}}})
 check(rest("123456789012345678901234567890 x"), "x")
 check(tree("\"a\\tb\\n\""), "a\tb\n")
 check(str_len(tree("\"a\\0b\"")), 3)
@@ -64,12 +84,16 @@ check(tree("[1, 2]"), 'Cons{1, Cons{2, Nil{}}})
 check(tree("[]"), 'Nil{})
 
 check(tree("1 + 2 * 3"), 'Apply{int_add, Tuple{1, Apply{int_mul, Tuple{2, 3}}}})
-check(tree("(1 + 2) * 3"), 'Apply{int_mul, Tuple{Apply{int_add, Tuple{1, 2}}, 3}})
+check(tree("(1 + 2) * 3"),
+    'Apply{int_mul, Tuple{Apply{int_add, Tuple{1, 2}}, 3}})
 check(tree("1 - 2 - 3"), 'Apply{int_sub, Tuple{Apply{int_sub, Tuple{1, 2}}, 3}})
 check(tree("8 / 4 % 3"), 'Apply{int_mod, Tuple{Apply{int_div, Tuple{8, 4}}, 3}})
-check(tree("8 // 4 % 3"), 'Apply{int_mod, Tuple{Apply{int_quo, Tuple{8, 4}}, 3}})
-check(tree("8 / 4 // 2"), 'Apply{int_quo, Tuple{Apply{int_div, Tuple{8, 4}}, 2}})
-check(tree("1 + 7 // 2"), 'Apply{int_add, Tuple{1, Apply{int_quo, Tuple{7, 2}}}})
+check(tree("8 // 4 % 3"),
+    'Apply{int_mod, Tuple{Apply{int_quo, Tuple{8, 4}}, 3}})
+check(tree("8 / 4 // 2"),
+    'Apply{int_quo, Tuple{Apply{int_div, Tuple{8, 4}}, 2}})
+check(tree("1 + 7 // 2"),
+    'Apply{int_add, Tuple{1, Apply{int_quo, Tuple{7, 2}}}})
 check(tree("a + 1 < b"), 'Apply{int_lt, Tuple{Apply{int_add, Tuple{a, 1}}, b}})
 check(tree("a <= b"), 'Apply{int_le, Tuple{a, b}})
 check(tree("a >= b"), 'Apply{int_ge, Tuple{a, b}})
@@ -95,27 +119,35 @@ check(tree("x -> x + 1"), 'Lambda{Tuple{x}, Apply{int_add, Tuple{x, 1}}})
 check(tree("(x, y) -> x"), 'Lambda{Tuple{x, y}, x})
 check(tree("() -> 1"), 'Lambda{Tuple{}, 1})
 check(tree("x -> y -> x"), 'Lambda{Tuple{x}, Lambda{Tuple{y}, x}})
-check(tree("(0) -> 1 | (n) -> n"), 'Fusion{Lambda{Tuple{0}, 1}, Lambda{Tuple{n}, n}})
+check(tree("(0) -> 1 | (n) -> n"),
+    'Fusion{Lambda{Tuple{0}, 1}, Lambda{Tuple{n}, n}})
 check(tree("(F{a}, 'none) -> a"), 'Lambda{Tuple{F{a}, Quote{none}}, a})
 check(tree("(x @ Int) -> x"), 'Lambda{Tuple{_TypeOf{x, Int}}, x})
 check(tree("x := 1"), 'Def{x, 1})
-check(tree("f(x) := x"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
+check(tree("f(x) := x"),
+    'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
 check(tree("x = y"), 'Set{x, y})
 
 check(tree("'a"), 'Quote{a})
 check(tree("'(a + 1)"), 'Quote{Apply{int_add, Tuple{a, 1}}})
 check(tree("`F{!x}"), 'QuasiQuote{F{UnQuote{x}}})
-check(tree("`{ !i := 1; !i = !i + 1 }"), 'QuasiQuote{Do{Def{UnQuote{i}, 1}, Set{UnQuote{i}, Apply{int_add, Tuple{UnQuote{i}, 1}}}}})
-check(tree("`(if (c) !i = 1 else !i := 2)"), 'QuasiQuote{If{c, Set{UnQuote{i}, 1}, Def{UnQuote{i}, 2}}})
+check(tree("`{ !i := 1; !i = !i + 1 }"),
+    'QuasiQuote{
+        Do{Def{UnQuote{i}, 1},
+            Set{UnQuote{i}, Apply{int_add, Tuple{UnQuote{i}, 1}}}}})
+check(tree("`(if (c) !i = 1 else !i := 2)"),
+    'QuasiQuote{If{c, Set{UnQuote{i}, 1}, Def{UnQuote{i}, 2}}})
 
 check(tree("{ a; b }"), 'Do{a, b})
 check(tree("{\n a\n b\n}"), 'Do{a, b})
 check(tree("{}"), 'Do{})
 check(tree("if (a) { b }"), 'If{a, Do{b}, none})
 check(tree("if (a) { b } else { c }"), 'If{a, Do{b}, Do{c}})
-check(tree("if (a) { b }\nelse if (c) { d }"), 'If{a, Do{b}, If{c, Do{d}, none}})
+check(tree("if (a) { b }\nelse if (c) { d }"),
+    'If{a, Do{b}, If{c, Do{d}, none}})
 check(tree("while (a) { b }"), 'While{a, Do{b}})
-check(tree("handle { a } with (E{}, k) -> k(1)"), 'Handle{Do{a}, Lambda{Tuple{E{}, k}, Apply{k, Tuple{1}}}})
+check(tree("handle { a } with (E{}, k) -> k(1)"),
+    'Handle{Do{a}, Lambda{Tuple{E{}, k}, Apply{k, Tuple{1}}}})
 check(tree("if (a) b"), 'If{a, b, none})
 check(tree("if (a) b else c"), 'If{a, b, c})
 check(tree("if (a) x = 1 else x = 2"), 'If{a, Set{x, 1}, Set{x, 2}})
@@ -137,27 +169,33 @@ check(tree("perform E{x}"), 'Perform{E{x}})
 
 check(tree("x :: xs"), 'Cons{x, xs})
 check(tree("1 :: 2 :: []"), 'Cons{1, Cons{2, Nil{}}})
-check(tree("a + 1 :: b * 2"), 'Cons{Apply{int_add, Tuple{a, 1}}, Apply{int_mul, Tuple{b, 2}}})
+check(tree("a + 1 :: b * 2"),
+    'Cons{Apply{int_add, Tuple{a, 1}}, Apply{int_mul, Tuple{b, 2}}})
 check(tree("a :: b == c :: d"), 'Apply{expr_eq, Tuple{Cons{a, b}, Cons{c, d}}})
 check(tree("a :: b - 1"), 'Cons{a, Apply{int_sub, Tuple{b, 1}}})
 check(tree("(a :: b) :: c"), 'Cons{Cons{a, b}, c})
 
 check(tree("0..3"), 'Range{0, 3})
 check(tree("a .. b"), 'Range{a, b})
-check(tree("a + 1..b * 2"), 'Range{Apply{int_add, Tuple{a, 1}}, Apply{int_mul, Tuple{b, 2}}})
+check(tree("a + 1..b * 2"),
+    'Range{Apply{int_add, Tuple{a, 1}}, Apply{int_mul, Tuple{b, 2}}})
 check(tree("a..b == c..d"), 'Apply{expr_eq, Tuple{Range{a, b}, Range{c, d}}})
 check(tree("x :: 1..2"), 'Cons{x, Range{1, 2}})
 check(tree("f(0..n, 1)"), 'Apply{f, Tuple{Range{0, n}, 1}})
-check(tree("for (i in 0..3) f(i)"), 'Apply{peg_for, Tuple{Range{0, 3}, Lambda{Tuple{i}, Apply{f, Tuple{i}}}}})
+check(tree("for (i in 0..3) f(i)"),
+    'Apply{peg_for, Tuple{Range{0, 3}, Lambda{Tuple{i}, Apply{f, Tuple{i}}}}})
 check(tree("s[1..2]"), 'Apply{_index_get, Tuple{s, Range{1, 2}}})
 check(tree("f(a :: b, c)"), 'Apply{f, Tuple{Cons{a, b}, c}})
 check(tree("[a :: b]"), 'Cons{Cons{a, b}, Nil{}})
 check(tree("(x :: xs) -> x"), 'Lambda{Tuple{Cons{x, xs}}, x})
 check(tree("x :: xs -> x"), 'Lambda{Tuple{Cons{x, xs}}, x})
 check(tree("(x :: y :: r, n) -> x"), 'Lambda{Tuple{Cons{x, Cons{y, r}}, n}, x})
-check(tree("(x :: Nil{}) -> x | (x :: xs) -> xs"), 'Fusion{Lambda{Tuple{Cons{x, Nil{}}}, x}, Lambda{Tuple{Cons{x, xs}}, xs}})
-check(tree("f(x :: xs) := x"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}}})
-check(tree("xs ::= ident"), 'Apply{_define_rule, Tuple{Quote{xs}, Quote{ident}}})
+check(tree("(x :: Nil{}) -> x | (x :: xs) -> xs"),
+    'Fusion{Lambda{Tuple{Cons{x, Nil{}}}, x}, Lambda{Tuple{Cons{x, xs}}, xs}})
+check(tree("f(x :: xs) := x"),
+    'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}}})
+check(tree("xs ::= ident"),
+    'Apply{_define_rule, Tuple{Quote{xs}, Quote{ident}}})
 
 check(tree("a\n-1"), 'a)
 check(rest("a\n-1"), "-1")
@@ -227,11 +265,18 @@ w := 'name
 check(`{ !w := 1; !w = 2 }, 'Do{Def{name, 1}, Set{name, 2}})
 check(Apply{int_add, Tuple{1, 2}}, 3)
 
-check(tree("match x { A{a} -> a\n| B{} -> 0 }"), 'Apply{Fusion{Lambda{Tuple{A{a}}, a}, Lambda{Tuple{B{}}, 0}}, Tuple{x}})
+check(tree("match x { A{a} -> a\n| B{} -> 0 }"),
+    'Apply{Fusion{Lambda{Tuple{A{a}}, a}, Lambda{Tuple{B{}}, 0}}, Tuple{x}})
 check(tree("match x { 1 -> 2 }"), 'Apply{Lambda{Tuple{1}, 2}, Tuple{x}})
-check(tree("match f(x) + 1 { y -> y | _ -> 0 }"), 'Apply{Fusion{Lambda{Tuple{y}, y}, Lambda{Tuple{_}, 0}}, Tuple{Apply{int_add, Tuple{Apply{f, Tuple{x}}, 1}}}})
-check(tree("match l {\n  x :: xs -> x\n| Nil{} -> 0\n}"), 'Apply{Fusion{Lambda{Tuple{Cons{x, xs}}, x}, Lambda{Tuple{Nil{}}, 0}}, Tuple{l}})
-check(tree("match x {\n  -1 -> 1\n| ((a, b)) -> a\n}"), 'Apply{Fusion{Lambda{Tuple{-1}, 1}, Lambda{Tuple{Tuple{a, b}}, a}}, Tuple{x}})
+check(tree("match f(x) + 1 { y -> y | _ -> 0 }"),
+    'Apply{Fusion{Lambda{Tuple{y}, y}, Lambda{Tuple{_}, 0}},
+        Tuple{Apply{int_add, Tuple{Apply{f, Tuple{x}}, 1}}}})
+check(tree("match l {\n  x :: xs -> x\n| Nil{} -> 0\n}"),
+    'Apply{Fusion{Lambda{Tuple{Cons{x, xs}}, x}, Lambda{Tuple{Nil{}}, 0}},
+        Tuple{l}})
+check(tree("match x {\n  -1 -> 1\n| ((a, b)) -> a\n}"),
+    'Apply{Fusion{Lambda{Tuple{-1}, 1}, Lambda{Tuple{Tuple{a, b}}, a}},
+        Tuple{x}})
 check(head(tree("match x { }")), 'SyntaxError)
 check(head(tree("match x A{} -> 1")), 'SyntaxError)
 check(head(tree("match x { a b }")), 'SyntaxError)
@@ -261,8 +306,11 @@ check(tree_eval(Add{Num{2}, Mul{Num{3}, Neg{Num{4}}}}), -10)
 check(match [1, 2] { x :: xs -> x | Nil{} -> 0 }, 1)
 check(match 'a { 'a -> 1 | 'b -> 2 }, 1)
 k := 3
-check(match k { 3 -> match k + 1 { n if n > 3 -> "inner" | _ -> "no" } | _ -> "outer" }, "inner")
-nest(a, b) := match a { x if x > 0 -> match b { y if y > 0 -> x + y | _ -> x } | _ -> 0 }
+check(
+    match k { 3 -> match k + 1 { n if n > 3 -> "inner" | _ -> "no" } | _ ->
+        "outer" }, "inner")
+nest(a, b) :=
+    match a { x if x > 0 -> match b { y if y > 0 -> x + y | _ -> x } | _ -> 0 }
 check(nest(1, 2), 3)
 check(nest(1, -2), 1)
 check(nest(-1, 2), 0)
@@ -273,16 +321,25 @@ check(calls, 1)
 acc := 0
 match 4 { n if n > 3 -> { acc = acc + n } | _ -> { acc = 100 } }
 check(acc, 4)
-check(tree("match x { 1 -> a | 2 -> b | _ -> c }"), 'Apply{Fusion{Lambda{Tuple{1}, a}, Fusion{Lambda{Tuple{2}, b}, Lambda{Tuple{_}, c}}}, Tuple{x}})
+check(tree("match x { 1 -> a | 2 -> b | _ -> c }"),
+    'Apply{
+        Fusion{Lambda{Tuple{1}, a},
+            Fusion{Lambda{Tuple{2}, b}, Lambda{Tuple{_}, c}}}, Tuple{x}})
 check(tree("match x { f }"), 'Apply{f, Tuple{x}})
 inc := (x) -> x + 1
 check(match 4 { inc }, 5)
 check(match 4 { inc | _ -> 0 }, 5)
 check(head(tree("match x { 1 -> a; 2 -> b }")), 'SyntaxError)
-check(tree("match x {\n    1 -> a   # one\n  | 2 -> b\n}"), tree("match x { 1 -> a | 2 -> b }"))
-check(tree("match x {\n    1 -> a\n    | 2 -> b\n}"), tree("match x { 1 -> a | 2 -> b }"))
-check(tree("match x { 0 -> if (c) 1 else 2 | n -> n }"), 'Apply{Fusion{Lambda{Tuple{0}, If{c, 1, 2}}, Lambda{Tuple{n}, n}}, Tuple{x}})
-check(tree("match x { 0 -> if (c) 1 | n -> n }"), 'Apply{Fusion{Lambda{Tuple{0}, If{c, 1, none}}, Lambda{Tuple{n}, n}}, Tuple{x}})
+check(tree("match x {\n    1 -> a   # one\n  | 2 -> b\n}"),
+    tree("match x { 1 -> a | 2 -> b }"))
+check(tree("match x {\n    1 -> a\n    | 2 -> b\n}"),
+    tree("match x { 1 -> a | 2 -> b }"))
+check(tree("match x { 0 -> if (c) 1 else 2 | n -> n }"),
+    'Apply{Fusion{Lambda{Tuple{0}, If{c, 1, 2}}, Lambda{Tuple{n}, n}},
+        Tuple{x}})
+check(tree("match x { 0 -> if (c) 1 | n -> n }"),
+    'Apply{Fusion{Lambda{Tuple{0}, If{c, 1, none}}, Lambda{Tuple{n}, n}},
+        Tuple{x}})
 check(tree("if (c) x = 1 else y := 2"), 'If{c, Set{x, 1}, Def{y, 2}})
 check(tree("if (c) (f | g) else h"), 'If{c, Fusion{f, g}, h})
 lev(n) := match n {
@@ -344,18 +401,27 @@ under := n if n < lim -> n + lim | n -> n
 check(under(3), 13)
 check(under(30), 30)
 
-check(tree("f\"a{x}b\""), 'Apply{str_cat, Tuple{Apply{str_cat, Tuple{"a", Apply{_to_text, Tuple{x}}}}, "b"}})
+check(tree("f\"a{x}b\""),
+    'Apply{str_cat,
+        Tuple{Apply{str_cat, Tuple{"a", Apply{_to_text, Tuple{x}}}}, "b"}})
 check(tree("f\"{x}\""), 'Apply{_to_text, Tuple{x}})
-check(tree("f\"{x}{y}\""), 'Apply{str_cat, Tuple{Apply{_to_text, Tuple{x}}, Apply{_to_text, Tuple{y}}}})
-check(tree("f\"{1 + 2}\""), 'Apply{_to_text, Tuple{Apply{int_add, Tuple{1, 2}}}})
-check(tree("f\"a{f(\"q\")}\""), 'Apply{str_cat, Tuple{"a", Apply{_to_text, Tuple{Apply{f, Tuple{"q"}}}}}})
+check(tree("f\"{x}{y}\""),
+    'Apply{str_cat,
+        Tuple{Apply{_to_text, Tuple{x}}, Apply{_to_text, Tuple{y}}}})
+check(tree("f\"{1 + 2}\""),
+    'Apply{_to_text, Tuple{Apply{int_add, Tuple{1, 2}}}})
+check(tree("f\"a{f(\"q\")}\""),
+    'Apply{str_cat, Tuple{"a", Apply{_to_text, Tuple{Apply{f, Tuple{"q"}}}}}})
 check(tree("f\"{ x }\""), 'Apply{_to_text, Tuple{x}})
 check(tree("f\"a\\tb\""), "a\tb")
 check(tree("f\"\""), "")
 check(tree("f\"abc\""), "abc")
 check(tree("f\"{{x}}\""), "{x}")
-check(tree("f\"{{{x}}}\""), 'Apply{str_cat, Tuple{Apply{str_cat, Tuple{"{", Apply{_to_text, Tuple{x}}}}, "}"}})
-check(tree("f\"\\\"{x}\""), 'Apply{str_cat, Tuple{"\"", Apply{_to_text, Tuple{x}}}})
+check(tree("f\"{{{x}}}\""),
+    'Apply{str_cat,
+        Tuple{Apply{str_cat, Tuple{"{", Apply{_to_text, Tuple{x}}}}, "}"}})
+check(tree("f\"\\\"{x}\""),
+    'Apply{str_cat, Tuple{"\"", Apply{_to_text, Tuple{x}}}})
 check(tree("\"{x}\""), "{x}")
 check(tree("\"a { b } {{\""), "a { b } {{")
 check(head(tree("\"\\(x)\"")), 'SyntaxError)
@@ -407,11 +473,17 @@ check(head(tree("record Tok(kind, value, pos) = tok")), 'Do)
 check(arity(tree("record Tok(kind, value, pos) = tok")), 5)
 check(head(tree("record R() = r")), 'Do)
 check(tree("t.kind"), 'Apply{_record_get, Tuple{t, Quote{kind}}})
-check(tree("t.a.b"), 'Apply{_record_get, Tuple{Apply{_record_get, Tuple{t, Quote{a}}}, Quote{b}}})
+check(tree("t.a.b"),
+    'Apply{_record_get,
+        Tuple{Apply{_record_get, Tuple{t, Quote{a}}}, Quote{b}}})
 check(tree("f(x).y"), 'Apply{_record_get, Tuple{Apply{f, Tuple{x}}, Quote{y}}})
 check(tree("t.f(1)"), 'Apply{Apply{_record_get, Tuple{t, Quote{f}}}, Tuple{1}})
-check(tree("a.b + c.d * 2"), 'Apply{int_add, Tuple{Apply{_record_get, Tuple{a, Quote{b}}}, Apply{int_mul, Tuple{Apply{_record_get, Tuple{c, Quote{d}}}, 2}}}})
-check(tree("a.b == 'x"), 'Apply{expr_eq, Tuple{Apply{_record_get, Tuple{a, Quote{b}}}, Quote{x}}})
+check(tree("a.b + c.d * 2"),
+    'Apply{int_add,
+        Tuple{Apply{_record_get, Tuple{a, Quote{b}}},
+            Apply{int_mul, Tuple{Apply{_record_get, Tuple{c, Quote{d}}}, 2}}}})
+check(tree("a.b == 'x"),
+    'Apply{expr_eq, Tuple{Apply{_record_get, Tuple{a, Quote{b}}}, Quote{x}}})
 check(tree("x := t.v"), 'Def{x, Apply{_record_get, Tuple{t, Quote{v}}}})
 check(tree("F{a.b}"), 'F{Apply{_record_get, Tuple{a, Quote{b}}}})
 check(head(tree("t.")), 'SyntaxError)
@@ -472,9 +544,12 @@ check((tk with { pos = tk.pos + 1 }).pos, 4)
 
 rh := 'Lambda{Tuple{Return{v}, k}, v}
 bh := 'Lambda{Tuple{Break{}, k}, none}
-check(tree("for (x in xs) f(x)"), 'Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Apply{f, Tuple{x}}}}})
-check(tree("for (Tuple{a, b} in ps) a"), 'Apply{peg_for, Tuple{ps, Lambda{Tuple{Tuple{a, b}}, a}}})
-check(tree("for (x in f(y)) { z }"), 'Apply{peg_for, Tuple{Apply{f, Tuple{y}}, Lambda{Tuple{x}, Do{z}}}})
+check(tree("for (x in xs) f(x)"),
+    'Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Apply{f, Tuple{x}}}}})
+check(tree("for (Tuple{a, b} in ps) a"),
+    'Apply{peg_for, Tuple{ps, Lambda{Tuple{Tuple{a, b}}, a}}})
+check(tree("for (x in f(y)) { z }"),
+    'Apply{peg_for, Tuple{Apply{f, Tuple{y}}, Lambda{Tuple{x}, Do{z}}}})
 check(tree("return 1"), 'Perform{Return{1}})
 check(tree("return a + 1"), 'Perform{Return{Apply{int_add, Tuple{a, 1}}}})
 check(tree("return"), 'Perform{Return{none}})
@@ -482,23 +557,70 @@ check(tree("{ return\n 1 }"), 'Do{Perform{Return{none}}, 1})
 check(tree("{ return }"), 'Do{Perform{Return{none}}})
 check(tree("if (a) return 1 else 2"), 'If{a, Perform{Return{1}}, 2})
 check(tree("break"), 'Perform{Break{}})
-check(tree("f(x) := { return x }"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, Handle{Do{Perform{Return{x}}}, !rh}}}}})
-check(tree("f(x) := x"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
+check(tree("f(x) := { return x }"),
+    `Do{Declare{f},
+        Set{f,
+            Fusion{f, Lambda{Tuple{x}, Handle{Do{Perform{Return{x}}}, !rh}}}}})
+check(tree("f(x) := x"),
+    'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
 check(tree("x -> return x"), `Lambda{Tuple{x}, Handle{Perform{Return{x}}, !rh}})
 check(tree("while (a) { break }"), `Handle{While{a, Do{Perform{Break{}}}}, !bh})
 check(tree("while (a) b"), 'While{a, b})
-check(tree("for (x in xs) break"), `Handle{Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Perform{Break{}}}}}, !bh})
-check(tree("while (a) { while (b) break }"), `While{a, Do{Handle{While{b, Perform{Break{}}}, !bh}}})
-check(tree("f() := { g() := return 1; 2 }"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Do{Do{Declare{g}, Set{g, Fusion{g, Lambda{Tuple{}, Handle{Perform{Return{1}}, !rh}}}}}, 2}}}}})
-check(tree("f() := for (x in xs) return x"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Handle{Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Perform{Return{x}}}}}, !rh}}}}})
-check(tree("f() := match x { 1 -> return 2 | _ -> 3 }"), `Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Handle{Apply{Fusion{Lambda{Tuple{1}, Perform{Return{2}}}, Lambda{Tuple{_}, 3}}, Tuple{x}}, !rh}}}}})
-check(tree("f() := '(return 1)"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Quote{Perform{Return{1}}}}}}})
+check(tree("for (x in xs) break"),
+    `Handle{Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Perform{Break{}}}}}, !bh})
+check(tree("while (a) { while (b) break }"),
+    `While{a, Do{Handle{While{b, Perform{Break{}}}, !bh}}})
+check(tree("f() := { g() := return 1; 2 }"),
+    `Do{Declare{f},
+        Set{f,
+            Fusion{f,
+                Lambda{Tuple{},
+                    Do{
+                        Do{Declare{g},
+                            Set{g,
+                                Fusion{g,
+                                    Lambda{Tuple{},
+                                        Handle{Perform{Return{1}},
+                                            !rh}}}}}, 2}}}}})
+check(tree("f() := for (x in xs) return x"),
+    `Do{Declare{f},
+        Set{f,
+            Fusion{f,
+                Lambda{Tuple{},
+                    Handle{
+                        Apply{peg_for,
+                            Tuple{xs, Lambda{Tuple{x}, Perform{Return{x}}}}},
+                        !rh}}}}})
+check(tree("f() := match x { 1 -> return 2 | _ -> 3 }"),
+    `Do{Declare{f},
+        Set{f,
+            Fusion{f,
+                Lambda{Tuple{},
+                    Handle{
+                        Apply{
+                            Fusion{Lambda{Tuple{1}, Perform{Return{2}}},
+                                Lambda{Tuple{_}, 3}}, Tuple{x}}, !rh}}}}})
+check(tree("f() := '(return 1)"),
+    'Do{Declare{f},
+        Set{f, Fusion{f, Lambda{Tuple{}, Quote{Perform{Return{1}}}}}}})
 ch := 'Lambda{Tuple{Continue{}, k}, none}
 check(tree("continue"), 'Perform{Continue{}})
-check(tree("while (a) { continue }"), `While{a, Handle{Do{Perform{Continue{}}}, !ch}})
-check(tree("for (x in xs) continue"), `Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Handle{Perform{Continue{}}, !ch}}}})
-check(tree("while (a) { if (b) continue else break }"), `Handle{While{a, Handle{Do{If{b, Perform{Continue{}}, Perform{Break{}}}}, !ch}}, !bh})
-check(tree("while (a) { for (x in xs) continue }"), `While{a, Do{Apply{peg_for, Tuple{xs, Lambda{Tuple{x}, Handle{Perform{Continue{}}, !ch}}}}}})
+check(tree("while (a) { continue }"),
+    `While{a, Handle{Do{Perform{Continue{}}}, !ch}})
+check(tree("for (x in xs) continue"),
+    `Apply{peg_for,
+        Tuple{xs, Lambda{Tuple{x}, Handle{Perform{Continue{}}, !ch}}}})
+check(tree("while (a) { if (b) continue else break }"),
+    `Handle{
+        While{a,
+            Handle{Do{If{b, Perform{Continue{}}, Perform{Break{}}}},
+                !ch}}, !bh})
+check(tree("while (a) { for (x in xs) continue }"),
+    `While{a,
+        Do{
+            Apply{peg_for,
+                Tuple{xs,
+                    Lambda{Tuple{x}, Handle{Perform{Continue{}}, !ch}}}}}})
 check(tree("while (a) b"), 'While{a, b})
 check(head(tree("for x in xs f(x)")), 'SyntaxError)
 check(head(tree("for (x in xs)")), 'SyntaxError)
@@ -686,7 +808,8 @@ skip_neg(xs) := {
 }
 check(skip_neg([1, -2, 3, 99, 4]), [3, 1])
 check(skip_neg([-1, 5]), [5])
-f_in() := { t := 0; for (x in [1, 2, 3]) { if (x == 2) continue; t = t + x }; t }
+f_in() :=
+    { t := 0; for (x in [1, 2, 3]) { if (x == 2) continue; t = t + x }; t }
 w := 0
 for (x in [1, 2]) { if (x == 1) continue; w = w + f_in() }
 check(w, 4)
@@ -746,22 +869,39 @@ check({ pb := 1; pb := pb + 1; pb }, 2)
 check({ pf(n) := n + 1; pf := (n) -> pf(n) * 10; pf(1) }, 20)
 check({ pc(n) := if (n == 0) 0 else 1 + pc(n - 1); pc(3) }, 3)
 
-check(tree("{ f(x) := x }"), 'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}}})
-check(tree("{ a := 1; f() := { a }; f() }"), 'Do{Def{a, 1}, Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Do{a}}}}}, Apply{f, Tuple{}}})
-check(tree("{ f(x :: xs) := x }"), 'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}}}})
-check(tree("{ f() := { return 1 } }"), `Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Handle{Do{Perform{Return{1}}}, !rh}}}}}})
-check(tree("{ f(x) := 1; f(x) := 2 }"), 'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, 1}}}}, Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, 2}}}}})
-check(tree("{ g := x -> x; y := 1 }"), 'Do{Def{g, Lambda{Tuple{x}, x}}, Def{y, 1}})
+check(tree("{ f(x) := x }"),
+    'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}}})
+check(tree("{ a := 1; f() := { a }; f() }"),
+    'Do{Def{a, 1}, Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{}, Do{a}}}}},
+        Apply{f, Tuple{}}})
+check(tree("{ f(x :: xs) := x }"),
+    'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}}}})
+check(tree("{ f() := { return 1 } }"),
+    `Do{
+        Do{Declare{f},
+            Set{f,
+                Fusion{f,
+                    Lambda{Tuple{}, Handle{Do{Perform{Return{1}}}, !rh}}}}}})
+check(tree("{ f(x) := 1; f(x) := 2 }"),
+    'Do{Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, 1}}}},
+        Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{x}, 2}}}}})
+check(tree("{ g := x -> x; y := 1 }"),
+    'Do{Def{g, Lambda{Tuple{x}, x}}, Def{y, 1}})
 check(tree("{ a; b }"), 'Do{a, b})
 
 check(tree("fun f"), 'Def{f, none})
-check(tree("{ fun f; f(x) = x }"), 'Do{Def{f, none}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
-check(tree("f(x, y) = x + y"), 'Set{f, Fusion{f, Lambda{Tuple{x, y}, Apply{int_add, Tuple{x, y}}}}})
+check(tree("{ fun f; f(x) = x }"),
+    'Do{Def{f, none}, Set{f, Fusion{f, Lambda{Tuple{x}, x}}}})
+check(tree("f(x, y) = x + y"),
+    'Set{f, Fusion{f, Lambda{Tuple{x, y}, Apply{int_add, Tuple{x, y}}}}})
 check(tree("f(x :: xs) = x"), 'Set{f, Fusion{f, Lambda{Tuple{Cons{x, xs}}, x}}})
-check(tree("f() = { return 1 }"), `Set{f, Fusion{f, Lambda{Tuple{}, Handle{Do{Perform{Return{1}}}, !rh}}}})
+check(tree("f() = { return 1 }"),
+    `Set{f, Fusion{f, Lambda{Tuple{}, Handle{Do{Perform{Return{1}}}, !rh}}}})
 check(tree("f = (x) -> x"), 'Set{f, Lambda{Tuple{x}, x}})
 check(tree("f(x) == 1"), 'Apply{expr_eq, Tuple{Apply{f, Tuple{x}}, 1}})
-check(tree("if (c) f(x) = 1 else f(x) = 2"), 'If{c, Set{f, Fusion{f, Lambda{Tuple{x}, 1}}}, Set{f, Fusion{f, Lambda{Tuple{x}, 2}}}})
+check(tree("if (c) f(x) = 1 else f(x) = 2"),
+    'If{c, Set{f, Fusion{f, Lambda{Tuple{x}, 1}}},
+        Set{f, Fusion{f, Lambda{Tuple{x}, 2}}}})
 check(head(tree("fun")), 'SyntaxError)
 check(head(tree("fun f(x)")), 'SyntaxError)
 check(head(tree("fun 1")), 'SyntaxError)
@@ -798,7 +938,8 @@ fun fun_first
 fun_first(x) = x + 1
 fun_first_g := fun_first
 fun_first(0) = 5
-check(Tuple{fun_first(0), fun_first_g(0), fun_first_g == fun_first}, Tuple{1, 1, false})
+check(Tuple{fun_first(0), fun_first_g(0), fun_first_g == fun_first},
+    Tuple{1, 1, false})
 fun fun_ar
 fun_ar(x) = 1
 fun_ar(x, y) = 2
@@ -1065,29 +1206,70 @@ check(head(tree("nosuch{| 1 |}")), 'SyntaxError)
 check(expr{| f(`!a) |}, 'Apply{f, Tuple{QuasiQuote{UnQuote{a}}}})
 check(expr{| 'a |}, 'Quote{a})
 
-check(tree("a@Int + b@Int -> a + b"), 'Lambda{Tuple{Apply{Quote{int_add}, Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}}, Apply{int_add, Tuple{a, b}}})
-check(tree("a * b + c -> a"), 'Lambda{Tuple{Apply{Quote{int_add}, Tuple{Apply{Quote{int_mul}, Tuple{a, b}}, c}}}, a})
-check(tree("(a + b) * c -> a"), 'Lambda{Tuple{Apply{Quote{int_mul}, Tuple{Apply{Quote{int_add}, Tuple{a, b}}, c}}}, a})
-check(tree("a - b - c -> a"), 'Lambda{Tuple{Apply{Quote{int_sub}, Tuple{Apply{Quote{int_sub}, Tuple{a, b}}, c}}}, a})
-check(tree("a / b % c -> a"), 'Lambda{Tuple{Apply{Quote{int_mod}, Tuple{Apply{Quote{int_div}, Tuple{a, b}}, c}}}, a})
+check(tree("a@Int + b@Int -> a + b"),
+    'Lambda{
+        Tuple{Apply{Quote{int_add}, Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}},
+        Apply{int_add, Tuple{a, b}}})
+check(tree("a * b + c -> a"),
+    'Lambda{
+        Tuple{
+            Apply{Quote{int_add},
+                Tuple{Apply{Quote{int_mul}, Tuple{a, b}}, c}}}, a})
+check(tree("(a + b) * c -> a"),
+    'Lambda{
+        Tuple{
+            Apply{Quote{int_mul},
+                Tuple{Apply{Quote{int_add}, Tuple{a, b}}, c}}}, a})
+check(tree("a - b - c -> a"),
+    'Lambda{
+        Tuple{
+            Apply{Quote{int_sub},
+                Tuple{Apply{Quote{int_sub}, Tuple{a, b}}, c}}}, a})
+check(tree("a / b % c -> a"),
+    'Lambda{
+        Tuple{
+            Apply{Quote{int_mod},
+                Tuple{Apply{Quote{int_div}, Tuple{a, b}}, c}}}, a})
 check(tree("-a -> a"), 'Lambda{Tuple{Apply{Quote{int_sub}, Tuple{0, a}}}, a})
 check(tree("-1 -> a"), 'Lambda{Tuple{-1}, a})
 check(tree("f(x, 1) -> x"), 'Lambda{Tuple{Apply{Quote{f}, Tuple{x, 1}}}, x})
 check(tree("f() -> 0"), 'Lambda{Tuple{Apply{Quote{f}, Tuple{}}}, 0})
-check(tree("[a, b + 1] -> a"), 'Lambda{Tuple{Cons{a, Cons{Apply{Quote{int_add}, Tuple{b, 1}}, Nil{}}}}, a})
-check(tree("a + 1 :: b -> a"), 'Lambda{Tuple{Cons{Apply{Quote{int_add}, Tuple{a, 1}}, b}}, a})
-check(tree("a == b -> a"), 'Lambda{Tuple{Apply{Quote{expr_eq}, Tuple{a, b}}}, a})
-check(tree("a < b + 1 -> a"), 'Lambda{Tuple{Apply{Quote{int_lt}, Tuple{a, Apply{Quote{int_add}, Tuple{b, 1}}}}}, a})
+check(tree("[a, b + 1] -> a"),
+    'Lambda{Tuple{Cons{a, Cons{Apply{Quote{int_add}, Tuple{b, 1}}, Nil{}}}}, a})
+check(tree("a + 1 :: b -> a"),
+    'Lambda{Tuple{Cons{Apply{Quote{int_add}, Tuple{a, 1}}, b}}, a})
+check(tree("a == b -> a"),
+    'Lambda{Tuple{Apply{Quote{expr_eq}, Tuple{a, b}}}, a})
+check(tree("a < b + 1 -> a"),
+    'Lambda{
+        Tuple{
+            Apply{Quote{int_lt},
+                Tuple{a, Apply{Quote{int_add}, Tuple{b, 1}}}}}, a})
 check(tree("(not a, b and c, If{d, 'true, e}) -> a"),
-      'Lambda{Tuple{Apply{Quote{_not}, Tuple{a}}, If{b, c, Quote{false}}, If{d, Quote{true}, e}}, a})
-check(tree("'(x + 1) -> 0"), 'Lambda{Tuple{Quote{Apply{int_add, Tuple{x, 1}}}}, 0})
-check(tree("F{a + 1, g(b)} -> a"), 'Lambda{Tuple{F{Apply{Quote{int_add}, Tuple{a, 1}}, Apply{Quote{g}, Tuple{b}}}}, a})
-check(tree("(a + b, c) -> a"), 'Lambda{Tuple{Apply{Quote{int_add}, Tuple{a, b}}, c}, a})
+      'Lambda{
+          Tuple{Apply{Quote{_not}, Tuple{a}}, If{b, c, Quote{false}},
+              If{d, Quote{true}, e}}, a})
+check(tree("'(x + 1) -> 0"),
+    'Lambda{Tuple{Quote{Apply{int_add, Tuple{x, 1}}}}, 0})
+check(tree("F{a + 1, g(b)} -> a"),
+    'Lambda{
+        Tuple{
+            F{Apply{Quote{int_add}, Tuple{a, 1}},
+                Apply{Quote{g}, Tuple{b}}}}, a})
+check(tree("(a + b, c) -> a"),
+    'Lambda{Tuple{Apply{Quote{int_add}, Tuple{a, b}}, c}, a})
 check(tree("((a, b)) -> a"), 'Lambda{Tuple{Tuple{a, b}}, a})
-check(tree("f(a + b) := a"), 'Do{Declare{f}, Set{f, Fusion{f, Lambda{Tuple{Apply{Quote{int_add}, Tuple{a, b}}}, a}}}})
-check(tree("match e { a + 0 -> a | _ -> e }"), 'Apply{Fusion{Lambda{Tuple{Apply{Quote{int_add}, Tuple{a, 0}}}, a}, Lambda{Tuple{_}, e}}, Tuple{e}})
+check(tree("f(a + b) := a"),
+    'Do{Declare{f},
+        Set{f,
+            Fusion{f, Lambda{Tuple{Apply{Quote{int_add}, Tuple{a, b}}}, a}}}})
+check(tree("match e { a + 0 -> a | _ -> e }"),
+    'Apply{
+        Fusion{Lambda{Tuple{Apply{Quote{int_add}, Tuple{a, 0}}}, a},
+            Lambda{Tuple{_}, e}}, Tuple{e}})
 check(tree("Apply{f, Tuple{x}} -> f"), 'Lambda{Tuple{Apply{f, Tuple{x}}}, f})
-check(tree("Apply{'int_add, Tuple{a @ Int, b}} -> a"), 'Lambda{Tuple{Apply{Quote{int_add}, Tuple{_TypeOf{a, Int}, b}}}, a})
+check(tree("Apply{'int_add, Tuple{a @ Int, b}} -> a"),
+    'Lambda{Tuple{Apply{Quote{int_add}, Tuple{_TypeOf{a, Int}, b}}}, a})
 check(tree("x - 1 -> x"), 'Lambda{Tuple{Apply{Quote{int_sub}, Tuple{x, 1}}}, x})
 check(tree("x->x - 1"), 'Lambda{Tuple{x}, Apply{int_sub, Tuple{x, 1}}})
 
@@ -1107,7 +1289,8 @@ check(simp('(z * w)), 'Apply{int_mul, Tuple{z, w}})
 check(simp('(x + 1)), 'Apply{int_add, Tuple{x, 1}})
 check(simp('f(5)), 5)
 check(simp('g(5)), 'Apply{g, Tuple{5}})
-check(match '((1 + 2) * 3) { (a + b) * c -> Tuple{a, b, c} | _ -> 0 }, Tuple{1, 2, 3})
+check(match '((1 + 2) * 3) { (a + b) * c -> Tuple{a, b, c} | _ -> 0 },
+    Tuple{1, 2, 3})
 check(match '(1 + 2 * 3) { (a + b) * c -> 1 | a + b * c -> 2 | _ -> 0 }, 2)
 check(match '(-x) { -a -> a | _ -> 0 }, 'x)
 check(match '(not p) { not a -> a | _ -> 0 }, 'p)
@@ -1132,15 +1315,23 @@ check(unless 1 > 2 { "a" } else { "b" }, "a")
 check(tree("unless c { a } else { b }"), 'If{c, Do{b}, Do{a}})
 
 check(tree("a[i]"), 'Apply{_index_get, Tuple{a, i}})
-check(tree("a[i][j]"), 'Apply{_index_get, Tuple{Apply{_index_get, Tuple{a, i}}, j}})
-check(tree("f(x)[i].g"), 'Apply{_record_get, Tuple{Apply{_index_get, Tuple{Apply{f, Tuple{x}}, i}}, Quote{g}}})
+check(tree("a[i][j]"),
+    'Apply{_index_get, Tuple{Apply{_index_get, Tuple{a, i}}, j}})
+check(tree("f(x)[i].g"),
+    'Apply{_record_get,
+        Tuple{Apply{_index_get, Tuple{Apply{f, Tuple{x}}, i}}, Quote{g}}})
 check(tree("a[i](x)"), 'Apply{Apply{_index_get, Tuple{a, i}}, Tuple{x}})
 check(tree("-a[i]"), 'Apply{int_sub, Tuple{0, Apply{_index_get, Tuple{a, i}}}})
 check(tree("a[i] = v"), 'Apply{_index_set, Tuple{a, i, v}})
-check(tree("a[i][j] = v"), 'Apply{_index_set, Tuple{Apply{_index_get, Tuple{a, i}}, j, v}})
-check(tree("a[i] = b[j] = v"), 'Apply{_index_set, Tuple{a, i, Apply{_index_set, Tuple{b, j, v}}}})
-check(tree("a[i] == v"), 'Apply{expr_eq, Tuple{Apply{_index_get, Tuple{a, i}}, v}})
-check(tree("t[x -> 1 | y -> 2]"), 'Apply{_index_get, Tuple{t, Fusion{Lambda{Tuple{x}, 1}, Lambda{Tuple{y}, 2}}}})
+check(tree("a[i][j] = v"),
+    'Apply{_index_set, Tuple{Apply{_index_get, Tuple{a, i}}, j, v}})
+check(tree("a[i] = b[j] = v"),
+    'Apply{_index_set, Tuple{a, i, Apply{_index_set, Tuple{b, j, v}}}})
+check(tree("a[i] == v"),
+    'Apply{expr_eq, Tuple{Apply{_index_get, Tuple{a, i}}, v}})
+check(tree("t[x -> 1 | y -> 2]"),
+    'Apply{_index_get,
+        Tuple{t, Fusion{Lambda{Tuple{x}, 1}, Lambda{Tuple{y}, 2}}}})
 check(tree("a\n[1, 2]"), 'a)
 check(rest("a\n[1, 2]"), "[1, 2]")
 check(tree("a [1]"), 'a)
@@ -1240,14 +1431,25 @@ check(('(1 + 2 * (3 + 4)))[a @ Int + b @ Int -> a + b], '(1 + 2 * 7))
 check(('(a + a + b))[a + b if a == b -> `(2 * !a)], '(2 * a + b))
 check(('(f(1) + g(2)))[f(x) -> x | g(x) -> x * 10], '(1 + 20))
 check(('(x + 0 * y))[a + 0 -> a | 0 * a -> 0], '(x + 0))
-check(tree("t[a @ Int + b @ Int -> a + b | -x -> x]"), 'Apply{_index_get, Tuple{t, Fusion{Lambda{Tuple{Apply{Quote{int_add}, Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}}, Apply{int_add, Tuple{a, b}}}, Lambda{Tuple{Apply{Quote{int_sub}, Tuple{0, x}}}, x}}}})
+check(tree("t[a @ Int + b @ Int -> a + b | -x -> x]"),
+    'Apply{_index_get,
+        Tuple{t,
+            Fusion{
+                Lambda{
+                    Tuple{
+                        Apply{Quote{int_add},
+                            Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}},
+                    Apply{int_add, Tuple{a, b}}},
+                Lambda{Tuple{Apply{Quote{int_sub}, Tuple{0, x}}}, x}}}})
 rt2 := 'F{P{1, 1}, P{1, 2}}
 check(rt2[P{a, b} if a == b -> a], 'F{1, P{1, 2}})
 check(rt2[P{a, b} if a == b -> 'same | P{a, b} -> 'diff], 'F{same, diff})
 check(('P{P{3, 3}, 2})[P{a, b} if a == b -> a], 'P{3, 2})
 check(rt2[P{1, 2} -> 'x | P{a, b} if a == b -> a], 'F{1, x})
-check(('F{G{1}, P{2, 2}})[P{a, b} if a == b -> a | G{a} if a > 5 -> a], 'F{G{1}, 2})
-check(('(a + a + b))[Apply{int_add, Tuple{a, b}} if a == b -> `(2 * !a)], '(2 * a + b))
+check(('F{G{1}, P{2, 2}})[P{a, b} if a == b -> a | G{a} if a > 5 -> a],
+    'F{G{1}, 2})
+check(('(a + a + b))[Apply{int_add, Tuple{a, b}} if a == b -> `(2 * !a)],
+    '(2 * a + b))
 rf := G{a} -> a
 check(('F{G{1}})[rf], 'F{1})
 check(('(g(1, 2)))[(f)(a, b) -> a + b], 3)
@@ -1259,7 +1461,8 @@ check(tree("f(a, rest...)"), 'Apply{f, Tuple{a, _Rest{rest}}})
 check(tree("(a, rest...) -> a"), 'Lambda{Tuple{a, _Rest{rest}}, a})
 check(tree("(rest...) -> rest"), 'Lambda{Tuple{_Rest{rest}}, rest})
 check(tree("F{a, rest...} -> a"), 'Lambda{Tuple{F{a, _Rest{rest}}}, a})
-check(tree("f(a, rest...) -> a"), 'Lambda{Tuple{Apply{Quote{f}, Tuple{a, _Rest{rest}}}}, a})
+check(tree("f(a, rest...) -> a"),
+    'Lambda{Tuple{Apply{Quote{f}, Tuple{a, _Rest{rest}}}}, a})
 check(tree("_..."), '_Rest{_})
 drop_first(t) := {
     r := Tuple{}
@@ -1299,10 +1502,18 @@ check(match 'F{1, G{2, 3, 4}} { F{a, G{b, r...}} -> r }, 'Tuple{3, 4})
 check(match 'F{1, 2, 3} { F{a, _...} -> a }, 1)
 
 check(tree("p with { x = 1 }"), 'Apply{_with, Tuple{p, Quote{x}, 1}})
-check(tree("p with { x = 1, y = a + 2 }"), 'Apply{_with, Tuple{Apply{_with, Tuple{p, Quote{x}, 1}}, Quote{y}, Apply{int_add, Tuple{a, 2}}}})
-check(tree("p with { x = 1 } with { y = 2 }"), 'Apply{_with, Tuple{Apply{_with, Tuple{p, Quote{x}, 1}}, Quote{y}, 2}})
-check(tree("f(a).b with { x = 1 }"), 'Apply{_with, Tuple{Apply{_record_get, Tuple{Apply{f, Tuple{a}}, Quote{b}}}, Quote{x}, 1}})
-check(tree("r := p with { x = 1 }"), 'Def{r, Apply{_with, Tuple{p, Quote{x}, 1}}})
+check(tree("p with { x = 1, y = a + 2 }"),
+    'Apply{_with,
+        Tuple{Apply{_with, Tuple{p, Quote{x}, 1}}, Quote{y},
+            Apply{int_add, Tuple{a, 2}}}})
+check(tree("p with { x = 1 } with { y = 2 }"),
+    'Apply{_with, Tuple{Apply{_with, Tuple{p, Quote{x}, 1}}, Quote{y}, 2}})
+check(tree("f(a).b with { x = 1 }"),
+    'Apply{_with,
+        Tuple{Apply{_record_get, Tuple{Apply{f, Tuple{a}}, Quote{b}}},
+            Quote{x}, 1}})
+check(tree("r := p with { x = 1 }"),
+    'Def{r, Apply{_with, Tuple{p, Quote{x}, 1}}})
 check(tree("handle p with (E{}, k) -> 1"), 'Handle{p, Lambda{Tuple{E{}, k}, 1}})
 
 check(head(tree("(a, b) := e")), 'Do)
@@ -1317,10 +1528,12 @@ check(tree("(a, b) -> a"), 'Lambda{Tuple{a, b}, a})
 
 check(tree("x += 1"), 'Set{x, Apply{int_add, Tuple{x, 1}}})
 check(tree("x -= 1"), 'Set{x, Apply{int_sub, Tuple{x, 1}}})
-check(tree("x *= y + 1"), 'Set{x, Apply{int_mul, Tuple{x, Apply{int_add, Tuple{y, 1}}}}})
+check(tree("x *= y + 1"),
+    'Set{x, Apply{int_mul, Tuple{x, Apply{int_add, Tuple{y, 1}}}}})
 check(tree("x /= 2"), 'Set{x, Apply{int_div, Tuple{x, 2}}})
 check(tree("x %= 2"), 'Set{x, Apply{int_mod, Tuple{x, 2}}})
-check(tree("x += y -= 1"), 'Set{x, Apply{int_add, Tuple{x, Set{y, Apply{int_sub, Tuple{y, 1}}}}}})
+check(tree("x += y -= 1"),
+    'Set{x, Apply{int_add, Tuple{x, Set{y, Apply{int_sub, Tuple{y, 1}}}}}})
 check(head(tree("a[i] += 1")), 'Do)
 check(arity(tree("a[i] += 1")), 3)
 check(arg(arg(tree("a[i] += 1"), 2), 0), '_index_set)
@@ -1351,7 +1564,8 @@ check(og(1, 5), "yes")
 check(og(1, -5), "no")
 check(og(2, 5), "no")
 check(match '(p or q) { If{a, 'true, b} -> b | _ -> 0 }, 'q)
-check(match 5 { 'true or 'false -> 1 | 1 or 2 -> 2 | none or 5 -> 3 | _ -> 4 }, 3)
+check(
+    match 5 { 'true or 'false -> 1 | 1 or 2 -> 2 | none or 5 -> 3 | _ -> 4 }, 3)
 check(match 6 { none or true -> 1 | _ -> 2 }, 2)
 
 same(a, a) := "same"
@@ -1390,9 +1604,12 @@ check(match (0, 9) { ((x, 0) or (0, x)) -> x | _ -> 0 }, 9)
 check(match F{1} { F{x} or G{x} -> x | _ -> 0 }, 1)
 check(match G{2} { F{x} or G{x} -> x | _ -> 0 }, 2)
 check(match H{2} { F{x} or G{x} -> x | _ -> 0 }, 0)
-check(match (1, (2, 0)) { ((a, (x, 0) or (0, x))) -> Tuple{a, x} | _ -> 0 }, Tuple{1, 2})
-check(match (1, (0, 5)) { ((a, (x, 0) or (0, x))) -> Tuple{a, x} | _ -> 0 }, Tuple{1, 5})
-check(match F{G{1}, K{2}} { F{G{x} or H{x}, J{y} or K{y}} -> x + y | _ -> 0 }, 3)
+check(match (1, (2, 0)) { ((a, (x, 0) or (0, x))) -> Tuple{a, x} | _ -> 0 },
+    Tuple{1, 2})
+check(match (1, (0, 5)) { ((a, (x, 0) or (0, x))) -> Tuple{a, x} | _ -> 0 },
+    Tuple{1, 5})
+check(
+    match F{G{1}, K{2}} { F{G{x} or H{x}, J{y} or K{y}} -> x + y | _ -> 0 }, 3)
 check(match F{K{7}} { F{G{x} or H{x} or K{x}} -> x | _ -> 0 }, 7)
 check(match (4, 0) { (((x, 0) or (0, x)) or (1, x)) -> x | _ -> 0 }, 4)
 check(match (1, 8) { (((x, 0) or (0, x)) or (1, x)) -> x | _ -> 0 }, 8)
@@ -1425,19 +1642,28 @@ blk := {
 }
 check(blk, Tuple{"n", "p"})
 
-check(peg_parse('toplevel, "x := )"), Tuple{'SyntaxError{"unexpected input", ")"}, ""})
+check(peg_parse('toplevel, "x := )"),
+    Tuple{'SyntaxError{"unexpected input", ")"}, ""})
 check(tree("1 +"), 'SyntaxError{"unexpected end of input"})
-check(tree_at("x := )", Loc{"f.pk", 1, 1}), 'SyntaxError{"unexpected input", ")", Loc{"f.pk", 1, 6}})
-check(tree_at("\n  b := )\n", Loc{"f.pk", 3, 4}), 'SyntaxError{"unexpected input", ")", Loc{"f.pk", 4, 8}})
-check(tree_at("a := (1 +", Loc{"f.pk", 2, 1}), 'SyntaxError{"unexpected end of input", Loc{"f.pk", 2, 10}})
-check(tree_at("a := (1 +\n", Loc{"f.pk", 2, 1}), 'SyntaxError{"unexpected end of input", Loc{"f.pk", 3, 1}})
-check(peg_error_text(tree_at("x := )", Loc{"f.pk", 1, 1})), "f.pk:1:6: syntax error: unexpected input: \")\"")
-check(peg_error_text(tree_at("1 +", Loc{"<repl>", 1, 1})), "<repl>:1:4: syntax error: unexpected end of input")
+check(tree_at("x := )", Loc{"f.pk", 1, 1}),
+    'SyntaxError{"unexpected input", ")", Loc{"f.pk", 1, 6}})
+check(tree_at("\n  b := )\n", Loc{"f.pk", 3, 4}),
+    'SyntaxError{"unexpected input", ")", Loc{"f.pk", 4, 8}})
+check(tree_at("a := (1 +", Loc{"f.pk", 2, 1}),
+    'SyntaxError{"unexpected end of input", Loc{"f.pk", 2, 10}})
+check(tree_at("a := (1 +\n", Loc{"f.pk", 2, 1}),
+    'SyntaxError{"unexpected end of input", Loc{"f.pk", 3, 1}})
+check(peg_error_text(tree_at("x := )", Loc{"f.pk", 1, 1})),
+    "f.pk:1:6: syntax error: unexpected input: \")\"")
+check(peg_error_text(tree_at("1 +", Loc{"<repl>", 1, 1})),
+    "<repl>:1:4: syntax error: unexpected end of input")
 check(peg_error_text(tree("1 +")), "syntax error: unexpected end of input")
-check(peg_file_error_text("g.pk", "a := 1\nb := 2 )\nc := 3\n", 7), "g.pk:2:8: syntax error: unexpected input: \")\"")
+check(peg_file_error_text("g.pk", "a := 1\nb := 2 )\nc := 3\n", 7),
+    "g.pk:2:8: syntax error: unexpected input: \")\"")
 
 check(tree("f(1, a = 5)"), 'Apply{f, Tuple{1, _Kw{Quote{a}, 5}}})
-check(tree("f(a = 1, b = 2)"), 'Apply{f, Tuple{_Kw{Quote{a}, 1}, _Kw{Quote{b}, 2}}})
+check(tree("f(a = 1, b = 2)"),
+    'Apply{f, Tuple{_Kw{Quote{a}, 1}, _Kw{Quote{b}, 2}}})
 check(tree("f(a == 1)"), 'Apply{f, Tuple{Apply{expr_eq, Tuple{a, 1}}}})
 check(rest("f(a = 1, 2)"), "(a = 1, 2)")
 

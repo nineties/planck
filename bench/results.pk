@@ -1,21 +1,42 @@
-machine("Debian GNU/Linux 13 (trixie)", "Intel(R) Xeon(R) Platinum 8481C CPU @ 2.70GHz, 15.6 GiB memory", 4)
-result("use_libs", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 1967832296, 57797512, 1)
-result("recursion", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 139183963, 5626176, 0)
-result("match", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 707665975, 24692232, 1)
-result("partial_fusion", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 587055366, 36249408, 0)
-result("list_lib", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 2361960886, 11019552, 0)
-result("vector_table", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 445195202, 9363640, 1)
-result("strings", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 549950212, 4818128, 0)
-result("bigint", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 1336291471, 60726720, 1)
-result("bytes_bitset", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 304078351, 8072632, 0)
-result("effects_nondet", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 282944454, 9041256, 0)
-result("effects_state", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 215828968, 10830760, 0)
-result("exceptions", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 1079392555, 48275016, 1)
-result("macro", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 765663379, 27118048, 0)
-result("gc_alloc", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 2885211483, 56793760, 1)
-result("pretty_error", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 1387655484, 32575480, 0)
-result("modules_records", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 1075793227, 27333464, 1)
-result("loops_closures", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 1866608481, 43702296, 1)
-result("getopt", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 169441882, 5235040, 0)
-result("syntax_extension", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 348417277, 12029064, 0)
-result("startup", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5", "2026-11-23T23:03:02Z", 5, 8987906500, 0, 0)
+machine("Debian GNU/Linux 13 (trixie)",
+    "Intel(R) Xeon(R) Platinum 8481C CPU @ 2.70GHz, 15.6 GiB memory", 4)
+result("use_libs", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 1967832296, 57797512, 1)
+result("recursion", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 139183963, 5626176, 0)
+result("match", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 707665975, 24692232, 1)
+result("partial_fusion", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 587055366, 36249408, 0)
+result("list_lib", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 2361960886, 11019552, 0)
+result("vector_table", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 445195202, 9363640, 1)
+result("strings", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 549950212, 4818128, 0)
+result("bigint", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 1336291471, 60726720, 1)
+result("bytes_bitset", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 304078351, 8072632, 0)
+result("effects_nondet", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 282944454, 9041256, 0)
+result("effects_state", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 215828968, 10830760, 0)
+result("exceptions", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 1079392555, 48275016, 1)
+result("macro", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 765663379, 27118048, 0)
+result("gc_alloc", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 2885211483, 56793760, 1)
+result("pretty_error", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 1387655484, 32575480, 0)
+result("modules_records", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 1075793227, 27333464, 1)
+result("loops_closures", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 1866608481, 43702296, 1)
+result("getopt", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 169441882, 5235040, 0)
+result("syntax_extension", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f",
+    "v0.1.5", "2026-11-23T23:03:02Z", 5, 348417277, 12029064, 0)
+result("startup", "main", "220b5fdac37914dbd35731bab35f2a624f990f4f", "v0.1.5",
+    "2026-11-23T23:03:02Z", 5, 8987906500, 0, 0)

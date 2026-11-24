@@ -1,7 +1,8 @@
 fun append
 append = (Nil{}, ys) -> ys | (x :: xs, ys) -> x :: append(xs, ys)
 fun concat_map
-concat_map = (f, Nil{}) -> Nil{} | (f, x :: xs) -> append(f(x), concat_map(f, xs))
+concat_map = (f, Nil{}) -> Nil{} | (f, x :: xs) ->
+    append(f(x), concat_map(f, xs))
 fun length
 length = (Nil{}) -> 0 | (_ :: xs) -> 1 + length(xs)
 range(a, b) := if (a > b) [] else a :: range(a + 1, b)
@@ -15,7 +16,8 @@ all_results(f) := handle [f()] with
 
 fun safe
 safe = (q, Nil{}, d) -> true
-      | (q, x :: xs, d) -> q != x and q != x + d and q != x - d and safe(q, xs, d + 1)
+      | (q, x :: xs, d) -> q != x and q != x + d and q != x - d and
+          safe(q, xs, d + 1)
 
 place(n, k, qs) := if (k == 0) qs else {
     q := choose(range(1, n))

@@ -18,7 +18,8 @@ module list {
 
     export map(f, xs) := reverse(foldl((acc, x) -> f(x) :: acc, [], xs))
 
-    export filter(p, xs) := reverse(foldl((acc, x) -> if (p(x)) x :: acc else acc, [], xs))
+    export filter(p, xs) :=
+        reverse(foldl((acc, x) -> if (p(x)) x :: acc else acc, [], xs))
 
     export concat_map(f, xs) := concat(map(f, xs))
 
@@ -97,7 +98,8 @@ module list {
         merge = (Nil{}, ys, acc) -> foldl(prepend, acc, ys)
                | (xs, Nil{}, acc) -> foldl(prepend, acc, xs)
                | (x :: xs, y :: ys, acc) ->
-                    if (less(y, x)) merge(x :: xs, ys, y :: acc) else merge(xs, y :: ys, x :: acc)
+                    if (less(y, x)) merge(x :: xs, ys, y :: acc)
+                        else merge(xs, y :: ys, x :: acc)
         fun go
         go = (xs) -> {
             n := length(xs)
