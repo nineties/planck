@@ -36,13 +36,15 @@ module vector {
 
     export get(vector @ Vector, i) := {
         v := vector.a
-        if (i < 0 or i >= array_get(v, 1)) panic("vector.get: index out of range")
+        if (i < 0 or
+            i >= array_get(v, 1)) panic("vector.get: index out of range")
         array_get(array_get(v, 0), i)
     }
 
     export set(vector @ Vector, i, x) := {
         v := vector.a
-        if (i < 0 or i >= array_get(v, 1)) panic("vector.set: index out of range")
+        if (i < 0 or
+            i >= array_get(v, 1)) panic("vector.set: index out of range")
         array_set(array_get(v, 0), i, x)
     }
 

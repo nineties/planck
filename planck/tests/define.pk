@@ -13,7 +13,8 @@ check(Tuple{dh_def(0), dh_def(3)}, Tuple{10, 3})
 dh_first(x) := x + 1
 dh_first_g := dh_first
 dh_first(0) := 5
-check(Tuple{dh_first(0), dh_first_g(0), dh_first_g == dh_first}, Tuple{1, 1, false})
+check(Tuple{dh_first(0), dh_first_g(0), dh_first_g == dh_first},
+    Tuple{1, 1, false})
 dh_fun(x) := "old"
 dh_fun_g := () -> dh_fun(0)
 fun dh_fun
@@ -80,7 +81,8 @@ check(dh_out(0), "outer")
 dl_f(x) := "program"
 dl_old := dl_f
 load("planck/tests/define_load.pk")
-check(Tuple{dl_f(0), dl_f(1), dl_old(0)}, Tuple{"loaded zero", "loaded", "program"})
+check(Tuple{dl_f(0), dl_f(1), dl_old(0)},
+    Tuple{"loaded zero", "loaded", "program"})
 dl_f(2) := "again"
 dl_f(n) := "again n"
 check(Tuple{dl_f(2), dl_f(0)}, Tuple{"again", "again n"})
@@ -92,8 +94,10 @@ strlen(0) := 0
 check(Tuple{strlen("ab"), strlen(0)}, Tuple{7, 7})
 dl_g(2) = "ext two"
 dl_g(n) = "ext n"
-check(Tuple{dl_g(0), dl_g(2), dl_g(5)}, Tuple{"loaded g zero", "loaded g two", "ext n"})
+check(Tuple{dl_g(0), dl_g(2), dl_g(5)},
+    Tuple{"loaded g zero", "loaded g two", "ext n"})
 foldl(f, acc, Tuple{a, b}) = f(f(acc, a), b)
-check(Tuple{foldl(int_add, 0, [1, 2, 3]), foldl(int_add, 0, Tuple{4, 5})}, Tuple{6, 9})
+check(Tuple{foldl(int_add, 0, [1, 2, 3]), foldl(int_add, 0, Tuple{4, 5})},
+    Tuple{6, 9})
 
 finish()

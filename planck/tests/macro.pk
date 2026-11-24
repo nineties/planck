@@ -42,7 +42,8 @@ check(if (true) Twice{1} else Twice{2}, 2)
 
 check('Twice{1}, 'Twice{1})
 check(expand_macro('Quote{Twice{1}}, 0), 'Quote{Twice{1}})
-check(expand_macro('Twice{Quote{Twice{1}}}, 0), '(Quote{Twice{1}} + Quote{Twice{1}}))
+check(expand_macro('Twice{Quote{Twice{1}}}, 0),
+    '(Quote{Twice{1}} + Quote{Twice{1}}))
 
 check(expand_macro('QuasiQuote{Twice{a}}, 0), 'QuasiQuote{Twice{a}})
 check(expand_macro('QuasiQuote{F{Twice{a}, UnQuote{Twice{b}}}}, 0),
@@ -52,11 +53,13 @@ check(expand_macro('QuasiQuote{QuasiQuote{UnQuote{UnQuote{Twice{b}}}}}, 0),
 check(expand_macro('QuasiQuote{QuasiQuote{UnQuote{Twice{b}}}}, 0),
       'QuasiQuote{QuasiQuote{UnQuote{Twice{b}}}})
 check(`(Twice{1} + !Twice{2}), '(Twice{1} + 4))
-check(expand_macro('QuasiQuote{Quote{UnQuote{Twice{a}}}}, 0), 'QuasiQuote{Quote{UnQuote{(a + a)}}})
+check(expand_macro('QuasiQuote{Quote{UnQuote{Twice{a}}}}, 0),
+    'QuasiQuote{Quote{UnQuote{(a + a)}}})
 
 g(Twice{x}) := x
 check(g('Twice{7}), 7)
-check(expand_macro('Lambda{Tuple{Twice{x}}, Twice{x}}, 0), 'Lambda{Tuple{Twice{x}}, (x + x)})
+check(expand_macro('Lambda{Tuple{Twice{x}}, Twice{x}}, 0),
+    'Lambda{Tuple{Twice{x}}, (x + x)})
 check(expand_macro('Def{Twice, Twice{1}}, 0), 'Def{Twice, (1 + 1)})
 check(expand_macro('Set{Twice, Twice{1}}, 0), 'Set{Twice, (1 + 1)})
 check(expand_macro('Declare{Twice}, 0), 'Declare{Twice})

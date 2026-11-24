@@ -20,7 +20,8 @@ all_results(f) := handle [f()] with
 
 fun safe
 safe = (q, Nil{}, d) -> true
-      | (q, x :: xs, d) -> q != x and q != x + d and q != x - d and safe(q, xs, d + 1)
+      | (q, x :: xs, d) -> q != x and q != x + d and q != x - d and
+          safe(q, xs, d + 1)
 
 place(n, k, qs) := if (k == 0) qs else {
     q := choose(range(1, n + 1))

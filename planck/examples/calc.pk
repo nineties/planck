@@ -27,12 +27,14 @@ lex(src) := {
           | c if string.is_digit(c) -> {
                 j := i
                 while (j < n and string.is_digit(str_ord(src, j))) j = j + 1
-                vector.push(toks, token('num, string.string_to_int(str_sub(src, i, j)), i))
+                vector.push(toks,
+                    token('num, string.string_to_int(str_sub(src, i, j)), i))
                 i = j
             }
           | c if string.is_ident_start(c) -> {
                 j := i
-                while (j < n and string.is_ident_char(str_ord(src, j))) j = j + 1
+                while (j < n and
+                    string.is_ident_char(str_ord(src, j))) j = j + 1
                 vector.push(toks, token('id, str_sub(src, i, j), i))
                 i = j
             }
@@ -40,7 +42,9 @@ lex(src) := {
                 vector.push(toks, token('op, string.char(c), i))
                 i = i + 1
             }
-          | _ -> error.at(here(i), f"unexpected character {pretty.quote_string(string.char(c))}")
+          | _ ->
+              error.at(here(i),
+              f"unexpected character {pretty.quote_string(string.char(c))}")
         }
     }
     vector.push(toks, token('eof, "", n))
@@ -57,7 +61,8 @@ parse_program(toks) := {
     }
     at(kind, v) := peek().kind == kind and peek().value == v
     syntax_error(msg) := error.at(here(peek().pos), msg)
-    expect_op(v) := if (at('op, v)) advance() else syntax_error(f"expected \"{v}\"")
+    expect_op(v) := if (at('op, v)) advance()
+        else syntax_error(f"expected \"{v}\"")
 
     chain(next, ops) := {
         l := next()
@@ -102,7 +107,8 @@ parse_program(toks) := {
     skip_newlines()
     while (peek().kind != 'eof) {
         stmts = stmt() :: stmts
-        if (peek().kind != 'eof and peek().kind != 'nl) syntax_error("expected the end of the line")
+        if (peek().kind != 'eof and
+            peek().kind != 'nl) syntax_error("expected the end of the line")
         skip_newlines()
     }
     reverse(stmts)
@@ -115,7 +121,8 @@ compile(stmts) := {
     fun operand
     operand = (Num{n}) -> n
              | (Var{x, p}) -> {
-                   if (not set.has(defined, sym_intern(x))) error.at(here(p), f"undefined variable {x}")
+                   if (not set.has(defined, sym_intern(x))) error.at(here(p),
+                       f"undefined variable {x}")
                    sym_intern(x)
                }
              | (Neg{e}) -> {
@@ -139,8 +146,10 @@ compile(stmts) := {
     vector.to_list(code)
 }
 
-show_operand(o) := if (expr_type(o) == Int) string.int_to_string(o) else sym_name(o)
-show_instr(Bin{d, op, a, b, _}) := join(" ", [show_operand(d), "=", show_operand(a), op, show_operand(b)])
+show_operand(o) := if (expr_type(o) == Int) string.int_to_string(o)
+    else sym_name(o)
+show_instr(Bin{d, op, a, b, _}) :=
+    join(" ", [show_operand(d), "=", show_operand(a), op, show_operand(b)])
 show_instr(Copy{d, a}) := join(" ", [show_operand(d), "=", show_operand(a)])
 show_instr(Print{a}) := str_cat("print ", show_operand(a))
 

@@ -2,7 +2,11 @@
 
 bench_first := os_time_ns()
 
-bench_cases := ["use_libs", "recursion", "match", "partial_fusion", "list_lib", "vector_table", "strings", "bigint", "bytes_bitset", "effects_nondet", "effects_state", "exceptions", "macro", "gc_alloc", "pretty_error", "modules_records", "loops_closures", "getopt", "syntax_extension"]
+bench_cases :=
+    ["use_libs", "recursion", "match", "partial_fusion", "list_lib",
+    "vector_table", "strings", "bigint", "bytes_bitset", "effects_nondet",
+    "effects_state", "exceptions", "macro", "gc_alloc", "pretty_error",
+    "modules_records", "loops_closures", "getopt", "syntax_extension"]
 
 bench_args := os_argv()
 
@@ -42,14 +46,16 @@ bench_run(name) := {
         print(f"{name}: output differs from the expected output")
         os_exit(1)
     }
-    bench_lines = str_cat(bench_lines, f"sample(\"{name}\", {t1 - t0}, {a1 - a0}, {g1 - g0})\n")
+    bench_lines = str_cat(bench_lines,
+        f"sample(\"{name}\", {t1 - t0}, {a1 - a0}, {g1 - g0})\n")
 }
 
 for (name in bench_cases) bench_run(name)
 
 if (array_len(bench_args) > 2) {
     startup := bench_first - string.string_to_int(bench_args[2])
-    bench_lines = str_cat(bench_lines, f"sample(\"startup\", {startup}, 0, 0)\n")
+    bench_lines = str_cat(bench_lines,
+        f"sample(\"startup\", {startup}, 0, 0)\n")
 }
 
 bench_path := bench_args[1]
@@ -57,4 +63,5 @@ bench_old := match os_read_file(bench_path) {
     Ok{t} -> t
   | Err{_} -> none
 }
-os_write_file(bench_path, str_cat(if (bench_old == none) "" else bench_old, bench_lines))
+os_write_file(bench_path,
+    str_cat(if (bench_old == none) "" else bench_old, bench_lines))

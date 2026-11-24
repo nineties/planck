@@ -27,7 +27,8 @@ or_dash(s) := if (s == "") "-" else s
 result(name, ref, commit, planck0, date, rounds, t, heap, gcs) := {
     label := version_label(ref, commit)
     key := f"{name}/{label}"
-    if (not list.member(name, case_names)) case_names = list.append(case_names, [name])
+    if (not list.member(name, case_names)) case_names = list.append(
+        case_names, [name])
     if (not list.member(label, ref_names)) {
         ref_names = list.append(ref_names, [label])
         table.set(ref_rows, label, (ref, commit, planck0, date))
@@ -78,7 +79,8 @@ text := string.join("\n", [
     string.join("\n", runs),
     "",
     table_lines("Time per benchmark (seconds, median)", 0, seconds, case_names),
-    table_lines("Allocated memory per benchmark (MiB)", 1, mebibytes, cases_without_startup),
+    table_lines("Allocated memory per benchmark (MiB)", 1, mebibytes,
+        cases_without_startup),
     ""
 ])
 os_write_file(out_path, text)

@@ -12,7 +12,8 @@ cur_path := args[2]
 meta := table.new()
 for (line in string.split(unwrap(os_read_file(args[3])), "\n")) {
     parts := string.split(line, "=")
-    if (list.length(parts) > 1) table.set(meta, list.nth(parts, 0), string.join("=", list.drop(parts, 1)))
+    if (list.length(parts) > 1) table.set(meta, list.nth(parts, 0),
+        string.join("=", list.drop(parts, 1)))
 }
 
 acc_table := table.new()

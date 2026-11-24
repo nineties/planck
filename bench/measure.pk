@@ -9,7 +9,8 @@ measure_args := os_argv()
 measure_i := 1
 while (measure_i < array_len(measure_args)) {
     parts := string.split(measure_args[measure_i], "=")
-    table.set(measure_options, list.nth(parts, 0), string.join("=", list.drop(parts, 1)))
+    table.set(measure_options, list.nth(parts, 0),
+        string.join("=", list.drop(parts, 1)))
     measure_i = measure_i + 1
 }
 
@@ -63,7 +64,10 @@ meminfo_args := array_new(1)
 meminfo_args[0] = "/proc/meminfo"
 for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "\n")) {
     if (string.starts_with(line, "MemTotal:")) {
-        memory_kib = string.string_to_int(list.nth(string.split(string.trim(list.nth(string.split(line, ":"), 1)), " "), 0))
+        memory_kib = string.string_to_int(
+            list.nth(
+                string.split(string.trim(list.nth(string.split(line, ":"), 1)),
+                    " "), 0))
     }
 }
 cpu_name = f"{cpu_name}, {(memory_kib * 10 // 1048576) // 10}.{(memory_kib * 10 // 1048576) % 10} GiB memory"
@@ -71,7 +75,8 @@ cpu_name = f"{cpu_name}, {(memory_kib * 10 // 1048576) // 10}.{(memory_kib * 10 
 os_name := ""
 for (line in string.split(unwrap(os_read_file("/etc/os-release")), "\n")) {
     if (string.starts_with(line, "PRETTY_NAME=")) {
-        value := string.trim(string.join("=", list.drop(string.split(line, "="), 1)))
+        value :=
+            string.trim(string.join("=", list.drop(string.split(line, "="), 1)))
         os_name = str_sub(value, 1, str_len(value) - 1)
     }
 }
@@ -110,7 +115,8 @@ append_text(path, text) := {
 }
 
 if (option("summary") != "") {
-    append_text(option("summary"), f"# Benchmark {option("ref")}\n{unwrap(os_read_file(this_run_md))}")
+    append_text(option("summary"),
+        f"# Benchmark {option("ref")}\n{unwrap(os_read_file(this_run_md))}")
 }
 
 if (option("results") != "") {
@@ -119,7 +125,9 @@ if (option("results") != "") {
       | Err{_} -> ""
     }
     run_lines := string.split(unwrap(os_read_file(this_run)), "\n")
-    recorded := if (string.starts_with(results_old, "machine(")) list.drop(run_lines, 1) else run_lines
+    recorded :=
+        if (string.starts_with(results_old, "machine(")) list.drop(run_lines, 1)
+        else run_lines
     append_text(option("results"), string.join("\n", recorded))
     report_all := array_new(3)
     report_all[0] = f"{measure_cur}/bench/report.pk"

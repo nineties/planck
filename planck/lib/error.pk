@@ -39,7 +39,8 @@ module error {
 
     export at(loc, msg) := perform Error{loc, msg}
 
-    export catch(f) := handle Ok{f()} with (Error{loc, msg}, k) -> Error{loc, msg}
+    export catch(f) := handle Ok{f()} with (Error{loc, msg}, k) ->
+        Error{loc, msg}
 
     export show(src, loc, msg) := {
         b := strbuf.new()

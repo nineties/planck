@@ -101,7 +101,10 @@ check(str_ord(text, 0), 0)
 check(str_ord(text, 3), 255)
 check(text[1], "A")
 
-os_write_file("tmp-builtins.bin", str_cat(str_cat("a", str_sub(unwrap(os_read_file("tmp-builtins.bin")), 0, 1)), "z"))
+os_write_file("tmp-builtins.bin",
+    str_cat(
+        str_cat("a",
+            str_sub(unwrap(os_read_file("tmp-builtins.bin")), 0, 1)), "z"))
 back = unwrap(os_read_bytes("tmp-builtins.bin"))
 check(plain_len(back), 3)
 check(back[0], 97)
@@ -114,12 +117,17 @@ check(os_read_file("tmp-builtins.bin"), Ok{""})
 check(os_chmod("tmp-builtins.bin", 493), Ok{none})
 
 check(os_read_file("tmp-no-such-file"), Err{IoError{'open, "tmp-no-such-file"}})
-check(os_read_bytes("tmp-no-such-file"), Err{IoError{'open, "tmp-no-such-file"}})
+check(os_read_bytes("tmp-no-such-file"),
+    Err{IoError{'open, "tmp-no-such-file"}})
 check(os_read_file("planck"), Err{IoError{'read, "planck"}})
-check(os_write_file("tmp-no-such-dir/x", "a"), Err{IoError{'open, "tmp-no-such-dir/x"}})
-check(os_chmod("tmp-no-such-file", 493), Err{IoError{'chmod, "tmp-no-such-file"}})
+check(os_write_file("tmp-no-such-dir/x", "a"),
+    Err{IoError{'open, "tmp-no-such-dir/x"}})
+check(os_chmod("tmp-no-such-file", 493),
+    Err{IoError{'chmod, "tmp-no-such-file"}})
 check(unwrap(Ok{7}), 7)
-check(handle unwrap(os_read_file("tmp-no-such-file")) with (Error{loc, msg}, k) -> msg, "open: tmp-no-such-file")
+check(
+    handle unwrap(os_read_file("tmp-no-such-file")) with (Error{loc, msg}, k) ->
+    msg, "open: tmp-no-such-file")
 
 check(bit_and(12, 10), 8)
 check(bit_or(12, 10), 14)

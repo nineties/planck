@@ -17,30 +17,77 @@ Def{typename, expr_type_name}
 
 " === Basic Functions === "
 Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
-" text(x) is the text of x on one line. A string is its characters, an integer is its decimal digits, a symbol is its name, an expression is its head and its arguments in braces. An array and a function are <array> and <function>. "
+" text(x) is the text of x on one line. A string is its characters, an integer "
+"   is its decimal digits, a symbol is its name, an expression is its head and "
+"   its arguments in braces. An array and a function are <array> and "
+"   <function>. "
 Def{text, none}
 Set{text, Apply{Lambda{Tuple{}, Do{
     Def{_args_text, none},
-    Set{_args_text, Lambda{Tuple{e, i}, If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
+    Set{_args_text,
+        Lambda{Tuple{e, i},
+            If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
         Apply{str_cat, Tuple{Apply{text, Tuple{Apply{arg, Tuple{e, i}}}},
-            If{Apply{int_lt, Tuple{Apply{int_add, Tuple{i, 1}}, Apply{arity, Tuple{e}}}},
-                Apply{str_cat, Tuple{", ", Apply{_args_text, Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
+            If{
+                Apply{int_lt,
+                    Tuple{Apply{int_add, Tuple{i, 1}}, Apply{arity, Tuple{e}}}},
+                Apply{str_cat,
+                    Tuple{", ",
+                        Apply{_args_text,
+                            Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
                 ""}}}}}},
     Fusion{Lambda{Tuple{_TypeOf{x, String}}, x},
     Fusion{Lambda{Tuple{_TypeOf{x, Int}}, Apply{int_to_string, Tuple{x}}},
     Fusion{Lambda{Tuple{_TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
-    Fusion{Lambda{Tuple{_TypeOf{x, Expr}}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{head, Tuple{x}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}},
+    Fusion{
+        Lambda{Tuple{_TypeOf{x, Expr}},
+            Apply{str_cat,
+                Tuple{
+                    Apply{str_cat,
+                        Tuple{
+                            Apply{str_cat,
+                                Tuple{
+                                    Apply{sym_name,
+                                        Tuple{Apply{head, Tuple{x}}}}, "{"}},
+                            Apply{_args_text, Tuple{x, 0}}}}, "}"}}},
     Fusion{Lambda{Tuple{_TypeOf{x, Array}}, "<array>"},
-    Fusion{Lambda{Tuple{_TypeOf{x, Type}}, Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}}},
+    Fusion{
+        Lambda{Tuple{_TypeOf{x, Type}},
+            Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}}},
     Fusion{Lambda{Tuple{_TypeOf{x, Function}}, "<function>"},
     Fusion{Lambda{Tuple{_TypeOf{x, Plain}}, "<function>"},
-    Lambda{Tuple{x}, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{expr_type, Tuple{x}}}}}}, "{"}}, Apply{_args_text, Tuple{x, 0}}}}, "}"}}}}}}}}}}}}}, Tuple{}}}
-" print(x) writes text(x) and a new line. Until lib/pretty.pk is loaded, which is at the end of this file, this is the print. lib/pretty.pk then sets print to write the value as pretty.text(x, 60) does, and takes the argument pretty, and sets repr. The argument end = s writes s in place of the new line (here, the first argument with a name is taken as end). "
-Def{print, Lambda{Tuple{x, _Rest{_kwrest}}, Do{Apply{os_put, Tuple{Apply{text, Tuple{x}}}}, If{Apply{int_lt, Tuple{0, Apply{arity, Tuple{_kwrest}}}}, Apply{os_put, Tuple{Apply{arg, Tuple{Apply{arg, Tuple{_kwrest, 0}}, 1}}}}, Apply{os_put, Tuple{"\n"}}}}}}
+    Lambda{Tuple{x},
+        Apply{str_cat,
+            Tuple{
+                Apply{str_cat,
+                    Tuple{
+                        Apply{str_cat,
+                            Tuple{
+                                Apply{sym_name,
+                                    Tuple{
+                                        Apply{typename,
+                                            Tuple{
+                                                Apply{expr_type, Tuple{x}}}}}},
+                                "{"}}, Apply{_args_text, Tuple{x, 0}}}},
+                "}"}}}}}}}}}}}}}, Tuple{}}}
+" print(x) writes text(x) and a new line. Until lib/pretty.pk is loaded, which "
+"   is at the end of this file, this is the print. lib/pretty.pk then sets "
+"   print to write the value as pretty.text(x, 60) does, and takes the "
+"   argument pretty, and sets repr. The argument end = s writes s in place of "
+"   the new line (here, the first argument with a name is taken as end). "
+Def{print,
+    Lambda{Tuple{x, _Rest{_kwrest}},
+        Do{Apply{os_put, Tuple{Apply{text, Tuple{x}}}},
+            If{Apply{int_lt, Tuple{0, Apply{arity, Tuple{_kwrest}}}},
+                Apply{os_put,
+                    Tuple{Apply{arg, Tuple{Apply{arg, Tuple{_kwrest, 0}}, 1}}}},
+                Apply{os_put, Tuple{"\n"}}}}}}
 
 " === Tables === "
-" A table is a Table, whose field is an array | buckets | number of entries |. Each bucket is a chain of entries "
-" | key | value | next entry or none | hash of the key |. Keys are compared by eq. "
+" A table is a Table, whose field is an array | buckets | number of entries |. "
+"   Each bucket is a chain of entries "
+" | key | value | next entry or none | hash of the key |. Keys are compared by "
+"   eq. "
 " The number of buckets doubles when there are more entries than buckets. "
 Def{Table, none}
 
@@ -56,7 +103,9 @@ Def{table_new, Apply{Lambda{Tuple{}, Do{
 
 Def{table_find, Lambda{Tuple{t, k, h}, Do{
     Def{b, Apply{array_get, Tuple{t, 0}}},
-    Def{e, Apply{array_get, Tuple{b, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}}}},
+    Def{e,
+        Apply{array_get,
+            Tuple{b, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}}}},
     While{If{Apply{expr_ne, Tuple{e, none}},
             If{Apply{expr_eq, Tuple{Apply{array_get, Tuple{e, 3}}, h}},
                 Apply{expr_ne, Tuple{Apply{array_get, Tuple{e, 0}}, k}},
@@ -68,7 +117,8 @@ Def{table_find, Lambda{Tuple{t, k, h}, Do{
 Def{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
     Def{t, Apply{arg, Tuple{tb, 0}}},
     Def{e, Apply{table_find, Tuple{t, k, Apply{expr_hash, Tuple{k}}}}},
-    If{Apply{expr_eq, Tuple{e, none}}, default, Apply{array_get, Tuple{e, 1}}}}}}
+    If{Apply{expr_eq, Tuple{e, none}}, default,
+        Apply{array_get, Tuple{e, 1}}}}}}
 
 Def{table_set, Apply{Lambda{Tuple{}, Do{
     Def{table_grow, Lambda{Tuple{t}, Do{
@@ -104,23 +154,41 @@ Def{table_set, Apply{Lambda{Tuple{}, Do{
             Apply{array_set, Tuple{b, i, n}},
             Def{c, Apply{int_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
             Apply{array_set, Tuple{t, 1, c}},
-            If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}}, Apply{table_grow, Tuple{t}}, none}},
+            If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}},
+                Apply{table_grow, Tuple{t}}, none}},
             Apply{array_set, Tuple{e, 1, v}}},
         none}}}}, Tuple{}}}
 
 " === Results of files === "
-" unwrap(r) is x for Ok{x}, and performs Error{none, message} for Err{IoError{stage, path}}. "
-Def{unwrap, Lambda{Tuple{r}, If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quote{Err}}},
-    Perform{Error{none, Apply{str_cat, Tuple{Apply{str_cat, Tuple{Apply{sym_name, Tuple{Apply{arg, Tuple{Apply{arg, Tuple{r, 0}}, 0}}}}, ": "}},
+" unwrap(r) is x for Ok{x}, and performs Error{none, message} for "
+"   Err{IoError{stage, path}}. "
+Def{unwrap,
+    Lambda{Tuple{r},
+        If{Apply{expr_eq, Tuple{Apply{head, Tuple{r}}, Quote{Err}}},
+    Perform{
+        Error{none,
+            Apply{str_cat,
+                Tuple{
+                    Apply{str_cat,
+                        Tuple{
+                            Apply{sym_name,
+                                Tuple{
+                                    Apply{arg,
+                                        Tuple{Apply{arg, Tuple{r, 0}},
+                                            0}}}}, ": "}},
         Apply{arg, Tuple{Apply{arg, Tuple{r, 0}}, 1}}}}}},
     Apply{arg, Tuple{r, 0}}}}}
 
 " === Loading files === "
 " load(path) parses and evaluates the file by the current parse and eval. "
-" The top-level definitions of the file are made while path is the file being loaded. "
-" A syntax error is printed as file:line:column: syntax error: message, once planck/syntax.pk has replaced parse and planck/peg.pk has defined peg_file_error_text. "
+" The top-level definitions of the file are made while path is the file being "
+"   loaded. "
+" A syntax error is printed as file:line:column: syntax error: message, once "
+"   planck/syntax.pk has replaced parse and planck/peg.pk has defined "
+"   peg_file_error_text. "
 Def{peg_file_error_text, none}
-" parse_from(s, pos) is the parse of the text s from the byte position pos: Tuple{value, next position}. planck/syntax.pk defines it. "
+" parse_from(s, pos) is the parse of the text s from the byte position pos: "
+"   Tuple{value, next position}. planck/syntax.pk defines it. "
 Def{parse_from, none}
 Def{load, Apply{Lambda{Tuple{}, Do{
     Def{_parse0, parse},
@@ -135,13 +203,26 @@ Def{load, Apply{Lambda{Tuple{}, Do{
         Def{go, true},
         While{go, Do{
             Def{by_pos, Apply{expr_ne, Tuple{parse, _parse0}}},
-            Set{r, If{by_pos, Apply{parse_from, Tuple{s0, pos}}, Apply{parse, Tuple{s}}}},
+            Set{r,
+                If{by_pos, Apply{parse_from, Tuple{s0, pos}},
+                    Apply{parse, Tuple{s}}}},
             Set{e, Apply{arg, Tuple{r, 0}}},
-            Set{next, If{by_pos, Apply{arg, Tuple{r, 1}}, Apply{int_sub, Tuple{Apply{str_len, Tuple{s0}}, Apply{str_len, Tuple{Apply{arg, Tuple{r, 1}}}}}}}},
+            Set{next,
+                If{by_pos, Apply{arg, Tuple{r, 1}},
+                    Apply{int_sub,
+                        Tuple{Apply{str_len, Tuple{s0}},
+                            Apply{str_len, Tuple{Apply{arg, Tuple{r, 1}}}}}}}},
             If{Apply{expr_eq, Tuple{e, Eof{}}}, Set{go, false},
-            If{If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{SyntaxError}}}, false},
+            If{
+                If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}},
+                    Apply{expr_eq,
+                        Tuple{Apply{head, Tuple{e}},
+                            Quote{SyntaxError}}}, false},
                 Do{
-                    Def{text, If{Apply{expr_ne, Tuple{parse, _parse0}}, Apply{peg_file_error_text, Tuple{path, s0, pos}}, none}},
+                    Def{text,
+                        If{Apply{expr_ne, Tuple{parse, _parse0}},
+                            Apply{peg_file_error_text,
+                                Tuple{path, s0, pos}}, none}},
                     If{Apply{expr_eq, Tuple{text, none}},
                         Do{
                             Apply{os_put, Tuple{path}},
@@ -152,17 +233,22 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                 Do{
                     Apply{eval, Tuple{e}},
                     Set{pos, next},
-                    Set{s, If{Apply{expr_ne, Tuple{parse, _parse0}}, s0, Apply{arg, Tuple{r, 1}}}}}}}}},
+                    Set{s,
+                        If{Apply{expr_ne, Tuple{parse, _parse0}}, s0,
+                            Apply{arg, Tuple{r, 1}}}}}}}}},
         Apply{os_set_file, Tuple{prev}},
         none}}}}, Tuple{}}}
 
 " === Syntax === "
-" planck/syntax.pk replaces parse. The files after it are read by the new syntax. "
+" planck/syntax.pk replaces parse. The files after it are read by the new "
+"   syntax. "
 Apply{load, Tuple{"planck/peg.pk"}}
 Apply{load, Tuple{"planck/syntax.pk"}}
 
-" planck/lib/import.pk defines import_lib(name), which loads planck/lib/<name>.pk once. It is written in the syntax above. "
+" planck/lib/import.pk defines import_lib(name), which loads "
+"   planck/lib/<name>.pk once. It is written in the syntax above. "
 Apply{load, Tuple{"planck/lib/import.pk"}}
 
-" planck/lib/pretty.pk defines show, repr and the print that takes pretty and end. It is loaded here, so that every program has them. "
+" planck/lib/pretty.pk defines show, repr and the print that takes pretty and "
+"   end. It is loaded here, so that every program has them. "
 Apply{import_lib, Tuple{"pretty"}}

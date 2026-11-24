@@ -1,11 +1,16 @@
 " Syntax of planck "
 " Copyright (C) 2026 nineties "
 
-" The grammar is defined with the packrat parser of planck/peg.pk. The trees are the m-exprs "
-" that eval takes, e.g. a + b is Apply{int_add, Tuple{a, b}}. M-expressions are a part of the syntax. "
-" The file has three parts. The tokens, the functions that the actions call and the grammar of the grammar "
-" (name ::= ...) are written in m-exprs. parse is replaced in the middle of the file, by the smallest syntax "
-" that an action needs. The rest of the file is read by it, and the syntax of planck is declared with ::=. "
+" The grammar is defined with the packrat parser of planck/peg.pk. The trees "
+"   are the m-exprs "
+" that eval takes, e.g. a + b is Apply{int_add, Tuple{a, b}}. M-expressions "
+"   are a part of the syntax. "
+" The file has three parts. The tokens, the functions that the actions call "
+"   and the grammar of the grammar "
+" (name ::= ...) are written in m-exprs. parse is replaced in the middle of "
+"   the file, by the smallest syntax "
+" that an action needs. The rest of the file is read by it, and the syntax of "
+"   planck is declared with ::=. "
 
 " === Tokens === "
 
@@ -31,40 +36,56 @@ Apply{table_set, Tuple{peg_reserved, "export", true}}
 Apply{table_set, Tuple{peg_reserved, "macro", true}}
 Apply{table_set, Tuple{peg_reserved, "import", true}}
 
-" identifier: [A-Za-z_][A-Za-z0-9_]*[?!]? except the peg_reserved words and the f of f\"...\". "
-" A ? or ! right after the name is part of it, but ! is not when = follows (x!=y is x != y). "
-" rule_name is the same without the ? and !, for the names in a grammar, where x? is an optional x. "
+" identifier: [A-Za-z_][A-Za-z0-9_]*[?!]? except the peg_reserved words and "
+"   the f of f\"...\". "
+" A ? or ! right after the name is part of it, but ! is not when = follows "
+"   (x!=y is x != y). "
+" rule_name is the same without the ? and !, for the names in a grammar, where "
+"   x? is an optional x. "
 Def{peg_scan_ident, Lambda{Tuple{p, suffix}, Do{
     Set{p, Apply{peg_skip_ws, Tuple{p}}},
     Def{q, Apply{peg_inc, Tuple{p}}},
     Def{name, ""},
     If{Apply{peg_is_alpha, Tuple{Apply{peg_char_at, Tuple{p}}}}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}}, Set{q, Apply{peg_inc, Tuple{q}}}},
+        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}},
+            Set{q, Apply{peg_inc, Tuple{q}}}},
         If{suffix, Do{
             Def{c, Apply{peg_char_at, Tuple{q}}},
             If{If{Apply{expr_eq, Tuple{c, 63}}, true,
-                  If{Apply{expr_eq, Tuple{c, 33}}, Apply{expr_ne, Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}, 61}}, false}},
+                  If{Apply{expr_eq, Tuple{c, 33}},
+                      Apply{expr_ne,
+                          Tuple{
+                              Apply{peg_char_at,
+                                  Tuple{Apply{peg_inc, Tuple{q}}}}, 61}},
+                      false}},
                 Set{q, Apply{peg_inc, Tuple{q}}}, none}}, none},
         Set{name, Apply{str_sub, Tuple{peg_src, p, q}}},
         If{If{Apply{table_get, Tuple{peg_reserved, name, false}}, true,
               If{Apply{expr_eq, Tuple{q, Apply{int_add, Tuple{p, 1}}}},
-                 If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{p}}, 102}}, Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 34}}, false},
+                 If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{p}}, 102}},
+                     Apply{expr_eq,
+                         Tuple{Apply{peg_char_at, Tuple{q}}, 34}}, false},
                  false}},
             Apply{peg_fail, Tuple{p}},
             Do{Set{peg_pv, Apply{sym_intern, Tuple{name}}}, q}}},
         Apply{peg_fail, Tuple{p}}}}}}
 
 Def{peg_token_ident, Lambda{Tuple{p}, Apply{peg_scan_ident, Tuple{p, true}}}}
-Def{peg_token_rule_name, Lambda{Tuple{p}, Apply{peg_scan_ident, Tuple{p, false}}}}
+Def{peg_token_rule_name,
+    Lambda{Tuple{p}, Apply{peg_scan_ident, Tuple{p, false}}}}
 
 Def{peg_digit_value, Lambda{Tuple{c},
     If{Apply{peg_is_digit, Tuple{c}}, Apply{int_sub, Tuple{c, 48}},
-    If{If{Apply{int_le, Tuple{97, c}}, Apply{int_le, Tuple{c, 102}}, false}, Apply{int_sub, Tuple{c, 87}},
-    If{If{Apply{int_le, Tuple{65, c}}, Apply{int_le, Tuple{c, 70}}, false}, Apply{int_sub, Tuple{c, 55}},
+    If{If{Apply{int_le, Tuple{97, c}}, Apply{int_le, Tuple{c, 102}}, false},
+        Apply{int_sub, Tuple{c, 87}},
+    If{If{Apply{int_le, Tuple{65, c}}, Apply{int_le, Tuple{c, 70}}, false},
+        Apply{int_sub, Tuple{c, 55}},
         99}}}}}
 
-" integer: -?[0-9]+, 0x.., 0o.., 0b..; the value is built as a negative number (as much as -2^30) so that it does not wrap around. "
-" A literal that does not fit in 31 bits is Apply{int_parse, Tuple{text}}, with the text as it is written. "
+" integer: -?[0-9]+, 0x.., 0o.., 0b..; the value is built as a negative number "
+"   (as much as -2^30) so that it does not wrap around. "
+" A literal that does not fit in 31 bits is Apply{int_parse, Tuple{text}}, "
+"   with the text as it is written. "
 Def{peg_token_int, Lambda{Tuple{p}, Do{
     Set{p, Apply{peg_skip_ws, Tuple{p}}},
     Def{q, p},
@@ -74,51 +95,97 @@ Def{peg_token_int, Lambda{Tuple{p}, Do{
     Def{d, 0},
     Def{low, -1073741823},
     Def{big, false},
-    If{If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 45}}, Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}}}, false},
+    If{
+        If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 45}},
+            Apply{peg_is_digit,
+                Tuple{
+                    Apply{peg_char_at,
+                        Tuple{Apply{peg_inc, Tuple{q}}}}}}, false},
         Do{Set{sign, -1}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
     If{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}}, Do{
         If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 48}}, Do{
             Set{d, Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}},
-            If{If{Apply{expr_eq, Tuple{d, 120}}, true, Apply{expr_eq, Tuple{d, 88}}}, Set{base, 16},
-            If{If{Apply{expr_eq, Tuple{d, 111}}, true, Apply{expr_eq, Tuple{d, 79}}}, Set{base, 8},
-            If{If{Apply{expr_eq, Tuple{d, 98}}, true, Apply{expr_eq, Tuple{d, 66}}}, Set{base, 2}, none}}},
-            If{Apply{expr_ne, Tuple{base, 10}}, Set{q, Apply{int_add, Tuple{q, 2}}}, none}}, none},
+            If{
+                If{Apply{expr_eq, Tuple{d, 120}}, true,
+                    Apply{expr_eq, Tuple{d, 88}}}, Set{base, 16},
+            If{
+                If{Apply{expr_eq, Tuple{d, 111}}, true,
+                    Apply{expr_eq, Tuple{d, 79}}}, Set{base, 8},
+            If{
+                If{Apply{expr_eq, Tuple{d, 98}}, true,
+                    Apply{expr_eq, Tuple{d, 66}}}, Set{base, 2}, none}}},
+            If{Apply{expr_ne, Tuple{base, 10}},
+                Set{q, Apply{int_add, Tuple{q, 2}}}, none}}, none},
         If{Apply{expr_eq, Tuple{sign, -1}}, Set{low, -1073741824}, none},
         Set{d, Apply{peg_digit_value, Tuple{Apply{peg_char_at, Tuple{q}}}}},
         While{Apply{int_lt, Tuple{d, base}}, Do{
-            If{Apply{int_lt, Tuple{v, Apply{int_div, Tuple{Apply{int_add, Tuple{low, d}}, base}}}}, Set{big, true},
-                Set{v, Apply{int_sub, Tuple{Apply{int_mul, Tuple{v, base}}, d}}}},
+            If{
+                Apply{int_lt,
+                    Tuple{v,
+                        Apply{int_div,
+                            Tuple{Apply{int_add, Tuple{low, d}}, base}}}},
+                Set{big, true},
+                Set{v,
+                    Apply{int_sub, Tuple{Apply{int_mul, Tuple{v, base}}, d}}}},
             Set{q, Apply{peg_inc, Tuple{q}}},
-            Set{d, Apply{peg_digit_value, Tuple{Apply{peg_char_at, Tuple{q}}}}}}},
-        If{big, Set{peg_pv, QuasiQuote{Apply{int_parse, Tuple{UnQuote{Apply{str_sub, Tuple{peg_src, p, q}}}}}}},
-            Set{peg_pv, If{Apply{expr_eq, Tuple{sign, -1}}, v, Apply{int_sub, Tuple{0, v}}}}},
+            Set{d,
+                Apply{peg_digit_value, Tuple{Apply{peg_char_at, Tuple{q}}}}}}},
+        If{big,
+            Set{peg_pv,
+                QuasiQuote{
+                    Apply{int_parse,
+                        Tuple{UnQuote{Apply{str_sub, Tuple{peg_src, p, q}}}}}}},
+            Set{peg_pv,
+                If{Apply{expr_eq, Tuple{sign, -1}}, v,
+                    Apply{int_sub, Tuple{0, v}}}}},
         q},
         Apply{peg_fail, Tuple{p}}}}}}
 
-" float: -?[0-9]+.[0-9]+ and an exponent e or E, an optional -, and [0-9]+ after it. The tree has the text of the token. "
+" float: -?[0-9]+.[0-9]+ and an exponent e or E, an optional -, and [0-9]+ "
+"   after it. The tree has the text of the token. "
 Def{peg_token_float, Lambda{Tuple{p}, Do{
     Set{p, Apply{peg_skip_ws, Tuple{p}}},
     Def{q, p},
     Def{ok, true},
     Def{r, p},
-    If{If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 45}}, Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}}}, false},
+    If{
+        If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 45}},
+            Apply{peg_is_digit,
+                Tuple{
+                    Apply{peg_char_at,
+                        Tuple{Apply{peg_inc, Tuple{q}}}}}}, false},
         Set{q, Apply{peg_inc, Tuple{q}}}, none},
-    If{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}}, none, Set{ok, false}},
-    While{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}}, Set{q, Apply{peg_inc, Tuple{q}}}},
+    If{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}}, none,
+        Set{ok, false}},
+    While{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}},
+        Set{q, Apply{peg_inc, Tuple{q}}}},
     If{ok,
-        If{If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 46}}, Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}}}, false},
+        If{
+            If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 46}},
+                Apply{peg_is_digit,
+                    Tuple{
+                        Apply{peg_char_at,
+                            Tuple{Apply{peg_inc, Tuple{q}}}}}}, false},
             Set{q, Apply{peg_inc, Tuple{q}}},
             Set{ok, false}},
         none},
-    If{ok, While{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
     If{ok,
-        If{If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 101}}, true, Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 69}}},
+        While{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}},
+            Set{q, Apply{peg_inc, Tuple{q}}}}, none},
+    If{ok,
+        If{
+            If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 101}}, true,
+                Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 69}}},
             Do{
                 Set{r, Apply{peg_inc, Tuple{q}}},
-                If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{r}}, 45}}, Set{r, Apply{peg_inc, Tuple{r}}}, none},
+                If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{r}}, 45}},
+                    Set{r, Apply{peg_inc, Tuple{r}}}, none},
                 If{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{r}}}},
                     Do{
-                        While{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{r}}}}, Set{r, Apply{peg_inc, Tuple{r}}}},
+                        While{
+                            Apply{peg_is_digit,
+                                Tuple{Apply{peg_char_at, Tuple{r}}}},
+                            Set{r, Apply{peg_inc, Tuple{r}}}},
                         Set{q, r}},
                     Set{ok, false}}},
             none},
@@ -148,20 +215,35 @@ Def{peg_token_string, Lambda{Tuple{p}, Do{
     Def{acc, ""},
     Def{c, Apply{peg_char_at, Tuple{q}}},
     Def{e, none},
-    If{Apply{expr_ne, Tuple{Apply{peg_char_at, Tuple{p}}, 34}}, Apply{peg_fail, Tuple{p}}, Do{
-        While{If{Apply{expr_ne, Tuple{c, 34}}, If{Apply{expr_ne, Tuple{c, 10}}, Apply{int_ge, Tuple{c, 0}}, false}, false}, Do{
+    If{Apply{expr_ne, Tuple{Apply{peg_char_at, Tuple{p}}, 34}},
+        Apply{peg_fail, Tuple{p}}, Do{
+        While{
+            If{Apply{expr_ne, Tuple{c, 34}},
+                If{Apply{expr_ne, Tuple{c, 10}}, Apply{int_ge, Tuple{c, 0}},
+                    false}, false}, Do{
             If{Apply{expr_eq, Tuple{c, 92}}, Do{
-                Set{e, Apply{table_get, Tuple{peg_escapes, Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}, none}}},
-                If{Apply{expr_eq, Tuple{e, none}}, Do{Set{c, -1}, Set{q, Apply{peg_fail, Tuple{q}}}}, Do{
-                    Set{acc, Apply{str_cat, Tuple{acc, Apply{str_sub, Tuple{peg_src, start, q}}}}},
+                Set{e,
+                    Apply{table_get,
+                        Tuple{peg_escapes,
+                            Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}},
+                            none}}},
+                If{Apply{expr_eq, Tuple{e, none}},
+                    Do{Set{c, -1}, Set{q, Apply{peg_fail, Tuple{q}}}}, Do{
+                    Set{acc,
+                        Apply{str_cat,
+                            Tuple{acc,
+                                Apply{str_sub, Tuple{peg_src, start, q}}}}},
                     Set{acc, Apply{str_cat, Tuple{acc, e}}},
                     Set{q, Apply{int_add, Tuple{q, 2}}},
                     Set{start, q}}}},
                 Set{q, Apply{peg_inc, Tuple{q}}}},
-            If{Apply{int_ge, Tuple{c, 0}}, Set{c, Apply{peg_char_at, Tuple{q}}}, none}}},
+            If{Apply{int_ge, Tuple{c, 0}}, Set{c, Apply{peg_char_at, Tuple{q}}},
+                none}}},
         If{Apply{expr_eq, Tuple{c, 34}},
             Do{
-                Set{peg_pv, Apply{str_cat, Tuple{acc, Apply{str_sub, Tuple{peg_src, start, q}}}}},
+                Set{peg_pv,
+                    Apply{str_cat,
+                        Tuple{acc, Apply{str_sub, Tuple{peg_src, start, q}}}}},
                 Apply{peg_inc, Tuple{q}}},
             Apply{peg_fail, Tuple{q}}}}}}}}
 
@@ -169,13 +251,19 @@ Def{peg_token_string, Lambda{Tuple{p}, Do{
 Def{peg_token_keyword, Lambda{Tuple{p}, Do{
     Set{p, Apply{peg_skip_ws, Tuple{p}}},
     Def{q, Apply{peg_inc, Tuple{p}}},
-    If{If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{p}}, 39}}, Apply{peg_is_alpha, Tuple{Apply{peg_char_at, Tuple{q}}}}, false}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}}, Set{q, Apply{peg_inc, Tuple{q}}}},
-        Set{peg_pv, Key{Apply{str_sub, Tuple{peg_src, Apply{peg_inc, Tuple{p}}, q}}}},
+    If{
+        If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{p}}, 39}},
+            Apply{peg_is_alpha, Tuple{Apply{peg_char_at, Tuple{q}}}},
+            false}, Do{
+        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}},
+            Set{q, Apply{peg_inc, Tuple{q}}}},
+        Set{peg_pv,
+            Key{Apply{str_sub, Tuple{peg_src, Apply{peg_inc, Tuple{p}}, q}}}},
         q},
         Apply{peg_fail, Tuple{p}}}}}}
 
-" character class: [set] or [^set]. The blanks at both ends of the set are not in it. "
+" character class: [set] or [^set]. The blanks at both ends of the set are not "
+"   in it. "
 Def{peg_token_class, Lambda{Tuple{p}, Do{
     Set{p, Apply{peg_skip_ws, Tuple{p}}},
     Def{q, p},
@@ -185,10 +273,13 @@ Def{peg_token_class, Lambda{Tuple{p}, Do{
     Def{spec, ""},
     Def{c, 0},
     Def{go, true},
-    If{Apply{expr_ne, Tuple{Apply{peg_char_at, Tuple{p}}, 91}}, Apply{peg_fail, Tuple{p}}, Do{
+    If{Apply{expr_ne, Tuple{Apply{peg_char_at, Tuple{p}}, 91}},
+        Apply{peg_fail, Tuple{p}}, Do{
         Set{q, Apply{peg_inc, Tuple{p}}},
-        If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 94}}, Do{Set{neg, true}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
-        While{Apply{peg_is_blank, Tuple{Apply{peg_char_at, Tuple{q}}}}, Set{q, Apply{peg_inc, Tuple{q}}}},
+        If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 94}},
+            Do{Set{neg, true}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
+        While{Apply{peg_is_blank, Tuple{Apply{peg_char_at, Tuple{q}}}},
+            Set{q, Apply{peg_inc, Tuple{q}}}},
         Set{start, q},
         Set{endp, q},
         While{go, Do{
@@ -196,16 +287,27 @@ Def{peg_token_class, Lambda{Tuple{p}, Do{
             If{Apply{int_lt, Tuple{c, 0}}, Set{go, false},
             If{Apply{expr_eq, Tuple{c, 93}}, Set{go, false},
             If{Apply{expr_eq, Tuple{c, 92}},
-                If{Apply{int_lt, Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}, 0}}, Set{go, false}, Do{
+                If{
+                    Apply{int_lt,
+                        Tuple{
+                            Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}},
+                            0}}, Set{go, false}, Do{
                     Set{q, Apply{int_add, Tuple{q, 2}}},
                     Set{endp, q}}},
-            If{Apply{peg_is_blank, Tuple{c}}, Set{q, Apply{peg_inc, Tuple{q}}}, Do{
+            If{Apply{peg_is_blank, Tuple{c}},
+                Set{q, Apply{peg_inc, Tuple{q}}}, Do{
                 Set{q, Apply{peg_inc, Tuple{q}}},
                 Set{endp, q}}}}}}}},
         Set{spec, Apply{str_sub, Tuple{peg_src, start, endp}}},
-        If{If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 93}}, Apply{int_gt, Tuple{endp, start}}, false},
-            If{Apply{expr_eq, Tuple{Apply{peg_charset, Tuple{spec}}, none}}, Apply{peg_fail, Tuple{p}}, Do{
-                Set{peg_pv, Apply{expr, Tuple{If{neg, Quote{NoneOf}, Quote{OneOf}}, Tuple{spec}}}},
+        If{
+            If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 93}},
+                Apply{int_gt, Tuple{endp, start}}, false},
+            If{Apply{expr_eq, Tuple{Apply{peg_charset, Tuple{spec}}, none}},
+                Apply{peg_fail, Tuple{p}}, Do{
+                Set{peg_pv,
+                    Apply{expr,
+                        Tuple{If{neg, Quote{NoneOf}, Quote{OneOf}},
+                            Tuple{spec}}}},
                 Apply{peg_inc, Tuple{q}}}},
             Apply{peg_fail, Tuple{p}}}}}}}}
 
@@ -222,11 +324,14 @@ Apply{_define_rule, Tuple{Quote{here}, peg_token_here}}
 
 Def{peg_first, Lambda{Tuple{t}, Apply{arg, Tuple{t, 0}}}}
 
-" the tree t without the At of the calls in it, except in the parts !e: an f(a, ...) in a quote is a tree to be matched or built, not a call "
+" the tree t without the At of the calls in it, except in the parts !e: an "
+"   f(a, ...) in a quote is a tree to be matched or built, not a call "
 Def{peg_unat, none}
 Set{peg_unat, Lambda{Tuple{t},
     If{Apply{expr_ne, Tuple{Apply{expr_type, Tuple{t}}, Expr}}, t,
-    If{If{Apply{expr_eq, Tuple{Apply{head, Tuple{t}}, Quote{At}}}, Apply{expr_eq, Tuple{Apply{arity, Tuple{t}}, 2}}, false},
+    If{
+        If{Apply{expr_eq, Tuple{Apply{head, Tuple{t}}, Quote{At}}},
+            Apply{expr_eq, Tuple{Apply{arity, Tuple{t}}, 2}}, false},
         Apply{peg_unat, Tuple{Apply{arg, Tuple{t, 1}}}},
     If{Apply{expr_eq, Tuple{Apply{head, Tuple{t}}, Quote{UnQuote}}}, t,
         Apply{peg_map_args, Tuple{peg_unat, t}}}}}}}
@@ -237,12 +342,14 @@ Def{peg_to_list, Lambda{Tuple{t}, Do{
     Def{r, Quote{Nil{}}},
     While{Apply{int_gt, Tuple{i, 0}}, Do{
         Set{i, Apply{int_sub, Tuple{i, 1}}},
-        Set{r, QuasiQuote{Cons{UnQuote{Apply{arg, Tuple{t, i}}}, UnQuote{r}}}}}},
+        Set{r,
+            QuasiQuote{Cons{UnQuote{Apply{arg, Tuple{t, i}}}, UnQuote{r}}}}}},
     r}}}
 
 " === Functions of the syntax sugar === "
 
-" The functions peg_* and the rules of the syntax sugar. They come before the grammar since the actions of its rules call them. "
+" The functions peg_* and the rules of the syntax sugar. They come before the "
+"   grammar since the actions of its rules call them. "
 
 " the decimal text of an integer "
 
@@ -252,10 +359,13 @@ Set{peg_itoa,
         Tuple{n},
         If{
             Apply{int_lt, Tuple{n, 0}},
-            Apply{str_cat, Tuple{"-", Apply{peg_itoa, Tuple{Apply{int_sub, Tuple{0, n}}}}}},
+            Apply{str_cat,
+                Tuple{"-",
+                    Apply{peg_itoa, Tuple{Apply{int_sub, Tuple{0, n}}}}}},
             If{
                 Apply{int_lt, Tuple{n, 10}},
-                Apply{str_sub, Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
+                Apply{str_sub,
+                    Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
                 Apply{
                     str_cat,
                     Tuple{
@@ -267,7 +377,8 @@ Set{peg_itoa,
         }
     }}
 
-" a function that matches no arguments: what follows p if c -> e when no | follows it "
+" a function that matches no arguments: what follows p if c -> e when no | "
+"   follows it "
 
 Def{peg_no_type, Quote{nomatch}}
 
@@ -279,9 +390,11 @@ Def{peg_g, Apply{sym_intern, Tuple{"%g"}}}
 
 Def{peg_or, Apply{sym_intern, Tuple{"%or"}}}
 
-" def_run is declared with ::= at the end of the file. Until then it matches nothing. "
+" def_run is declared with ::= at the end of the file. Until then it matches "
+"   nothing. "
 
-Apply{_define_rule, Tuple{Quote{def_run}, Lambda{Tuple{p}, Apply{peg_fail, Tuple{p}}}}}
+Apply{_define_rule,
+    Tuple{Quote{def_run}, Lambda{Tuple{p}, Apply{peg_fail, Tuple{p}}}}}
 
 Def{peg_ret_handler, QuasiQuote{Lambda{Tuple{Return{v}, k}, v}}}
 
@@ -296,8 +409,10 @@ Def{
         If{
             Apply{peg_is_head, Tuple{h, Quote{Lambda}}},
             If{
-                Apply{int_gt, Tuple{Apply{arity, Tuple{Apply{arg, Tuple{h, 0}}}}, 0}},
-                Apply{peg_is_head, Tuple{Apply{arg, Tuple{Apply{arg, Tuple{h, 0}}, 0}}, tag}},
+                Apply{int_gt,
+                    Tuple{Apply{arity, Tuple{Apply{arg, Tuple{h, 0}}}}, 0}},
+                Apply{peg_is_head,
+                    Tuple{Apply{arg, Tuple{Apply{arg, Tuple{h, 0}}, 0}}, tag}},
                 false
             },
             false
@@ -315,14 +430,17 @@ Set{peg_scan,
                 Do{
                     Def{h, Apply{head, Tuple{e}}},
                     If{
-                        If{Apply{expr_eq, Tuple{h, Quote{Quote}}}, true, Apply{expr_eq, Tuple{h, Quote{QuasiQuote}}}},
+                        If{Apply{expr_eq, Tuple{h, Quote{Quote}}}, true,
+                            Apply{expr_eq, Tuple{h, Quote{QuasiQuote}}}},
                         false,
                         If{
                             If{
                                 Apply{expr_eq, Tuple{h, Quote{Perform}}},
                                 If{
-                                    Apply{expr_eq, Tuple{Apply{arity, Tuple{e}}, 1}},
-                                    Apply{peg_is_head, Tuple{Apply{arg, Tuple{e, 0}}, tag}},
+                                    Apply{expr_eq,
+                                        Tuple{Apply{arity, Tuple{e}}, 1}},
+                                    Apply{peg_is_head,
+                                        Tuple{Apply{arg, Tuple{e, 0}}, tag}},
                                     false
                                 },
                                 false
@@ -332,24 +450,35 @@ Set{peg_scan,
                                 If{
                                     Apply{expr_eq, Tuple{h, Quote{Handle}}},
                                     If{
-                                        Apply{expr_eq, Tuple{Apply{arity, Tuple{e}}, 2}},
-                                        Apply{peg_catches, Tuple{Apply{arg, Tuple{e, 1}}, tag}},
+                                        Apply{expr_eq,
+                                            Tuple{Apply{arity, Tuple{e}}, 2}},
+                                        Apply{peg_catches,
+                                            Tuple{
+                                                Apply{arg, Tuple{e, 1}}, tag}},
                                         false
                                     },
                                     false
                                 },
-                                Apply{peg_scan, Tuple{Apply{arg, Tuple{e, 1}}, tag}},
+                                Apply{peg_scan,
+                                    Tuple{Apply{arg, Tuple{e, 1}}, tag}},
                                 Do{
                                     Def{i, 0},
                                     Def{r, false},
                                     While{
                                         If{
                                             Apply{_not, Tuple{r}},
-                                            Apply{int_lt, Tuple{i, Apply{arity, Tuple{e}}}},
+                                            Apply{int_lt,
+                                                Tuple{i,
+                                                    Apply{arity, Tuple{e}}}},
                                             false
                                         },
                                         Do{
-                                            Set{r, Apply{peg_scan, Tuple{Apply{arg, Tuple{e, i}}, tag}}},
+                                            Set{r,
+                                                Apply{peg_scan,
+                                                    Tuple{
+                                                        Apply{arg,
+                                                            Tuple{e,
+                                                                i}}, tag}}},
                                             Set{i, Apply{int_add, Tuple{i, 1}}}
                                         }
                                     },
@@ -375,14 +504,16 @@ Set{
     peg_parse_from,
     Lambda{
         Tuple{r, s, pos, loc},
-        Do{Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0}, Apply{peg_parse_plain, Tuple{r, s, pos, loc}}}
+        Do{Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0},
+            Apply{peg_parse_plain, Tuple{r, s, pos, loc}}}
     }}
 
 Def{
     peg_wrap,
     Lambda{
         Tuple{body, tag, handler},
-        If{Apply{peg_scan, Tuple{body, tag}}, QuasiQuote{Handle{UnQuote{body}, UnQuote{handler}}}, body}
+        If{Apply{peg_scan, Tuple{body, tag}},
+            QuasiQuote{Handle{UnQuote{body}, UnQuote{handler}}}, body}
     }}
 
 Def{
@@ -395,7 +526,8 @@ Def{
                 UnQuote{
                     If{
                         Apply{int_gt, Tuple{peg_nret, 0}},
-                        Apply{peg_wrap, Tuple{body, Quote{Return}, peg_ret_handler}},
+                        Apply{peg_wrap,
+                            Tuple{body, Quote{Return}, peg_ret_handler}},
                         body
                     }
                 }
@@ -415,7 +547,15 @@ Def{
             While{
                 Apply{int_le, Tuple{i, n}},
                 Do{
-                    Set{vs, Apply{array_push, Tuple{vs, Apply{sym_intern, Tuple{Apply{str_cat, Tuple{"%v", Apply{peg_itoa, Tuple{i}}}}}}}}},
+                    Set{vs,
+                        Apply{array_push,
+                            Tuple{vs,
+                                Apply{sym_intern,
+                                    Tuple{
+                                        Apply{str_cat,
+                                            Tuple{"%v",
+                                                Apply{peg_itoa,
+                                                    Tuple{i}}}}}}}}},
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
@@ -423,8 +563,10 @@ Def{
         }
     }}
 
-" (p, ...) if c -> e. The function takes the arguments as %v1, ... and calls %g with them "
-" when the parameters do not match or c is false. %g is _nomatch until peg_fuse puts a function there. "
+" (p, ...) if c -> e. The function takes the arguments as %v1, ... and calls "
+"   %g with them "
+" when the parameters do not match or c is false. %g is _nomatch until "
+"   peg_fuse puts a function there. "
 
 " the parameters ps end with a rest parameter x... "
 Def{
@@ -434,7 +576,11 @@ Def{
         If{
             Apply{int_gt, Tuple{Apply{arity, Tuple{ps}}, 0}},
             Do{
-                Def{l, Apply{arg, Tuple{ps, Apply{int_sub, Tuple{Apply{arity, Tuple{ps}}, 1}}}}},
+                Def{l,
+                    Apply{arg,
+                        Tuple{ps,
+                            Apply{int_sub,
+                                Tuple{Apply{arity, Tuple{ps}}, 1}}}}},
                 If{
                     Apply{expr_eq, Tuple{Apply{expr_type, Tuple{l}}, Expr}},
                     Apply{expr_eq, Tuple{Apply{head, Tuple{l}}, Quote{_Rest}}},
@@ -445,7 +591,8 @@ Def{
         }
     }}
 
-" A function with a guard calls the functions after it with all of its arguments again, so it has no rest parameter: "
+" A function with a guard calls the functions after it with all of its "
+"   arguments again, so it has no rest parameter: "
 " the tree _Rest{ps} that it gives is an error when it is compiled. "
 Def{
     peg_guard,
@@ -454,13 +601,20 @@ Def{
         If{Apply{peg_has_rest, Tuple{ps}}, QuasiQuote{_Rest{UnQuote{ps}}},
         Do{
             Def{vs, Apply{peg_vars, Tuple{Apply{arity, Tuple{ps}}}}},
-            Def{f, Apply{peg_lambda, Tuple{ps, QuasiQuote{If{UnQuote{c}, UnQuote{e}, Apply{UnQuote{peg_g}, UnQuote{vs}}}}}}},
+            Def{f,
+                Apply{peg_lambda,
+                    Tuple{ps,
+                        QuasiQuote{
+                            If{UnQuote{c}, UnQuote{e},
+                                Apply{UnQuote{peg_g}, UnQuote{vs}}}}}}},
             QuasiQuote{
                 Apply{
                     Lambda{
                         Tuple{UnQuote{peg_g}},
                         Fusion{
-                            Lambda{UnQuote{vs}, Apply{Fusion{UnQuote{f}, UnQuote{peg_g}}, UnQuote{vs}}},
+                            Lambda{UnQuote{vs},
+                                Apply{Fusion{UnQuote{f}, UnQuote{peg_g}},
+                                    UnQuote{vs}}},
                             UnQuote{peg_g}
                         }
                     },
@@ -470,7 +624,8 @@ Def{
         }}
     }}
 
-" f | g: g goes in the place of the last _nomatch of the functions with a guard in f "
+" f | g: g goes in the place of the last _nomatch of the functions with a "
+"   guard in f "
 
 Def{peg_fuse, none}
 Set{peg_fuse,
@@ -481,19 +636,32 @@ Set{peg_fuse,
         },
         Fusion{
             Lambda{
-                Tuple{Apply{Lambda{Tuple{k}, Fusion{Lambda{vs, Apply{Fusion{a, k2}, vs2}}, k3}}, Tuple{r}}, g},
+                Tuple{
+                    Apply{
+                        Lambda{Tuple{k},
+                            Fusion{Lambda{vs, Apply{Fusion{a, k2}, vs2}}, k3}},
+                        Tuple{r}}, g},
                 If{
                     Apply{expr_eq, Tuple{k, peg_g}},
                     QuasiQuote{
                         Apply{
-                            Lambda{Tuple{UnQuote{k}}, Fusion{Lambda{UnQuote{vs}, Apply{Fusion{UnQuote{a}, UnQuote{k2}}, UnQuote{vs2}}}, UnQuote{k3}}},
+                            Lambda{Tuple{UnQuote{k}},
+                                Fusion{
+                                    Lambda{UnQuote{vs},
+                                        Apply{Fusion{UnQuote{a}, UnQuote{k2}},
+                                            UnQuote{vs2}}}, UnQuote{k3}}},
                             Tuple{UnQuote{Apply{peg_fuse, Tuple{r, g}}}}
                         }
                     },
                     QuasiQuote{
                         Fusion{
                             Apply{
-                                Lambda{Tuple{UnQuote{k}}, Fusion{Lambda{UnQuote{vs}, Apply{Fusion{UnQuote{a}, UnQuote{k2}}, UnQuote{vs2}}}, UnQuote{k3}}},
+                                Lambda{Tuple{UnQuote{k}},
+                                    Fusion{
+                                        Lambda{UnQuote{vs},
+                                            Apply{
+                                                Fusion{UnQuote{a}, UnQuote{k2}},
+                                                UnQuote{vs2}}}, UnQuote{k3}}},
                                 Tuple{UnQuote{r}}
                             },
                             UnQuote{g}
@@ -504,15 +672,19 @@ Set{peg_fuse,
             Fusion{
                 Lambda{
                     Tuple{Fusion{a, b}, g},
-                    QuasiQuote{Fusion{UnQuote{a}, UnQuote{Apply{peg_fuse, Tuple{b, g}}}}}
+                    QuasiQuote{
+                        Fusion{UnQuote{a},
+                            UnQuote{Apply{peg_fuse, Tuple{b, g}}}}}
                 },
                 Lambda{Tuple{f, g}, QuasiQuote{Fusion{UnQuote{f}, UnQuote{g}}}}
             }
         }
     }}
 
-" t[f]: when a function in f has a guard, (_ -> '%skip) goes last with peg_fuse, "
-" so that a part that no function applies to gives peg_skip and subst goes into its arguments "
+" t[f]: when a function in f has a guard, (_ -> '%skip) goes last with "
+"   peg_fuse, "
+" so that a part that no function applies to gives peg_skip and subst goes "
+"   into its arguments "
 
 Def{peg_skip, Apply{sym_intern, Tuple{"%skip"}}}
 
@@ -522,7 +694,11 @@ Set{peg_guarded,
         Lambda{Tuple{Fusion{_, g}}, Apply{peg_guarded, Tuple{g}}},
         Fusion{
             Lambda{
-                Tuple{Apply{Lambda{Tuple{k}, Fusion{Lambda{_, Apply{Fusion{_, _}, _}}, _}}, Tuple{_}}},
+                Tuple{
+                    Apply{
+                        Lambda{Tuple{k},
+                            Fusion{Lambda{_, Apply{Fusion{_, _}, _}}, _}},
+                        Tuple{_}}},
                 Apply{expr_eq, Tuple{k, peg_g}}
             },
             Lambda{Tuple{_}, false}
@@ -535,7 +711,9 @@ Def{
         Tuple{e},
         If{
             Apply{peg_guarded, Tuple{e}},
-            Apply{peg_fuse, Tuple{e, QuasiQuote{Lambda{Tuple{_}, Quote{UnQuote{peg_skip}}}}}},
+            Apply{peg_fuse,
+                Tuple{e,
+                    QuasiQuote{Lambda{Tuple{_}, Quote{UnQuote{peg_skip}}}}}},
             e
         }
     }}
@@ -552,8 +730,10 @@ Def{
                 If{
                     Apply{expr_eq, Tuple{Apply{arity, Tuple{b}}, 2}},
                     If{
-                        Apply{expr_eq, Tuple{Apply{arg, Tuple{b, 1}}, peg_ret_handler}},
-                        Apply{peg_scan, Tuple{Apply{arg, Tuple{b, 0}}, Quote{Return}}},
+                        Apply{expr_eq,
+                            Tuple{Apply{arg, Tuple{b, 1}}, peg_ret_handler}},
+                        Apply{peg_scan,
+                            Tuple{Apply{arg, Tuple{b, 0}}, Quote{Return}}},
                         false
                     },
                     false
@@ -565,7 +745,8 @@ Def{
         }
     }}
 
-" the functions joined by | in match, with the handlers of return taken off their bodies, "
+" the functions joined by | in match, with the handlers of return taken off "
+"   their bodies, "
 " so that a return in an arm belongs to the function around the match "
 
 Def{peg_arms, none}
@@ -573,17 +754,28 @@ Set{peg_arms,
     Fusion{
         Lambda{
             Tuple{Fusion{f, g}},
-            QuasiQuote{Fusion{UnQuote{Apply{peg_arms, Tuple{f}}}, UnQuote{Apply{peg_arms, Tuple{g}}}}}
+            QuasiQuote{
+                Fusion{UnQuote{Apply{peg_arms, Tuple{f}}},
+                    UnQuote{Apply{peg_arms, Tuple{g}}}}}
         },
         Fusion{
-            Lambda{Tuple{Lambda{ps, b}}, QuasiQuote{Lambda{UnQuote{ps}, UnQuote{Apply{peg_unret, Tuple{b}}}}}},
+            Lambda{Tuple{Lambda{ps, b}},
+                QuasiQuote{
+                    Lambda{UnQuote{ps}, UnQuote{Apply{peg_unret, Tuple{b}}}}}},
             Fusion{
                 Lambda{
-                    Tuple{Apply{Lambda{Tuple{k}, Fusion{Lambda{vs, Apply{Fusion{f, k2}, vs2}}, k3}}, Tuple{g}}},
+                    Tuple{
+                        Apply{
+                            Lambda{Tuple{k},
+                                Fusion{Lambda{vs, Apply{Fusion{f, k2}, vs2}},
+                                    k3}}, Tuple{g}}},
                     If{
                         If{
                             Apply{expr_eq, Tuple{k, peg_g}},
-                            If{Apply{expr_eq, Tuple{k2, k}}, If{Apply{expr_eq, Tuple{k3, k}}, Apply{expr_eq, Tuple{vs2, vs}}, false}, false},
+                            If{Apply{expr_eq, Tuple{k2, k}},
+                                If{Apply{expr_eq, Tuple{k3, k}},
+                                    Apply{expr_eq, Tuple{vs2, vs}},
+                                    false}, false},
                             false
                         },
                         QuasiQuote{
@@ -593,7 +785,12 @@ Set{peg_arms,
                                     Fusion{
                                         Lambda{
                                             UnQuote{vs},
-                                            Apply{Fusion{UnQuote{Apply{peg_arms, Tuple{f}}}, UnQuote{k}}, UnQuote{vs}}
+                                            Apply{
+                                                Fusion{
+                                                    UnQuote{
+                                                        Apply{peg_arms,
+                                                            Tuple{f}}},
+                                                    UnQuote{k}}, UnQuote{vs}}
                                         },
                                         UnQuote{k}
                                     }
@@ -601,7 +798,15 @@ Set{peg_arms,
                                 Tuple{UnQuote{Apply{peg_arms, Tuple{g}}}}
                             }
                         },
-                        QuasiQuote{Apply{Lambda{Tuple{UnQuote{k}}, Fusion{Lambda{UnQuote{vs}, Apply{Fusion{UnQuote{f}, UnQuote{k2}}, UnQuote{vs2}}}, UnQuote{k3}}}, Tuple{UnQuote{g}}}}
+                        QuasiQuote{
+                            Apply{
+                                Lambda{Tuple{UnQuote{k}},
+                                    Fusion{
+                                        Lambda{UnQuote{vs},
+                                            Apply{
+                                                Fusion{UnQuote{f}, UnQuote{k2}},
+                                                UnQuote{vs2}}}, UnQuote{k3}}},
+                                Tuple{UnQuote{g}}}}
                     }
                 },
                 Lambda{Tuple{f}, f}
@@ -613,9 +818,12 @@ Set{peg_arms,
 
 Def{
     peg_match,
-    Lambda{Tuple{s, f}, QuasiQuote{Apply{UnQuote{Apply{peg_arms, Tuple{f}}}, Tuple{UnQuote{s}}}}}}
+    Lambda{Tuple{s, f},
+        QuasiQuote{
+            Apply{UnQuote{Apply{peg_arms, Tuple{f}}}, Tuple{UnQuote{s}}}}}}
 
-" show(x) is defined in lib/pretty.pk (show(x) = ...); f\"{x}\" calls it for a value that is not a string or an integer "
+" show(x) is defined in lib/pretty.pk (show(x) = ...); f\"{x}\" calls it for a "
+"   value that is not a string or an integer "
 
 Def{show, none}
 
@@ -644,7 +852,10 @@ Def{
             If{
                 If{
                     Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{p}}, 102}},
-                    Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{Apply{int_add, Tuple{p, 1}}}}, 34}},
+                    Apply{expr_eq,
+                        Tuple{
+                            Apply{peg_char_at,
+                                Tuple{Apply{int_add, Tuple{p, 1}}}}, 34}},
                     false
                 },
                 Do{Set{peg_pv, none}, Apply{int_add, Tuple{p, 2}}},
@@ -671,14 +882,20 @@ Def{
                         If{
                             Apply{expr_eq, Tuple{c, 34}},
                             true,
-                            If{Apply{int_lt, Tuple{c, 0}}, true, Apply{expr_eq, Tuple{c, 10}}}
+                            If{Apply{int_lt, Tuple{c, 0}}, true,
+                                Apply{expr_eq, Tuple{c, 10}}}
                         },
                         Set{go, false},
                         If{
                             Apply{expr_eq, Tuple{c, 123}},
                             Do{
                                 If{
-                                    Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{Apply{int_add, Tuple{q, 1}}}}, 123}},
+                                    Apply{expr_eq,
+                                        Tuple{
+                                            Apply{peg_char_at,
+                                                Tuple{
+                                                    Apply{int_add,
+                                                        Tuple{q, 1}}}}, 123}},
                                     Do{
                                         Set{
                                             acc,
@@ -687,7 +904,10 @@ Def{
                                                 Tuple{
                                                     Apply{
                                                         str_cat,
-                                                        Tuple{acc, Apply{str_sub, Tuple{peg_src, start, q}}}
+                                                        Tuple{acc,
+                                                            Apply{str_sub,
+                                                                Tuple{peg_src,
+                                                                    start, q}}}
                                                     },
                                                     "{"
                                                 }
@@ -706,7 +926,11 @@ Def{
                                     If{
                                         Apply{
                                             expr_eq,
-                                            Tuple{Apply{peg_char_at, Tuple{Apply{int_add, Tuple{q, 1}}}}, 125}
+                                            Tuple{
+                                                Apply{peg_char_at,
+                                                    Tuple{
+                                                        Apply{int_add,
+                                                            Tuple{q, 1}}}}, 125}
                                         },
                                         Do{
                                             Set{
@@ -718,7 +942,11 @@ Def{
                                                             str_cat,
                                                             Tuple{
                                                                 acc,
-                                                                Apply{str_sub, Tuple{peg_src, start, q}}
+                                                                Apply{str_sub,
+                                                                    Tuple{
+                                                                        peg_src,
+                                                                        start,
+                                                                        q}}
                                                             }
                                                         },
                                                         "}"
@@ -741,7 +969,10 @@ Def{
                                                 table_get,
                                                 Tuple{
                                                     peg_escapes,
-                                                    Apply{peg_char_at, Tuple{Apply{int_add, Tuple{q, 1}}}},
+                                                    Apply{peg_char_at,
+                                                        Tuple{
+                                                            Apply{int_add,
+                                                                Tuple{q, 1}}}},
                                                     none
                                                 }
                                             }
@@ -766,13 +997,18 @@ Def{
                                                         }
                                                     }
                                                 },
-                                                Set{q, Apply{int_add, Tuple{q, 2}}},
+                                                Set{q,
+                                                    Apply{int_add,
+                                                        Tuple{q, 2}}},
                                                 Set{start, q},
-                                                Set{c, Apply{peg_char_at, Tuple{q}}}
+                                                Set{c,
+                                                    Apply{peg_char_at,
+                                                        Tuple{q}}}
                                             }
                                         }
                                     },
-                                    Do{Set{q, Apply{int_add, Tuple{q, 1}}}, Set{c, Apply{peg_char_at, Tuple{q}}}}
+                                    Do{Set{q, Apply{int_add, Tuple{q, 1}}},
+                                        Set{c, Apply{peg_char_at, Tuple{q}}}}
                                 }
                             }
                         }
@@ -781,7 +1017,11 @@ Def{
             },
             If{
                 ok,
-                Do{Set{peg_pv, Apply{str_cat, Tuple{acc, Apply{str_sub, Tuple{peg_src, start, q}}}}}, q},
+                Do{
+                    Set{peg_pv,
+                        Apply{str_cat,
+                            Tuple{acc,
+                                Apply{str_sub, Tuple{peg_src, start, q}}}}}, q},
                 Apply{peg_fail, Tuple{q}}
             }
         }
@@ -824,7 +1064,8 @@ Def{
                         If{
                             Apply{expr_eq, Tuple{acc, none}},
                             x,
-                            QuasiQuote{Apply{str_cat, Tuple{UnQuote{acc}, UnQuote{x}}}}
+                            QuasiQuote{
+                                Apply{str_cat, Tuple{UnQuote{acc}, UnQuote{x}}}}
                         }
                     }
                 }
@@ -834,14 +1075,20 @@ Def{
                 Apply{int_lt, Tuple{i, Apply{arity, Tuple{parts}}}},
                 Do{
                     Def{t, Apply{arg, Tuple{Apply{arg, Tuple{parts, i}}, 0}}},
-                    If{Apply{expr_ne, Tuple{t, ""}}, Apply{seg, Tuple{t}}, none},
+                    If{Apply{expr_ne, Tuple{t, ""}},
+                        Apply{seg, Tuple{t}}, none},
                     Apply{
                         seg,
                         Tuple{
                             QuasiQuote{
                                 Apply{
                                     _to_text,
-                                    Tuple{UnQuote{Apply{arg, Tuple{Apply{arg, Tuple{parts, i}}, 2}}}}
+                                    Tuple{
+                                        UnQuote{
+                                            Apply{arg,
+                                                Tuple{
+                                                    Apply{arg,
+                                                        Tuple{parts, i}}, 2}}}}
                                 }
                             }
                         }
@@ -862,28 +1109,34 @@ Apply{_define_rule, Tuple{Quote{istr_hole}, peg_token_istr_hole}}
 
 Apply{_define_rule, Tuple{Quote{istr_close}, peg_token_istr_close}}
 
-" the field names of each type that record declares: type -> Tuple of the names "
+" the field names of each type that record declares: type -> Tuple of the "
+"   names "
 Def{record_fields, Apply{table_new, Tuple{}}}
 
-" _record(name, fields) is Tuple{type, make} of a new type: expr_record, and the field names are kept for t.f "
+" _record(name, fields) is Tuple{type, make} of a new type: expr_record, and "
+"   the field names are kept for t.f "
 Def{
     _record,
     Lambda{
         Tuple{name, fields},
         Do{
             Def{r, Apply{expr_record, Tuple{name, fields}}},
-            Apply{table_set, Tuple{record_fields, Apply{arg, Tuple{r, 0}}, fields}},
+            Apply{table_set,
+                Tuple{record_fields, Apply{arg, Tuple{r, 0}}, fields}},
             r
         }
     }}
 
-" the index of the field name of the data t of a type that record declares, or none "
+" the index of the field name of the data t of a type that record declares, or "
+"   none "
 Def{
     _record_index,
     Lambda{
         Tuple{t, name},
         Do{
-            Def{fs, Apply{table_get, Tuple{record_fields, Apply{expr_type, Tuple{t}}, none}}},
+            Def{fs,
+                Apply{table_get,
+                    Tuple{record_fields, Apply{expr_type, Tuple{t}}, none}}},
             Def{i, 0},
             Def{r, none},
             If{
@@ -891,7 +1144,11 @@ Def{
                 While{
                     Apply{int_lt, Tuple{i, Apply{arity, Tuple{fs}}}},
                     Do{
-                        If{Apply{expr_eq, Tuple{Apply{arg, Tuple{fs, i}}, name}}, Do{Set{r, i}, Set{i, Apply{arity, Tuple{fs}}}}, Set{i, Apply{int_add, Tuple{i, 1}}}}
+                        If{
+                            Apply{expr_eq,
+                                Tuple{Apply{arg, Tuple{fs, i}}, name}},
+                            Do{Set{r, i}, Set{i, Apply{arity, Tuple{fs}}}},
+                            Set{i, Apply{int_add, Tuple{i, 1}}}}
                     }
                 },
                 none
@@ -900,7 +1157,8 @@ Def{
         }
     }}
 
-" a module value is a Module, whose field is the table that holds the names and the values of the fields of this value "
+" a module value is a Module, whose field is the table that holds the names "
+"   and the values of the fields of this value "
 Def{_module_type, Apply{_record, Tuple{Quote{Module}, Quote{Tuple{table}}}}}
 
 Def{Module, Apply{arg, Tuple{_module_type, 0}}}
@@ -916,7 +1174,9 @@ Def{
             While{
                 Apply{expr_eq, Tuple{Apply{head, Tuple{names}}, Quote{Cons}}},
                 Do{
-                    Apply{table_set, Tuple{t, Apply{arg, Tuple{names, 0}}, Apply{arg, Tuple{values, 0}}}},
+                    Apply{table_set,
+                        Tuple{t, Apply{arg, Tuple{names, 0}},
+                            Apply{arg, Tuple{values, 0}}}},
                     Set{names, Apply{arg, Tuple{names, 1}}},
                     Set{values, Apply{arg, Tuple{values, 1}}}
                 }
@@ -932,11 +1192,19 @@ Def{
             Tuple{_TypeOf{m, Module}, name},
             Do{
                 Def{a, Apply{arg, Tuple{Apply{arg, Tuple{m, 0}}, 0}}},
-                Def{e, Apply{table_find, Tuple{a, name, Apply{expr_hash, Tuple{name}}}}},
+                Def{e,
+                    Apply{table_find,
+                        Tuple{a, name, Apply{expr_hash, Tuple{name}}}}},
                 If{
                     Apply{expr_eq, Tuple{e, none}},
                     Do{
-                        Apply{print, Tuple{Apply{str_cat, Tuple{"no field ", Apply{str_cat, Tuple{Apply{sym_name, Tuple{name}}, " in Module{}"}}}}}},
+                        Apply{print,
+                            Tuple{
+                                Apply{str_cat,
+                                    Tuple{"no field ",
+                                        Apply{str_cat,
+                                            Tuple{Apply{sym_name, Tuple{name}},
+                                                " in Module{}"}}}}}},
                         Apply{os_exit, Tuple{1}}
                     },
                     none
@@ -952,7 +1220,9 @@ Def{
                     Apply{expr_eq, Tuple{i, none}},
                     Do{
                         Apply{os_put, Tuple{"no field "}},
-                        Apply{print, Tuple{Apply{sym_name, Tuple{name}}, _Kw{Quote{end}, ""}}},
+                        Apply{print,
+                            Tuple{Apply{sym_name, Tuple{name}},
+                                _Kw{Quote{end}, ""}}},
                         Apply{os_put, Tuple{" in "}},
                         Apply{print, Tuple{t, _Kw{Quote{end}, ""}}},
                         Apply{os_put, Tuple{"\n"}},
@@ -980,7 +1250,8 @@ Def{peg_index_update, none}
 
 Def{peg_fresh_count, 0}
 
-" _testing is true while the tests in the test blocks of modules run (tools/test.pk) "
+" _testing is true while the tests in the test blocks of modules run "
+"   (tools/test.pk) "
 Def{_testing, false}
 
 Def{peg_record, none}
@@ -990,21 +1261,26 @@ Def{
     peg_loop,
     Lambda{
         Tuple{loop},
-        If{Apply{int_gt, Tuple{peg_nbrk, 0}}, Apply{peg_wrap, Tuple{loop, Quote{Break}, peg_break_handler}}, loop}
+        If{Apply{int_gt, Tuple{peg_nbrk, 0}},
+            Apply{peg_wrap, Tuple{loop, Quote{Break}, peg_break_handler}}, loop}
     }}
 
 Def{
     peg_body,
     Lambda{
         Tuple{b},
-        If{Apply{int_gt, Tuple{peg_ncnt, 0}}, Apply{peg_wrap, Tuple{b, Quote{Continue}, peg_continue_handler}}, b}
+        If{Apply{int_gt, Tuple{peg_ncnt, 0}},
+            Apply{peg_wrap, Tuple{b, Quote{Continue}, peg_continue_handler}}, b}
     }}
 
 Def{
     peg_while,
     Lambda{
         Tuple{c, b},
-        Apply{peg_loop, Tuple{QuasiQuote{While{UnQuote{c}, UnQuote{Apply{peg_body, Tuple{b}}}}}}}
+        Apply{peg_loop,
+            Tuple{
+                QuasiQuote{
+                    While{UnQuote{c}, UnQuote{Apply{peg_body, Tuple{b}}}}}}}
     }}
 
 Def{
@@ -1017,7 +1293,9 @@ Def{
                 QuasiQuote{
                     Apply{
                         peg_for,
-                        Tuple{UnQuote{xs}, Lambda{Tuple{UnQuote{x}}, UnQuote{Apply{peg_body, Tuple{b}}}}}
+                        Tuple{UnQuote{xs},
+                            Lambda{Tuple{UnQuote{x}},
+                                UnQuote{Apply{peg_body, Tuple{b}}}}}
                     }
                 }
             }
@@ -1033,25 +1311,35 @@ Def{
             If{
                 Apply{expr_eq, Tuple{Apply{arity, Tuple{v}}, 0}},
                 QuasiQuote{Perform{Return{none}}},
-                QuasiQuote{Perform{Return{UnQuote{Apply{arg, Tuple{Apply{arg, Tuple{v, 0}}, 1}}}}}}
+                QuasiQuote{
+                    Perform{
+                        Return{
+                            UnQuote{
+                                Apply{arg,
+                                    Tuple{Apply{arg, Tuple{v, 0}}, 1}}}}}}
             }
         }
     }}
 
 Def{
     peg_break,
-    Lambda{Tuple{}, Do{Set{peg_nbrk, Apply{int_add, Tuple{peg_nbrk, 1}}}, QuasiQuote{Perform{Break{}}}}}}
+    Lambda{Tuple{},
+        Do{Set{peg_nbrk, Apply{int_add, Tuple{peg_nbrk, 1}}},
+            QuasiQuote{Perform{Break{}}}}}}
 
 Def{
     peg_continue,
-    Lambda{Tuple{}, Do{Set{peg_ncnt, Apply{int_add, Tuple{peg_ncnt, 1}}}, QuasiQuote{Perform{Continue{}}}}}}
+    Lambda{Tuple{},
+        Do{Set{peg_ncnt, Apply{int_add, Tuple{peg_ncnt, 1}}},
+            QuasiQuote{Perform{Continue{}}}}}}
 
 " the expressions of a block "
 Def{
     peg_block,
     Lambda{
         Tuple{es},
-        Apply{expr, Tuple{Quote{Do}, Apply{peg_map_args, Tuple{peg_first, es}}}}}}
+        Apply{expr,
+            Tuple{Quote{Do}, Apply{peg_map_args, Tuple{peg_first, es}}}}}}
 
 " === a[i], a[i] = v and t[p -> e | ...] === "
 
@@ -1080,8 +1368,10 @@ Def{
         }
     }}
 
-" subst(t, f) replaces the parts of t that f applies to. Each part is tried from the root down: "
-" when a pattern of f matches it, it is replaced by the value of f and its parts are not tried; "
+" subst(t, f) replaces the parts of t that f applies to. Each part is tried "
+"   from the root down: "
+" when a pattern of f matches it, it is replaced by the value of f and its "
+"   parts are not tried; "
 " otherwise its arguments are tried, and the head is kept. "
 Def{
     subst,
@@ -1100,12 +1390,17 @@ Def{
                             Apply{expr_ne, Tuple{y, peg_skip}},
                             y,
                             If{
-                                Apply{expr_eq, Tuple{Apply{expr_type, Tuple{x}}, Expr}},
+                                Apply{expr_eq,
+                                    Tuple{Apply{expr_type, Tuple{x}}, Expr}},
                                 Do{
-                                    Def{r, Apply{expr, Tuple{Apply{head, Tuple{x}}, Tuple{}}}},
+                                    Def{r,
+                                        Apply{expr,
+                                            Tuple{Apply{head, Tuple{x}},
+                                                Tuple{}}}},
                                     Def{i, 0},
                                     While{
-                                        Apply{int_lt, Tuple{i, Apply{arity, Tuple{x}}}},
+                                        Apply{int_lt,
+                                            Tuple{i, Apply{arity, Tuple{x}}}},
                                         Do{
                                             Set{
                                                 r,
@@ -1113,7 +1408,11 @@ Def{
                                                     array_push,
                                                     Tuple{
                                                         r,
-                                                        Apply{go, Tuple{Apply{arg, Tuple{x, i}}}}
+                                                        Apply{go,
+                                                            Tuple{
+                                                                Apply{arg,
+                                                                    Tuple{
+                                                                        x, i}}}}
                                                     }
                                                 }
                                             },
@@ -1145,7 +1444,8 @@ Def{
                     Apply{expr_eq, Tuple{Apply{head, Tuple{ys}}, Quote{Cons}}},
                     false
                 },
-                Do{Set{ys, Apply{arg, Tuple{ys, 1}}}, Set{n, Apply{int_sub, Tuple{n, 1}}}}
+                Do{Set{ys, Apply{arg, Tuple{ys, 1}}},
+                    Set{n, Apply{int_sub, Tuple{n, 1}}}}
             },
             If{
                 If{
@@ -1160,12 +1460,14 @@ Def{
         }
     }}
 
-" a[i] is _index_get(a, i), a function for each kind of a joined by Fusion. A program adds its own kind in front: "
+" a[i] is _index_get(a, i), a function for each kind of a joined by Fusion. A "
+"   program adds its own kind in front: "
 " _index_get = (Matrix{w, _, d}, (i, j)) -> d[i * w + j] | _index_get "
 Def{
     _index_get,
     Fusion{
-        Lambda{Tuple{_TypeOf{a, Array}, _TypeOf{i, Int}}, Apply{array_get, Tuple{a, i}}},
+        Lambda{Tuple{_TypeOf{a, Array}, _TypeOf{i, Int}},
+            Apply{array_get, Tuple{a, i}}},
         Fusion{
             Lambda{
                 Tuple{_TypeOf{s, String}, _TypeOf{i, Int}},
@@ -1175,9 +1477,11 @@ Def{
                 }
             },
             Fusion{
-                Lambda{Tuple{_TypeOf{t, Table}, k}, Apply{table_get, Tuple{t, k, none}}},
+                Lambda{Tuple{_TypeOf{t, Table}, k},
+                    Apply{table_get, Tuple{t, k, none}}},
                 Fusion{
-                    Lambda{Tuple{x, _TypeOf{f, Function}}, Apply{subst, Tuple{x, f}}},
+                    Lambda{Tuple{x, _TypeOf{f, Function}},
+                        Apply{subst, Tuple{x, f}}},
                     Fusion{
                         Lambda{
                             Tuple{Cons{x, xs}, _TypeOf{i, Int}},
@@ -1190,19 +1494,25 @@ Def{
                             },
                             Fusion{
                                     Lambda{
-                                        Tuple{_TypeOf{t, Expr}, _TypeOf{i, Int}},
+                                        Tuple{_TypeOf{t, Expr},
+                                            _TypeOf{i, Int}},
                                         Do{
-                                            Apply{_index_check, Tuple{t, i, Apply{arity, Tuple{t}}}},
+                                            Apply{_index_check,
+                                                Tuple{t, i,
+                                                    Apply{arity, Tuple{t}}}},
                                             Apply{arg, Tuple{t, i}}
                                         }
                                     },
                                     Lambda{
                                         Tuple{a, i},
                                         Do{
-                                            Apply{os_put, Tuple{"no index for "}},
-                                            Apply{print, Tuple{a, _Kw{Quote{end}, ""}}},
+                                            Apply{os_put,
+                                                Tuple{"no index for "}},
+                                            Apply{print,
+                                                Tuple{a, _Kw{Quote{end}, ""}}},
                                             Apply{os_put, Tuple{" and "}},
-                                            Apply{print, Tuple{i, _Kw{Quote{end}, ""}}},
+                                            Apply{print,
+                                                Tuple{i, _Kw{Quote{end}, ""}}},
                                             Apply{os_put, Tuple{"\n"}},
                                             Apply{os_exit, Tuple{1}}
                                         }
@@ -1246,9 +1556,11 @@ Def{
 Def{
     _index_set,
     Fusion{
-        Lambda{Tuple{_TypeOf{a, Array}, _TypeOf{i, Int}, v}, Apply{array_set, Tuple{a, i, v}}},
+        Lambda{Tuple{_TypeOf{a, Array}, _TypeOf{i, Int}, v},
+            Apply{array_set, Tuple{a, i, v}}},
         Fusion{
-            Lambda{Tuple{_TypeOf{t, Table}, k, v}, Apply{table_set, Tuple{t, k, v}}},
+            Lambda{Tuple{_TypeOf{t, Table}, k, v},
+                Apply{table_set, Tuple{t, k, v}}},
             Fusion{
                 Lambda{
                     Tuple{_TypeOf{s, String}, i, v},
@@ -1257,12 +1569,14 @@ Def{
                 Fusion{
                     Lambda{
                         Tuple{Cons{x, xs}, i, v},
-                        Apply{_index_set_immutable, Tuple{"a list", Cons{x, xs}, i}}
+                        Apply{_index_set_immutable,
+                            Tuple{"a list", Cons{x, xs}, i}}
                     },
                     Fusion{
                         Lambda{
                             Tuple{Nil{}, i, v},
-                            Apply{_index_set_immutable, Tuple{"a list", Nil{}, i}}
+                            Apply{_index_set_immutable,
+                                Tuple{"a list", Nil{}, i}}
                         },
                         Fusion{
                             Lambda{
@@ -1271,7 +1585,9 @@ Def{
                                     _index_set_immutable,
                                     Tuple{
                                         If{
-                                            Apply{expr_eq, Tuple{Apply{head, Tuple{t}}, Quote{Tuple}}},
+                                            Apply{expr_eq,
+                                                Tuple{Apply{head, Tuple{t}},
+                                                    Quote{Tuple}}},
                                             "a tuple",
                                             "an M-expression"
                                         },
@@ -1283,7 +1599,8 @@ Def{
                             Lambda{
                                 Tuple{a, i, v},
                                 Do{
-                                    Apply{os_put, Tuple{"no index assignment for "}},
+                                    Apply{os_put,
+                                        Tuple{"no index assignment for "}},
                                     Apply{print, Tuple{a, _Kw{Quote{end}, ""}}},
                                     Apply{os_put, Tuple{" and "}},
                                     Apply{print, Tuple{i, _Kw{Quote{end}, ""}}},
@@ -1309,7 +1626,8 @@ Set{
     }}
 
 " === Embedded text of a rule === "
-" name{| text |} reads the text by the rule name when the expression is parsed. "
+" name{| text |} reads the text by the rule name when the expression is "
+"   parsed. "
 " The rule decides where the text ends, and |} must follow it. "
 " The value is the value of the rule as a constant. "
 
@@ -1319,14 +1637,27 @@ Def{peg_token_embed, Lambda{Tuple{p}, Do{
     Def{r, none},
     Def{v, none},
     If{Apply{peg_is_alpha, Tuple{Apply{peg_char_at, Tuple{p}}}}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}}, Set{q, Apply{peg_inc, Tuple{q}}}},
-        If{If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 123}}, Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}, 124}}, false}, Do{
-            Set{r, Apply{sym_intern, Tuple{Apply{str_sub, Tuple{peg_src, p, q}}}}},
-            If{Apply{expr_eq, Tuple{Apply{table_get, Tuple{peg_ids, r, none}}, none}}, Apply{peg_fail, Tuple{p}}, Do{
-                Set{q, Apply{peg_call_rule, Tuple{r, Apply{int_add, Tuple{q, 2}}}}},
+        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}},
+            Set{q, Apply{peg_inc, Tuple{q}}}},
+        If{
+            If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{q}}, 123}},
+                Apply{expr_eq,
+                    Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}},
+                        124}}, false}, Do{
+            Set{r,
+                Apply{sym_intern, Tuple{Apply{str_sub, Tuple{peg_src, p, q}}}}},
+            If{
+                Apply{expr_eq,
+                    Tuple{Apply{table_get, Tuple{peg_ids, r, none}}, none}},
+                Apply{peg_fail, Tuple{p}}, Do{
+                Set{q,
+                    Apply{peg_call_rule,
+                        Tuple{r, Apply{int_add, Tuple{q, 2}}}}},
                 If{Apply{int_lt, Tuple{q, 0}}, -1, Do{
                     Set{v, peg_pv},
-                    Set{q, Apply{peg_literal, Tuple{"|}", Apply{peg_skip_ws, Tuple{q}}}}},
+                    Set{q,
+                        Apply{peg_literal,
+                            Tuple{"|}", Apply{peg_skip_ws, Tuple{q}}}}},
                     If{Apply{int_lt, Tuple{q, 0}}, -1, Do{
                         Set{peg_pv, Apply{expr, Tuple{Quote{Quote}, Tuple{v}}}},
                         q}}}}}}},
@@ -1342,48 +1673,74 @@ Def{peg_token_arrow_next, Lambda{Tuple{p}, Do{
     Def{d, Apply{peg_char_at, Tuple{Apply{int_add, Tuple{q, 1}}}}},
     Set{peg_pv, none},
     If{If{Apply{expr_eq, Tuple{c, 45}}, Apply{expr_eq, Tuple{d, 62}}, false}, p,
-    If{If{Apply{expr_eq, Tuple{c, 105}}, If{Apply{expr_eq, Tuple{d, 102}}, Apply{_not, Tuple{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{Apply{int_add, Tuple{q, 2}}}}}}}}, false}, false}, p,
+    If{
+        If{Apply{expr_eq, Tuple{c, 105}},
+            If{Apply{expr_eq, Tuple{d, 102}},
+                Apply{_not,
+                    Tuple{
+                        Apply{peg_is_alnum,
+                            Tuple{
+                                Apply{peg_char_at,
+                                    Tuple{Apply{int_add, Tuple{q, 2}}}}}}}},
+                false}, false}, p,
         Apply{peg_fail, Tuple{p}}}}}}}
 
 Apply{_define_rule, Tuple{Quote{arrow_next}, peg_token_arrow_next}}
 
 " === Grammar of the grammar === "
-" A rule is declared with  name ::= alt | alt ...  An alternative is items and an optional action { ... }. "
-" This part defines the declarations with m-exprs, in the form that the declarations make themselves, "
-" and the expressions that an action is written with. After the switch below, the rest of the file is read "
+" A rule is declared with  name ::= alt | alt ...  An alternative is items and "
+"   an optional action { ... }. "
+" This part defines the declarations with m-exprs, in the form that the "
+"   declarations make themselves, "
+" and the expressions that an action is written with. After the switch below, "
+"   the rest of the file is read "
 " by these rules, and the rules of planck are declared with ::=. "
 
 " the functions that the actions of the declarations call "
 Def{peg_choice, Lambda{Tuple{es},
-    If{Apply{expr_eq, Tuple{Apply{arity, Tuple{es}}, 1}}, Apply{peg_first, Tuple{es}},
+    If{Apply{expr_eq, Tuple{Apply{arity, Tuple{es}}, 1}},
+        Apply{peg_first, Tuple{es}},
         Apply{expr, Tuple{Quote{Choice}, es}}}}}
 
 " (e) is e, and (e, ...) is the tuple of them "
 Def{peg_group, Lambda{Tuple{es},
-    If{Apply{expr_eq, Tuple{Apply{arity, Tuple{es}}, 1}}, Apply{peg_first, Tuple{es}}, es}}}
+    If{Apply{expr_eq, Tuple{Apply{arity, Tuple{es}}, 1}},
+        Apply{peg_first, Tuple{es}}, es}}}
 
-" if (c) a, or if (c) a else b when b is Tuple{Tuple{else, b}} (the value of the option) "
+" if (c) a, or if (c) a else b when b is Tuple{Tuple{else, b}} (the value of "
+"   the option) "
 Def{peg_if, Lambda{Tuple{c, a, b},
     If{Apply{expr_eq, Tuple{b, Tuple{}}},
         QuasiQuote{If{UnQuote{c}, UnQuote{a}, none}},
-        QuasiQuote{If{UnQuote{c}, UnQuote{a}, UnQuote{Apply{arg, Tuple{Apply{arg, Tuple{b, 0}}, 1}}}}}}}}
+        QuasiQuote{
+            If{UnQuote{c}, UnQuote{a},
+                UnQuote{Apply{arg, Tuple{Apply{arg, Tuple{b, 0}}, 1}}}}}}}}
 
-" the items and the action of an alternative: Act{Seq{items...}, Lambda{Tuple{Tuple{labels...}}, action}} "
+" the items and the action of an alternative: Act{Seq{items...}, "
+"   Lambda{Tuple{Tuple{labels...}}, action}} "
 Def{peg_alt, Lambda{Tuple{items, act}, Do{
     Def{labels, Apply{peg_map_args, Tuple{peg_first, items}}},
-    Def{elems, Apply{peg_map_args, Tuple{Lambda{Tuple{t}, Apply{arg, Tuple{t, 1}}}, items}}},
+    Def{elems,
+        Apply{peg_map_args,
+            Tuple{Lambda{Tuple{t}, Apply{arg, Tuple{t, 1}}}, items}}},
     Def{seq, Apply{expr, Tuple{Quote{Seq}, elems}}},
     If{Apply{expr_eq, Tuple{act, Tuple{}}},
-        If{Apply{expr_eq, Tuple{Apply{arity, Tuple{elems}}, 1}}, Apply{peg_first, Tuple{elems}}, seq},
+        If{Apply{expr_eq, Tuple{Apply{arity, Tuple{elems}}, 1}},
+            Apply{peg_first, Tuple{elems}}, seq},
         QuasiQuote{Act{UnQuote{seq},
-            Lambda{Tuple{UnQuote{labels}}, UnQuote{Apply{arg, Tuple{Apply{peg_first, Tuple{act}}, 1}}}}}}}}}}
+            Lambda{Tuple{UnQuote{labels}},
+                UnQuote{
+                    Apply{arg, Tuple{Apply{peg_first, Tuple{act}}, 1}}}}}}}}}}
 
 Apply{_define_rule, Tuple{Quote{same}, Quote{Same{}}}}
 
 Apply{_define_rule, Tuple{Quote{syntax_decl}, Quote{
     Act{Seq{rule_name, "::=", g_choice},
         Lambda{Tuple{Tuple{n, _, e}},
-            Do{QuasiQuote{Apply{_define_rule, Tuple{Quote{UnQuote{n}}, Quote{UnQuote{e}}}}}}}}}}}
+            Do{
+                QuasiQuote{
+                    Apply{_define_rule,
+                        Tuple{Quote{UnQuote{n}}, Quote{UnQuote{e}}}}}}}}}}}
 
 Apply{_define_rule, Tuple{Quote{g_choice}, Quote{
     Act{Seq{Delimited1{g_alt, "|"}},
@@ -1392,7 +1749,8 @@ Apply{_define_rule, Tuple{Quote{g_choice}, Quote{
 Apply{_define_rule, Tuple{Quote{g_alt}, Quote{Choice{
     Act{Seq{"..."}, Lambda{Tuple{Tuple{_}}, Do{Quote{Prev{}}}}},
     Act{Seq{Many1{g_item}, Option{Seq{same, block}}},
-        Lambda{Tuple{Tuple{items, act}}, Do{Apply{peg_alt, Tuple{items, act}}}}}}}}}
+        Lambda{Tuple{Tuple{items, act}},
+            Do{Apply{peg_alt, Tuple{items, act}}}}}}}}}
 
 Apply{_define_rule, Tuple{Quote{g_item}, Quote{Choice{
     Act{Seq{same, ident, Tight{":"}, g_suffix},
@@ -1401,29 +1759,39 @@ Apply{_define_rule, Tuple{Quote{g_item}, Quote{Choice{
         Lambda{Tuple{Tuple{_, e}}, Do{Tuple{Quote{_}, e}}}}}}}}
 
 Apply{_define_rule, Tuple{Quote{g_suffix}, Quote{Choice{
-    Act{Seq{g_primary, Tight{"*"}}, Lambda{Tuple{Tuple{e, _}}, Do{QuasiQuote{Many{UnQuote{e}}}}}},
-    Act{Seq{g_primary, Tight{"+"}}, Lambda{Tuple{Tuple{e, _}}, Do{QuasiQuote{Many1{UnQuote{e}}}}}},
-    Act{Seq{g_primary, Tight{"?"}}, Lambda{Tuple{Tuple{e, _}}, Do{QuasiQuote{Option{UnQuote{e}}}}}},
-    Act{Seq{"&", g_primary}, Lambda{Tuple{Tuple{_, e}}, Do{QuasiQuote{And{UnQuote{e}}}}}},
-    Act{Seq{"!", g_primary}, Lambda{Tuple{Tuple{_, e}}, Do{QuasiQuote{Not{UnQuote{e}}}}}},
+    Act{Seq{g_primary, Tight{"*"}},
+        Lambda{Tuple{Tuple{e, _}}, Do{QuasiQuote{Many{UnQuote{e}}}}}},
+    Act{Seq{g_primary, Tight{"+"}},
+        Lambda{Tuple{Tuple{e, _}}, Do{QuasiQuote{Many1{UnQuote{e}}}}}},
+    Act{Seq{g_primary, Tight{"?"}},
+        Lambda{Tuple{Tuple{e, _}}, Do{QuasiQuote{Option{UnQuote{e}}}}}},
+    Act{Seq{"&", g_primary},
+        Lambda{Tuple{Tuple{_, e}}, Do{QuasiQuote{And{UnQuote{e}}}}}},
+    Act{Seq{"!", g_primary},
+        Lambda{Tuple{Tuple{_, e}}, Do{QuasiQuote{Not{UnQuote{e}}}}}},
     g_primary}}}}
 
 Apply{_define_rule, Tuple{Quote{g_primary}, Quote{Choice{
     string,
     keyword,
     charclass,
-    Act{Seq{".", Not{Tight{"."}}}, Lambda{Tuple{Tuple{_, _}}, Do{Quote{Any{}}}}},
+    Act{Seq{".", Not{Tight{"."}}},
+        Lambda{Tuple{Tuple{_, _}}, Do{Quote{Any{}}}}},
     Act{Seq{Key{"nospace"}, Tight{"("}, string, ")"},
         Lambda{Tuple{Tuple{_, _, s, _}}, Do{QuasiQuote{Tight{UnQuote{s}}}}}},
     Act{Seq{Key{"delimited"}, Tight{"("}, g_choice, ",", g_choice, ")"},
-        Lambda{Tuple{Tuple{_, _, e, _, s, _}}, Do{QuasiQuote{Delimited{UnQuote{e}, UnQuote{s}}}}}},
+        Lambda{Tuple{Tuple{_, _, e, _, s, _}},
+            Do{QuasiQuote{Delimited{UnQuote{e}, UnQuote{s}}}}}},
     Act{Seq{Key{"delimited1"}, Tight{"("}, g_choice, ",", g_choice, ")"},
-        Lambda{Tuple{Tuple{_, _, e, _, s, _}}, Do{QuasiQuote{Delimited1{UnQuote{e}, UnQuote{s}}}}}},
-    Act{Seq{rule_name, Not{Choice{"::=", Tight{":"}}}}, Lambda{Tuple{Tuple{n, _}}, Do{n}}},
+        Lambda{Tuple{Tuple{_, _, e, _, s, _}},
+            Do{QuasiQuote{Delimited1{UnQuote{e}, UnQuote{s}}}}}},
+    Act{Seq{rule_name, Not{Choice{"::=", Tight{":"}}}},
+        Lambda{Tuple{Tuple{n, _}}, Do{n}}},
     Act{Seq{"(", g_choice, ")"}, Lambda{Tuple{Tuple{_, e, _}}, Do{e}}}}}}}
 
 " === The expressions of an action === "
-" The smallest syntax that the actions below need: M-expressions, calls, `e, 'e and !e, and blocks. "
+" The smallest syntax that the actions below need: M-expressions, calls, `e, "
+"   'e and !e, and blocks. "
 " Rules of the same names are declared again with ::= after they are read. "
 
 Apply{_define_rule, Tuple{Quote{toplevel}, Quote{
@@ -1436,13 +1804,16 @@ Apply{_define_rule, Tuple{Quote{unary}, Quote{Choice{
     Act{Seq{"'", unary},
         Lambda{Tuple{Tuple{_, a}}, Apply{expr, Tuple{Quote{Quote}, Tuple{a}}}}},
     Act{Seq{"`", unary},
-        Lambda{Tuple{Tuple{_, a}}, Apply{expr, Tuple{Quote{QuasiQuote}, Tuple{a}}}}},
+        Lambda{Tuple{Tuple{_, a}},
+            Apply{expr, Tuple{Quote{QuasiQuote}, Tuple{a}}}}},
     Act{Seq{"!", unary},
-        Lambda{Tuple{Tuple{_, a}}, Apply{expr, Tuple{Quote{UnQuote}, Tuple{a}}}}}}}}}
+        Lambda{Tuple{Tuple{_, a}},
+            Apply{expr, Tuple{Quote{UnQuote}, Tuple{a}}}}}}}}}
 
 Apply{_define_rule, Tuple{Quote{postfix}, Quote{Choice{
     Act{Seq{postfix, Tight{"("}, Delimited{expr, ","}, ")"},
-        Lambda{Tuple{Tuple{f, _, args, _}}, QuasiQuote{Apply{UnQuote{f}, UnQuote{args}}}}},
+        Lambda{Tuple{Tuple{f, _, args, _}},
+            QuasiQuote{Apply{UnQuote{f}, UnQuote{args}}}}},
     primary}}}}
 
 Apply{_define_rule, Tuple{Quote{primary}, Quote{Choice{
@@ -1458,11 +1829,15 @@ Apply{_define_rule, Tuple{Quote{block}, Quote{
         Lambda{Tuple{Tuple{_, es, _}}, Apply{peg_block, Tuple{es}}}}}}}
 
 " === Switch to the grammar read by the rules above === "
-" The rest of the file is read by them. The M-expression reader remains as parse_mexpr. "
+" The rest of the file is read by them. The M-expression reader remains as "
+"   parse_mexpr. "
 Def{parse_mexpr, parse}
-Set{parse_from, Lambda{Tuple{s, pos}, Apply{peg_parse_from, Tuple{Quote{toplevel}, s, pos, none}}}}
+Set{parse_from,
+    Lambda{Tuple{s, pos},
+        Apply{peg_parse_from, Tuple{Quote{toplevel}, s, pos, none}}}}
 Set{parse, Lambda{Tuple{s}, Apply{peg_parse, Tuple{Quote{toplevel}, s}}}}
-Def{parse_at, Lambda{Tuple{s, loc}, Apply{peg_parse_at, Tuple{Quote{toplevel}, s, loc}}}}
+Def{parse_at,
+    Lambda{Tuple{s, loc}, Apply{peg_parse_at, Tuple{Quote{toplevel}, s, loc}}}}
 
 " === The grammar of the grammar, declared with ::= === "
 " The rules above declare themselves again, in the form that they make. "
@@ -1496,8 +1871,10 @@ g_primary ::= string
             | "(" e:g_choice ")" { e }
 
 " === The rules of planck === "
-" From the tightest binding to the loosest, so that each rule refers to rules already declared: "
-" the rest of the file is read by the rules declared so far. The actions are written in the expressions "
+" From the tightest binding to the loosest, so that each rule refers to rules "
+"   already declared: "
+" the rest of the file is read by the rules declared so far. The actions are "
+"   written in the expressions "
 " that the rules above allow: M-expressions, calls and quasi-quotes. "
 
 " a binary - must be on the same line as its left operand "
@@ -1514,7 +1891,8 @@ compound_op ::= "+=" { 'int_add }
               | "/=" { 'int_div }
               | "%=" { 'int_mod }
 
-" the inside of a[...]: an expression. In t[p -> e | q if c -> g] the functions joined by | "
+" the inside of a[...]: an expression. In t[p -> e | q if c -> g] the "
+"   functions joined by | "
 " end with a function that gives peg_skip (_peg_rewrite) "
 index ::= e:expr { _peg_rewrite(e) }
 
@@ -1529,13 +1907,17 @@ unary ::= postfix
 type_ref ::= m:type_ref nospace(".") f:ident { `Apply{_record_get, Tuple{!m, Quote{!f}}} }
            | ident
 
-" f(x, a = d1, b = d2) := e is f(x, _kwrest...) := { _kwcheck(_kwrest, Tuple{a, b}); a := _kwarg(_kwrest, 0, 'a, () -> d1); b := ...; e }. "
-" peg_defaults(ps, e) is Tuple{parameters, body}. The parameters without a default are not changed. "
+" f(x, a = d1, b = d2) := e is f(x, _kwrest...) := { _kwcheck(_kwrest, "
+"   Tuple{a, b}); a := _kwarg(_kwrest, 0, 'a, () -> d1); b := ...; e }. "
+" peg_defaults(ps, e) is Tuple{parameters, body}. The parameters without a "
+"   default are not changed. "
 Def{
     peg_is_default,
     Lambda{
         Tuple{x},
-        If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{x}}, Expr}}, Apply{expr_eq, Tuple{Apply{head, Tuple{x}}, Quote{_Default}}}, false}}}
+        If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{x}}, Expr}},
+            Apply{expr_eq, Tuple{Apply{head, Tuple{x}}, Quote{_Default}}},
+            false}}}
 
 Def{
     peg_defaults,
@@ -1545,7 +1927,11 @@ Def{
             Def{n, Apply{arity, Tuple{ps}}},
             Def{k, 0},
             While{
-                If{Apply{int_lt, Tuple{k, n}}, Apply{_not, Tuple{Apply{peg_is_default, Tuple{Apply{arg, Tuple{ps, k}}}}}}, false},
+                If{Apply{int_lt, Tuple{k, n}},
+                    Apply{_not,
+                        Tuple{
+                            Apply{peg_is_default,
+                                Tuple{Apply{arg, Tuple{ps, k}}}}}}, false},
                 Set{k, Apply{int_add, Tuple{k, 1}}}},
             If{
                 Apply{expr_eq, Tuple{k, n}},
@@ -1556,7 +1942,9 @@ Def{
                     While{
                         Apply{int_lt, Tuple{i, k}},
                         Do{
-                            Set{plain, Apply{array_push, Tuple{plain, Apply{arg, Tuple{ps, i}}}}},
+                            Set{plain,
+                                Apply{array_push,
+                                    Tuple{plain, Apply{arg, Tuple{ps, i}}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
                     Def{names, Tuple{}},
                     Def{items, Tuple{}},
@@ -1569,15 +1957,25 @@ Def{
                             Set{names, Apply{array_push, Tuple{names, name}}},
                             Set{items, Apply{array_push, Tuple{items, QuasiQuote{Def{UnQuote{name}, Apply{_kwarg, Tuple{_kwrest, UnQuote{idx}, Quote{UnQuote{name}}, Lambda{Tuple{}, UnQuote{Apply{arg, Tuple{d, 1}}}}}}}}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
-                    Def{all, Apply{array_push, Tuple{Tuple{}, QuasiQuote{Apply{_kwcheck, Tuple{_kwrest, Quote{UnQuote{names}}}}}}}},
+                    Def{all,
+                        Apply{array_push,
+                            Tuple{Tuple{},
+                                QuasiQuote{
+                                    Apply{_kwcheck,
+                                        Tuple{_kwrest,
+                                            Quote{UnQuote{names}}}}}}}},
                     Set{i, 0},
                     While{
                         Apply{int_lt, Tuple{i, Apply{arity, Tuple{items}}}},
                         Do{
-                            Set{all, Apply{array_push, Tuple{all, Apply{arg, Tuple{items, i}}}}},
+                            Set{all,
+                                Apply{array_push,
+                                    Tuple{all, Apply{arg, Tuple{items, i}}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
                     Set{all, Apply{array_push, Tuple{all, e}}},
-                    Tuple{Apply{array_push, Tuple{plain, Quote{_Rest{_kwrest}}}}, Apply{expr, Tuple{Quote{Do}, all}}}}}}}}
+                    Tuple{
+                        Apply{array_push, Tuple{plain, Quote{_Rest{_kwrest}}}},
+                        Apply{expr, Tuple{Quote{Do}, all}}}}}}}}
 
 " a lambda with the parameters of a definition, which may have defaults "
 Def{
@@ -1586,9 +1984,11 @@ Def{
         Tuple{ps, e},
         Do{
             Def{r, Apply{peg_defaults, Tuple{ps, e}}},
-            Apply{peg_lambda, Tuple{Apply{arg, Tuple{r, 0}}, Apply{arg, Tuple{r, 1}}}}}}}
+            Apply{peg_lambda,
+                Tuple{Apply{arg, Tuple{r, 0}}, Apply{arg, Tuple{r, 1}}}}}}}
 
-" peg_items(x, xs) is the Tuple of x and the second elements of the elements of xs "
+" peg_items(x, xs) is the Tuple of x and the second elements of the elements "
+"   of xs "
 Def{
     peg_items,
     Lambda{
@@ -1599,7 +1999,11 @@ Def{
             While{
                 Apply{int_lt, Tuple{i, Apply{arity, Tuple{xs}}}},
                 Do{
-                    Set{r, Apply{array_push, Tuple{r, Apply{arg, Tuple{Apply{arg, Tuple{xs, i}}, 1}}}}},
+                    Set{r,
+                        Apply{array_push,
+                            Tuple{r,
+                                Apply{arg,
+                                    Tuple{Apply{arg, Tuple{xs, i}}, 1}}}}},
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
@@ -1617,20 +2021,24 @@ Def{
             While{
                 Apply{int_lt, Tuple{i, Apply{arity, Tuple{b}}}},
                 Do{
-                    Set{r, Apply{array_push, Tuple{r, Apply{arg, Tuple{b, i}}}}},
+                    Set{r,
+                        Apply{array_push, Tuple{r, Apply{arg, Tuple{b, i}}}}},
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
             r
         }}}
 
-" An argument is an expression or name = expression (_Kw{'name, e}). The ones with names come after the ones without. "
-" An expression of an argument is not an assignment: x = e at the start of an argument is the name x. "
+" An argument is an expression or name = expression (_Kw{'name, e}). The ones "
+"   with names come after the ones without. "
+" An expression of an argument is not an assignment: x = e at the start of an "
+"   argument is the name x. "
 call_kw ::= n:ident "=" !nospace("=") e:expr { `_Kw{Quote{!n}, !e} }
 call_pos ::= !(ident "=" !nospace("=")) e:expr { e }
 call_list ::= x:call_pos xs:("," call_pos)* { peg_items(x, xs) }
 kw_list ::= x:call_kw xs:("," call_kw)* { peg_items(x, xs) }
-" the arguments as they are written: the check of the order is the lookahead of call_args in postfix "
+" the arguments as they are written: the check of the order is the lookahead "
+"   of call_args in postfix "
 call_arg ::= call_kw | call_pos
 call_args ::= a:call_list "," k:kw_list { peg_tuple_cat(a, k) }
             | kw_list
@@ -1653,7 +2061,8 @@ add_expr ::= a:add_expr "+" b:mul_expr { `int_add(!a, !b) }
            | a:add_expr minus b:mul_expr { `int_sub(!a, !b) }
            | mul_expr
 
-" a..b is Range{a, b}, the integers from a to b including b. Its operands are add_expr. "
+" a..b is Range{a, b}, the integers from a to b including b. Its operands are "
+"   add_expr. "
 range_expr ::= a:add_expr ".." b:add_expr { `Range{!a, !b} }
              | add_expr
 
@@ -1679,12 +2088,17 @@ or_expr ::= a:and_expr 'or b:or_expr { `If{!a, true, !b} }
           | and_expr
 
 " === Patterns === "
-" A pattern is written as an expression up to or, and matches the tree of that expression: "
+" A pattern is written as an expression up to or, and matches the tree of that "
+"   expression: "
 " a + b is Apply{'int_add, Tuple{a, b}} and f(x) is Apply{'f, Tuple{x}}. "
-" The names of operators and functions are symbols, the other identifiers are variables. "
-" (f)(p, ...) is Apply{f, Tuple{p, ...}} with the variable f: a call of any function. "
-" p @ type is _TypeOf{p, type}, and the arguments of Head{p, ...} are patterns. "
-" p or q matches what p or q matches (peg_pats). A name written twice matches two values that are ==. "
+" The names of operators and functions are symbols, the other identifiers are "
+"   variables. "
+" (f)(p, ...) is Apply{f, Tuple{p, ...}} with the variable f: a call of any "
+"   function. "
+" p @ type is _TypeOf{p, type}, and the arguments of Head{p, ...} are "
+"   patterns. "
+" p or q matches what p or q matches (peg_pats). A name written twice matches "
+"   two values that are ==. "
 
 pat_primary ::= f:ident nospace("(") args:delimited(pattern, ",") ")" { `Apply{Quote{!f}, !args} }
               | h:ident nospace("{") args:delimited(pattern, ",") "}" { expr(h, args) }
@@ -1737,8 +2151,10 @@ pattern ::= a:pat_and 'or b:pattern { expr(peg_or, Tuple{a, b}) }
 
 " === Functions, assignments and the other forms === "
 
-" the parameters are read as patterns only when an expression and -> or if follow, "
-" since every text of a pattern is also a text of an expression. The rule keeps the result for the position. "
+" the parameters are read as patterns only when an expression and -> or if "
+"   follow, "
+" since every text of a pattern is also a text of an expression. The rule "
+"   keeps the result for the position. "
 params ::= "(" ps:delimited(pattern, ",") ")" &arrow_next { ps }
          | p:pattern { Tuple{p} }
 
@@ -1759,11 +2175,13 @@ with_expr ::= o:with_expr 'with "{" fs:delimited1(with_field, ",") "}" { peg_wit
 " the names of (a, b, ...) := e and (a, b, ...) = e: two or more "
 destruct_names ::= "(" a:ident "," bs:delimited1(ident, ",") ")" { Tuple{a, bs} }
 
-" the left side of x := e and x = e: a name, or !x which is replaced by the name inside a quasi-quote "
+" the left side of x := e and x = e: a name, or !x which is replaced by the "
+"   name inside a quasi-quote "
 target ::= ident
          | "!" x:ident { expr('UnQuote, Tuple{x}) }
 
-" The parameters of a definition: the ones with a pattern, and then the ones with a default value name = expression (_Default{name, e}). "
+" The parameters of a definition: the ones with a pattern, and then the ones "
+"   with a default value name = expression (_Default{name, e}). "
 def_default ::= n:ident "=" !nospace("=") e:expr { `_Default{!n, !e} }
 def_plain ::= !(ident "=" !nospace("=")) p:pattern { p }
 def_plain_list ::= x:def_plain xs:("," def_plain)* { peg_items(x, xs) }
@@ -1776,7 +2194,8 @@ def_params ::= a:def_plain_list "," d:def_default_list { peg_tuple_cat(a, d) }
 " a branch of if: an expression without | outside of brackets, "
 " so that a | after if (c) a else b goes on with the functions around the if "
 branch ::= &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:branch {
-               `Do{Declare{!f}, Set{!f, Fusion{!f, !peg_lambda_defaults(ps, e)}}}
+               `Do{Declare{!f},
+                   Set{!f, Fusion{!f, !peg_lambda_defaults(ps, e)}}}
            }
          | ns:destruct_names ":=" e:branch { peg_destruct('Def, ns, e) }
          | ns:destruct_names "=" !nospace("=") e:branch { peg_destruct('Set, ns, e) }
@@ -1825,9 +2244,11 @@ primary ::= if_expr
 
 idents ::= delimited(ident, ",")
 
-" module m { ... }: export marks the definitions that stand directly in the body, which are the fields (peg_module) "
+" module m { ... }: export marks the definitions that stand directly in the "
+"   body, which are the fields (peg_module) "
 module_def ::= &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:expr {
-                   `Do{Declare{!f}, Set{!f, Fusion{!f, !peg_lambda_defaults(ps, e)}}}
+                   `Do{Declare{!f},
+                       Set{!f, Fusion{!f, !peg_lambda_defaults(ps, e)}}}
                }
              | x:ident ":=" e:expr { `Def{!x, !e} }
              | 'macro p:pattern ":=" e:expr { peg_macro(p, e) }
@@ -1838,16 +2259,20 @@ module_stmt ::= 'export d:module_def { `Export{!d} }
               | 'test b:block { `If{_testing, !b, none} }
               | expr
 
-" the statements of a body, the last one first (a repetition holds at most 64 results) "
+" the statements of a body, the last one first (a repetition holds at most 64 "
+"   results) "
 module_stmts ::= xs:module_stmts s:module_stmt ";"? { Cons{s, xs} }
                | s:module_stmt ";"? { Cons{s, Nil{}} }
 
 module_expr ::= 'module n:ident "{" es:module_stmts "}" { peg_module(n, es) }
               | 'module n:ident "{" "}" { peg_module(n, Nil{}) }
 
-" import a::b as m (x, y), import a::b (*), import a::b hiding (x, y): use of the file a/b loads it. "
-" The module that is named like the last name of the path is a variable of the file. as m defines m as that module. "
-" (x, y) defines x and y as the fields of the module, (*) defines all the fields, and hiding (x, y) all of them but x and y. "
+" import a::b as m (x, y), import a::b (*), import a::b hiding (x, y): use of "
+"   the file a/b loads it. "
+" The module that is named like the last name of the path is a variable of the "
+"   file. as m defines m as that module. "
+" (x, y) defines x and y as the fields of the module, (*) defines all the "
+"   fields, and hiding (x, y) all of them but x and y. "
 import_option ::= same "(" "*" ")" { Tuple{'all, Tuple{}} }
              | same "(" ns:delimited1(ident, ",") ")" { Tuple{'some, ns} }
              | same 'hiding "(" ns:delimited1(ident, ",") ")" { Tuple{'hiding, ns} }
@@ -1878,7 +2303,8 @@ expr ::= syntax_decl
        | module_expr
        | import_expr
 
-" a top-level expression ends with ; or a newline, or another expression follows "
+" a top-level expression ends with ; or a newline, or another expression "
+"   follows "
 toplevel ::= e:expr (";" | !same | &expr) { e }
 
 peg_import(p, a, o) := {
@@ -1903,22 +2329,29 @@ peg_import(p, a, o) := {
             j := 0
             while (j < arity(ns)) {
                 x := arg(ns, j)
-                ds = array_push(ds, `Def{!x, Apply{_record_get, Tuple{!load, Quote{!x}}}})
+                ds = array_push(ds,
+                    `Def{!x, Apply{_record_get, Tuple{!load, Quote{!x}}}})
                 j = j + 1
             }
         } else {
             hidden := if (kind == 'hiding) ns else Tuple{}
-            ds = array_push(ds, `Apply{eval, Tuple{Apply{_import_defs, Tuple{!load, Quote{!hidden}}}}})
+            ds = array_push(ds,
+                `Apply{eval,
+                    Tuple{Apply{_import_defs, Tuple{!load, Quote{!hidden}}}}})
         }
     }
     expr('Do, array_push(ds, none))
 }
 
-" the name that a definition marked export defines: x for Def{x, e}, f for Do{Declare{f}, ...}, the type for a record "
-peg_export_name(d) := if (head(d) == 'Def) arg(d, 0) else if (head(arg(d, 0)) == 'Def) arg(arg(d, 1), 0) else arg(arg(d, 0), 0)
+" the name that a definition marked export defines: x for Def{x, e}, f for "
+"   Do{Declare{f}, ...}, the type for a record "
+peg_export_name(d) := if (head(d) == 'Def) arg(d, 0)
+    else if (head(arg(d, 0)) == 'Def) arg(arg(d, 1), 0) else arg(arg(d, 0), 0)
 
-" module n { ... }: reverse is the list of the statements of the body, the last one first. The module is "
-" n := (() -> { statements; _module(names, values) })(). An M-expression holds at most 64 arguments, so "
+" module n { ... }: reverse is the list of the statements of the body, the "
+"   last one first. The module is "
+" n := (() -> { statements; _module(names, values) })(). An M-expression holds "
+"   at most 64 arguments, so "
 " the statements are gathered in blocks of 32 (a block does not make a scope). "
 peg_module(n, reverse) := {
     items := Nil{}
@@ -1951,31 +2384,42 @@ peg_module(n, reverse) := {
 }
 
 " === Macro === "
-" macro p := e is the tree Macro{f}, f being the function p -> e. It is not evaluated: the rewriting below "
-" takes it out of the tree, adds f in front of the macros that apply from there on (the last arm gives the "
-" tree itself), and leaves none in its place. A macro applies to the rest of the body of the innermost "
-" function or module around it, and to the parts inside. export macro in a module also adds f to the "
-" macros of the place around the module, after the module. Before eval takes an expression, each part of "
-" its tree is rewritten by the macros, from the root down: a part is rewritten until it no longer changes, "
-" then the parts inside the result are rewritten. A quote is not rewritten, and in a quasi-quote only what "
-" is unquoted is rewritten. The patterns of a function and the names that Def and Set define are not rewritten. "
+" macro p := e is the tree Macro{f}, f being the function p -> e. It is not "
+"   evaluated: the rewriting below "
+" takes it out of the tree, adds f in front of the macros that apply from "
+"   there on (the last arm gives the "
+" tree itself), and leaves none in its place. A macro applies to the rest of "
+"   the body of the innermost "
+" function or module around it, and to the parts inside. export macro in a "
+"   module also adds f to the "
+" macros of the place around the module, after the module. Before eval takes "
+"   an expression, each part of "
+" its tree is rewritten by the macros, from the root down: a part is rewritten "
+"   until it no longer changes, "
+" then the parts inside the result are rewritten. A quote is not rewritten, "
+"   and in a quasi-quote only what "
+" is unquoted is rewritten. The patterns of a function and the names that Def "
+"   and Set define are not rewritten. "
 _macro_on := false
 _macro := e -> e
 " the macros that the module being rewritten exports, the last one first "
 _macro_exports := Nil{}
 _eval_expanded := eval
-" a rewriting that takes more than _macro_limit steps in one eval stops with an error "
+" a rewriting that takes more than _macro_limit steps in one eval stops with "
+"   an error "
 _macro_limit := 1000
 _macro_steps := 0
 
-" _macro_on is set when a macro is read, so that nothing is rewritten before the first macro "
+" _macro_on is set when a macro is read, so that nothing is rewritten before "
+"   the first macro "
 peg_macro(p, e) := {
     _macro_on = true
     `Macro{!peg_lambda(Tuple{p}, e)}
 }
 fun expand_macro
 
-" the tree whose arguments from index from on are rewritten at the quasi-quote level level "
+" the tree whose arguments from index from on are rewritten at the quasi-quote "
+"   level level "
 expand_macro_args(e, level, from) := {
     n := arity(e)
     xs := Tuple{}
@@ -1996,7 +2440,8 @@ expand_macro_define(m, exported) := {
     none
 }
 
-" a function or module body is a scope: the macros of its inside end with it, except the exported ones "
+" a function or module body is a scope: the macros of its inside end with it, "
+"   except the exported ones "
 expand_macro_scope(e) := {
     saved := _macro
     saved_exports := _macro_exports
@@ -2022,13 +2467,16 @@ expand_macro_sub(e, level) := {
     else {
         h := head(e)
         if (h == 'QuasiQuote) expand_macro_args(e, level + 1, 0)
-        else if (h == 'UnQuote) { if (level == 0) e else expand_macro_args(e, level - 1, 0) }
+        else if (h == 'UnQuote) { if (level == 0) e
+            else expand_macro_args(e, level - 1, 0) }
         else if (level > 0) expand_macro_args(e, level, 0)
         else if (h == 'Quote) e
         else if (h == 'Macro) expand_macro_define(e, false)
-        else if (h == 'Export and expr_type(arg(e, 0)) == Expr and head(arg(e, 0)) == 'Macro) expand_macro_define(arg(e, 0), true)
+        else if (h == 'Export and expr_type(arg(e, 0)) == Expr and
+            head(arg(e, 0)) == 'Macro) expand_macro_define(arg(e, 0), true)
         else if (h == 'Lambda) expand_macro_scope(e)
-        else if (h == 'Def or h == 'Set or h == 'Declare) expand_macro_args(e, 0, 1)
+        else if (h == 'Def or h == 'Set or
+            h == 'Declare) expand_macro_args(e, 0, 1)
         else expand_macro_args(e, 0, 0)
     }
 }
@@ -2039,7 +2487,8 @@ expand_macro = (e, level) -> {
         n := _macro(e)
         while (n != e) {
             _macro_steps = _macro_steps + 1
-            if (_macro_steps > _macro_limit) perform Error{none, "macro expansion does not end"}
+            if (_macro_steps > _macro_limit) perform Error{none,
+                "macro expansion does not end"}
             e = n
             n = _macro(e)
         }
@@ -2047,7 +2496,8 @@ expand_macro = (e, level) -> {
     }
 }
 
-" eval rewrites the tree by the macros first. Nothing is rewritten until the first macro is read. "
+" eval rewrites the tree by the macros first. Nothing is rewritten until the "
+"   first macro is read. "
 eval = e -> {
     if (_macro_on) {
         saved := _macro_steps
@@ -2058,12 +2508,14 @@ eval = e -> {
     } else _eval_expanded(e)
 }
 
-" e with { f = v, ... } is _with(_with(e, 'f, v), 'g, w) ... _with is defined by record in the place of the record "
+" e with { f = v, ... } is _with(_with(e, 'f, v), 'g, w) ... _with is defined "
+"   by record in the place of the record "
 peg_with(o, fs) := {
     r := o
     i := 0
     while (i < arity(fs)) {
-        r = `Apply{_with, Tuple{!r, Quote{!arg(arg(fs, i), 0)}, !arg(arg(fs, i), 1)}}
+        r = `Apply{_with,
+            Tuple{!r, Quote{!arg(arg(fs, i), 0)}, !arg(arg(fs, i), 1)}}
         i = i + 1
     }
     r
@@ -2078,7 +2530,8 @@ _record_with_error(t, name) := {
     os_exit(1)
 }
 
-" the function (d, name, v) -> a copy of the data d of the type t with the field name replaced by v. make makes the data of t. "
+" the function (d, name, v) -> a copy of the data d of the type t with the "
+"   field name replaced by v. make makes the data of t. "
 _record_with(t, make) := {
     fs := table_get(record_fields, t, none)
     (d @ t, name, v) -> {
@@ -2086,7 +2539,8 @@ _record_with(t, make) := {
         args := Tuple{}
         i := 0
         while (i < arity(fs)) {
-            args = array_push(args, expr('Quote, Tuple{if (arg(fs, i) == name) v else arg(d, i)}))
+            args = array_push(args,
+                expr('Quote, Tuple{if (arg(fs, i) == name) v else arg(d, i)}))
             i = i + 1
         }
         eval(expr('Apply, Tuple{expr('Quote, Tuple{make}), args}))
@@ -2110,9 +2564,12 @@ peg_fresh() := {
     sym_intern(str_cat("%d", peg_itoa(peg_fresh_count)))
 }
 
-" record T(f, ...) = make defines T (the type) and make (the function that makes the data), and adds to _with the function "
-" that copies a data of T with a field replaced (_record_with). _with is a variable of the place of the record, so a data "
-" is copied only where the record is declared. %record is the variable that holds the type and make until they are named. "
+" record T(f, ...) = make defines T (the type) and make (the function that "
+"   makes the data), and adds to _with the function "
+" that copies a data of T with a field replaced (_record_with). _with is a "
+"   variable of the place of the record, so a data "
+" is copied only where the record is declared. %record is the variable that "
+"   holds the type and make until they are named. "
 peg_record(n, fs, m) := {
     r := sym_intern("%record")
     `Do{
@@ -2124,7 +2581,8 @@ peg_record(n, fs, m) := {
     }
 }
 
-" (a, b) := e is a block that defines a and b from the elements of the tuple e, and (a, b) = e "
+" (a, b) := e is a block that defines a and b from the elements of the tuple "
+"   e, and (a, b) = e "
 " assigns them. kind is Def or Set. "
 peg_destruct(kind, ns, e) := {
     names := peg_names(arg(ns, 0), arg(ns, 1))
@@ -2133,7 +2591,8 @@ peg_destruct(kind, ns, e) := {
     i := 0
     while (i < arity(names)) {
         v := `Apply{_destructure, Tuple{!t, !i, !arity(names)}}
-        items = array_push(items, if (kind == 'Def) `Def{!arg(names, i), !v} else `Set{!arg(names, i), !v})
+        items = array_push(items, if (kind == 'Def) `Def{!arg(names, i), !v}
+            else `Set{!arg(names, i), !v})
         i = i + 1
     }
     expr('Do, items)
@@ -2148,7 +2607,8 @@ _destructure(t, i, n) := {
     arg(t, i)
 }
 
-" x += e is x = x + e, and likewise for the other operators; op is the function of the operator "
+" x += e is x = x + e, and likewise for the other operators; op is the "
+"   function of the operator "
 peg_compound(x, op, e) := `Set{!x, Apply{!op, Tuple{!x, !e}}}
 
 " a[i] += e is a[i] = a[i] + e, in which a and i are evaluated once "
@@ -2158,17 +2618,24 @@ peg_index_update(a, i, op, v) := {
     `Do{
         Def{!ta, !a},
         Def{!ti, !i},
-        Apply{_index_set, Tuple{!ta, !ti, Apply{!op, Tuple{Apply{_index_get, Tuple{!ta, !ti}}, !v}}}}
+        Apply{_index_set,
+            Tuple{!ta, !ti,
+                Apply{!op, Tuple{Apply{_index_get, Tuple{!ta, !ti}}, !v}}}}
     }
 }
 
-" === or in patterns, and the arms of a definition that goes on to the next === "
+" === or in patterns, and the arms of a definition that goes on to the next "
+"   === "
 
-" p or q in a pattern is %or{p, q} (pattern). peg_pats takes the parameters ps and gives Tuple{ps2, test}: "
-" every or is replaced by a variable %o1, ... and the test is true when the values of the variables "
-" are among the alternatives. test is none when ps has no or. The alternatives bind no variables. "
+" p or q in a pattern is %or{p, q} (pattern). peg_pats takes the parameters ps "
+"   and gives Tuple{ps2, test}: "
+" every or is replaced by a variable %o1, ... and the test is true when the "
+"   values of the variables "
+" are among the alternatives. test is none when ps has no or. The alternatives "
+"   bind no variables. "
 
-peg_pat_var(p) := expr_type(p) == Symbol and p != '_ and p != 'true and p != 'false and p != 'none
+peg_pat_var(p) := expr_type(p) == Symbol and p != '_ and p != 'true and
+    p != 'false and p != 'none
 
 " the variables of a pattern in order, pushed on the tuple acc "
 peg_pat_names(p, acc) := {
@@ -2213,7 +2680,8 @@ peg_pat_has_or(p) := {
 
 " the alternatives of p or q or ... pushed on the tuple acc "
 peg_or_alts(p, acc) :=
-    if (expr_type(p) == Expr and head(p) == peg_or) peg_or_alts(arg(p, 1), peg_or_alts(arg(p, 0), acc))
+    if (expr_type(p) == Expr and head(p) == peg_or) peg_or_alts(arg(p, 1),
+        peg_or_alts(arg(p, 0), acc))
     else array_push(acc, p)
 
 " the tests all true "
@@ -2227,15 +2695,18 @@ peg_conj(ts) := {
     acc
 }
 
-" p with true, false and none written as Quote{true}, Quote{false} and Quote{none} "
+" p with true, false and none written as Quote{true}, Quote{false} and "
+"   Quote{none} "
 peg_pat_literals(p) := {
-    if (expr_type(p) == Symbol) return if (p == 'true or p == 'false or p == 'none) expr('Quote, Tuple{p}) else p
+    if (expr_type(p) == Symbol) return if (p == 'true or p == 'false or
+        p == 'none) expr('Quote, Tuple{p}) else p
     if (expr_type(p) != Expr or head(p) == 'Quote) return p
     n := if (head(p) == '_TypeOf) 1 else arity(p)
     args := Tuple{}
     i := 0
     while (i < arity(p)) {
-        args = array_push(args, if (i < n) peg_pat_literals(arg(p, i)) else arg(p, i))
+        args = array_push(args, if (i < n) peg_pat_literals(arg(p, i))
+            else arg(p, i))
         i = i + 1
     }
     expr(head(p), args)
@@ -2277,13 +2748,17 @@ peg_same_names(a, b) := {
     true
 }
 
-" p with every or replaced by a variable and every name written a second time by a new variable. "
-" st[0] is the tests, st[1] is Tuple{variable, alternatives} of the or that bind variables, "
+" p with every or replaced by a variable and every name written a second time "
+"   by a new variable. "
+" st[0] is the tests, st[1] is Tuple{variable, alternatives} of the or that "
+"   bind variables, "
 " st[2] is the names seen and st[3] is the names of or. "
 peg_pat_walk(p, st) := {
     if (expr_type(p) == Symbol) {
         if (not peg_pat_var(p)) return p
-        if (peg_has_name(st[3], p)) peg_pat_error(str_cat("a variable of or is written more than once: ", sym_name(p)))
+        if (peg_has_name(st[3], p)) peg_pat_error(
+            str_cat("a variable of or is written more than once: ",
+                sym_name(p)))
         if (peg_has_name(st[2], p)) {
             d := peg_fresh("%d")
             st[0] = array_push(st[0], `Apply{expr_eq, Tuple{!p, !d}})
@@ -2301,7 +2776,9 @@ peg_pat_walk(p, st) := {
         while (i < arity(alts0)) {
             a := peg_pat_literals(arg(alts0, i))
             ni := peg_pat_names(a, Tuple{})
-            if (i > 0 and not peg_same_names(ns, ni)) peg_pat_error("every alternative of or must bind the same variables")
+            if (i > 0 and
+                not peg_same_names(ns, ni)) peg_pat_error(
+                "every alternative of or must bind the same variables")
             ns = ni
             alts = array_push(alts, a)
             i = i + 1
@@ -2309,7 +2786,10 @@ peg_pat_walk(p, st) := {
         i = 0
         while (i < arity(ns)) {
             n := arg(ns, i)
-            if (peg_has_name(st[2], n) and not peg_has_name(st[3], n)) peg_pat_error(str_cat("a variable of or is written more than once: ", sym_name(n)))
+            if (peg_has_name(st[2], n) and
+                not peg_has_name(st[3], n)) peg_pat_error(
+                str_cat("a variable of or is written more than once: ",
+                    sym_name(n)))
             if (not peg_has_name(st[3], n)) {
                 st[2] = array_push(st[2], n)
                 st[3] = array_push(st[3], n)
@@ -2333,17 +2813,22 @@ peg_pat_walk(p, st) := {
     args := Tuple{}
     i := 0
     while (i < arity(p)) {
-        args = array_push(args, if (i < n) peg_pat_walk(arg(p, i), st) else arg(p, i))
+        args = array_push(args, if (i < n) peg_pat_walk(arg(p, i), st)
+            else arg(p, i))
         i = i + 1
     }
     expr(head(p), args)
 }
 
-" Tuple{ps2, test, wraps}: ps2 is ps without or and without a name written twice. The test is true when "
-" the values are among the alternatives of or and the two values of a name are ==. The test is none when "
+" Tuple{ps2, test, wraps}: ps2 is ps without or and without a name written "
+"   twice. The test is true when "
+" the values are among the alternatives of or and the two values of a name are "
+"   ==. The test is none when "
 " there is nothing to test. wraps is for peg_wrap. "
 peg_pats(ps) := {
-    if (not peg_pat_has_or(ps) and peg_pat_dup(peg_pat_names(ps, Tuple{})) == none) return Tuple{ps, none, Tuple{}}
+    if (not peg_pat_has_or(ps) and
+        peg_pat_dup(peg_pat_names(ps, Tuple{})) == none) return Tuple{ps, none,
+        Tuple{}}
     st := array_new(4)
     st[0] = Tuple{}
     st[1] = Tuple{}
@@ -2353,7 +2838,8 @@ peg_pats(ps) := {
     Tuple{ps2, peg_conj(st[0]), st[1]}
 }
 
-" the variables of an or are bound by matching its value again with each alternative: e is evaluated there "
+" the variables of an or are bound by matching its value again with each "
+"   alternative: e is evaluated there "
 peg_wrap(e, wraps) := {
     i := arity(wraps) - 1
     while (i >= 0) {
@@ -2371,33 +2857,40 @@ peg_wrap(e, wraps) := {
     e
 }
 
-" a function whose parameters have or or a name twice is a function with the guard that the test makes "
+" a function whose parameters have or or a name twice is a function with the "
+"   guard that the test makes "
 peg_lambda_plain := peg_lambda
 peg_guard_plain := peg_guard
 
 peg_lambda = (ps, body) -> {
     r := peg_pats(ps)
-    if (arg(r, 1) == none) peg_lambda_plain(ps, body) else peg_guard_plain(arg(r, 0), arg(r, 1), peg_wrap(body, arg(r, 2)))
+    if (arg(r, 1) == none) peg_lambda_plain(ps, body)
+        else peg_guard_plain(arg(r, 0), arg(r, 1), peg_wrap(body, arg(r, 2)))
 }
 
 peg_guard = (ps, c, e) -> {
     r := peg_pats(ps)
     if (arg(r, 1) == none) peg_guard_plain(ps, c, e)
-    else peg_guard_plain(arg(r, 0), `If{!arg(r, 1), !peg_wrap(c, arg(r, 2)), false}, peg_wrap(e, arg(r, 2)))
+    else peg_guard_plain(arg(r, 0),
+        `If{!arg(r, 1), !peg_wrap(c, arg(r, 2)), false}, peg_wrap(e, arg(r, 2)))
 }
 
-" f(p, ...) := e and f(p, ...) if c := e. Tuple{f, special, function} where special is true when "
+" f(p, ...) := e and f(p, ...) if c := e. Tuple{f, special, function} where "
+"   special is true when "
 " the function has a guard or an or, which go on to the arms after it. "
 peg_def_arm(f, ps0, g, e0) := {
     r := peg_defaults(ps0, e0)
     ps := arg(r, 0)
     e := arg(r, 1)
-    sp := peg_pat_has_or(ps) or peg_pat_dup(peg_pat_names(ps, Tuple{})) != none or arity(g) > 0
-    lambda := if (arity(g) > 0) peg_guard(ps, arg(arg(g, 0), 1), e) else peg_lambda(ps, e)
+    sp := peg_pat_has_or(ps) or
+        peg_pat_dup(peg_pat_names(ps, Tuple{})) != none or arity(g) > 0
+    lambda := if (arity(g) > 0) peg_guard(ps, arg(arg(g, 0), 1), e)
+        else peg_lambda(ps, e)
     Tuple{f, sp, lambda}
 }
 
-" The arguments of a call with names: the rest of the parameters is a Tuple of the arguments without names, and then _Kw{'name, value}. "
+" The arguments of a call with names: the rest of the parameters is a Tuple of "
+"   the arguments without names, and then _Kw{'name, value}. "
 _kwis(x) := expr_type(x) == Expr and head(x) == '_Kw
 
 " the number of the arguments without names "
@@ -2430,7 +2923,8 @@ _kwfail(msg) := {
     os_exit(1)
 }
 
-" _kwcheck(rest, names) stops the program for an argument that no parameter has, for too many arguments and for a parameter given twice "
+" _kwcheck(rest, names) stops the program for an argument that no parameter "
+"   has, for too many arguments and for a parameter given twice "
 _kwcheck(rest, names) := {
     n := _kwpos(rest)
     if (n > arity(names)) _kwfail("too many arguments")
@@ -2439,18 +2933,23 @@ _kwcheck(rest, names) := {
         name := arg(arg(rest, i), 0)
         j := _kwindex(names, name)
         if (j < 0) _kwfail(str_cat("unknown argument ", sym_name(name)))
-        if (j < n or _kwfind(rest, name, i + 1) >= 0) _kwfail(str_cat(sym_name(name), " is given twice"))
+        if (j < n or
+            _kwfind(rest, name, i + 1) >=
+            0) _kwfail(str_cat(sym_name(name), " is given twice"))
         i = i + 1
     }
 }
 
-" _kwarg(rest, i, name, thunk) is the argument named name, or the i-th one without a name, or thunk() "
+" _kwarg(rest, i, name, thunk) is the argument named name, or the i-th one "
+"   without a name, or thunk() "
 _kwarg(rest, i, name, thunk) := {
     j := _kwfind(rest, name, 0)
-    if (j >= 0) arg(arg(rest, j), 1) else if (i < _kwpos(rest)) arg(rest, i) else thunk()
+    if (j >= 0) arg(arg(rest, j), 1) else if (i < _kwpos(rest)) arg(rest, i)
+        else thunk()
 }
 
-" a definition of a special arm matches def_run with the definitions that follow it "
+" a definition of a special arm matches def_run with the definitions that "
+"   follow it "
 peg_token_special(p) := {
     q := peg_call_rule('def_arm, p)
     if (q < 0) return q
@@ -2464,8 +2963,10 @@ peg_token_special(p) := {
 
 _define_rule('special_arm, peg_token_special)
 
-" The arms of the same f in a row are joined by | : f(p, ...) := e, f(q, ...) := e, ... is "
-" Set{f, Fusion{f, p-arm | q-arm | ...}}. A guard or an or that does not apply goes on to the next arm. "
+" The arms of the same f in a row are joined by | : f(p, ...) := e, f(q, ...) "
+"   := e, ... is "
+" Set{f, Fusion{f, p-arm | q-arm | ...}}. A guard or an or that does not apply "
+"   goes on to the next arm. "
 peg_def_run(a, rest) := {
     arms := array_push(Tuple{}, a)
     i := 0
@@ -2485,7 +2986,8 @@ peg_def_run(a, rest) := {
             lambda = peg_fuse(arg(arg(arms, k), 2), lambda)
             k = k - 1
         }
-        stmts = array_push(stmts, `Do{Declare{!f}, Set{!f, Fusion{!f, !lambda}}})
+        stmts = array_push(stmts,
+            `Do{Declare{!f}, Set{!f, Fusion{!f, !lambda}}})
         i = j
     }
     if (arity(stmts) == 1) arg(stmts, 0) else expr('Do, stmts)
@@ -2496,12 +2998,17 @@ def_arm ::= &(postfix (":=" | 'if)) f:ident nospace("(") &(def_params ")") ps:de
 def_run ::= a:special_arm rest:(";"? def_arm)* { peg_def_run(a, rest) }
 
 " === for === "
-" for (p in xs) a is peg_for(xs, p -> a). It calls no function of a type but _iter: the elements of xs "
-" are the ones that the iterator _iter(xs) gives. An iterator is a function next. next(end) is the next "
-" element, or end itself when there is no more. peg_for makes a new end for each run, so no element is it. "
+" for (p in xs) a is peg_for(xs, p -> a). It calls no function of a type but "
+"   _iter: the elements of xs "
+" are the ones that the iterator _iter(xs) gives. An iterator is a function "
+"   next. next(end) is the next "
+" element, or end itself when there is no more. peg_for makes a new end for "
+"   each run, so no element is it. "
 " A type is added by putting its arm in front of _iter (like _index_get): "
-"     _iter = (Matrix{w, h, d}) -> { i := 0; (end) -> if (i < w * h) { i += 1; d[i - 1] } else end } | _iter "
-" _iter has no arm for another value, and iterating over it is a call that no arm matches. "
+"     _iter = (Matrix{w, h, d}) -> { i := 0; (end) -> if (i < w * h) { i += 1; "
+"       d[i - 1] } else end } | _iter "
+" _iter has no arm for another value, and iterating over it is a call that no "
+"   arm matches. "
 " a list, from the first element to the end "
 _iter(Cons{x, xs}) := {
     cur := Cons{x, xs}
@@ -2540,7 +3047,8 @@ _iter(a @ Plain) := {
     } else end
 }
 
-" a table: Tuple{key, value} of each entry, in the order of table.items. The table must not change while it is walked. "
+" a table: Tuple{key, value} of each entry, in the order of table.items. The "
+"   table must not change while it is walked. "
 _iter(tb @ Table) := {
     b := array_get(arg(tb, 0), 0)
     n := array_len(b)

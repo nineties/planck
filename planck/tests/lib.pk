@@ -61,9 +61,12 @@ check(list.sort((a, b) -> a < b, []), [])
 check(list.sort((a, b) -> a < b, [5, 5, 1, 5]), [1, 5, 5, 5])
 check(list.sort((a, b) -> a < b, range(0, 300)), range(0, 300))
 check(list.sort((a, b) -> a < b, reverse(range(0, 300))), range(0, 300))
-check(list.sort((a, b) -> arg(a, 0) < arg(b, 0), [Tuple{2, "a"}, Tuple{1, "b"}, Tuple{2, "c"}, Tuple{1, "d"}]),
+check(
+    list.sort((a, b) -> arg(a, 0) < arg(b, 0),
+        [Tuple{2, "a"}, Tuple{1, "b"}, Tuple{2, "c"}, Tuple{1, "d"}]),
       [Tuple{1, "b"}, Tuple{1, "d"}, Tuple{2, "a"}, Tuple{2, "c"}])
-check(list.sort(string.string_less, ["pear", "apple", "fig"]), ["apple", "fig", "pear"])
+check(list.sort(string.string_less, ["pear", "apple", "fig"]),
+    ["apple", "fig", "pear"])
 order := []
 map(x -> { order = x :: order; x }, [1, 2, 3])
 check(order, [3, 2, 1])
@@ -232,7 +235,11 @@ check(table.has(t, 'b), true)
 check(table.has(t, "z"), false)
 check(table.has(t, 4), false)
 check(list.sort((a, b) -> a < b, table.values(t)), [2, 3, 10])
-check(list.sort(string.string_less, map(k -> if (expr_type(k) == String) k else if (expr_type(k) == Symbol) sym_name(k) else string.int_to_string(k), table.keys(t))), ["3", "a", "b"])
+check(
+    list.sort(string.string_less,
+        map(k -> if (expr_type(k) == String) k
+            else if (expr_type(k) == Symbol) sym_name(k)
+            else string.int_to_string(k), table.keys(t))), ["3", "a", "b"])
 check(length(table.items(t)), 3)
 check(member(Tuple{"a", 10}, table.items(t)), true)
 i = 0
@@ -276,8 +283,10 @@ l := error.loc_at("a.txt", src, 14)
 check(l, Loc{"a.txt", 2, 5})
 check(error.show_loc(l), "a.txt:2:5")
 check(error.catch(() -> 1 + 2), Ok{3})
-check(error.catch(() -> { error.at(l, "bad"); 5 }), Error{Loc{"a.txt", 2, 5}, "bad"})
-check(error.show(src, l, "unexpected yy"), "a.txt:2:5: unexpected yy\n  let yy = 22\n      ^")
+check(error.catch(() -> { error.at(l, "bad"); 5 }),
+    Error{Loc{"a.txt", 2, 5}, "bad"})
+check(error.show(src, l, "unexpected yy"),
+    "a.txt:2:5: unexpected yy\n  let yy = 22\n      ^")
 inner(x) := if (x == 0) error.at(l, "zero") else x
 check(error.catch(() -> inner(1) + inner(0)), Error{Loc{"a.txt", 2, 5}, "zero"})
 
@@ -299,7 +308,8 @@ check(pretty.show([[1], [Tuple{2, 3}]]), "[[1], [(2, 3)]]")
 check(pretty.show(x -> x), "<function>")
 check(pretty.show(array_new(1)), "<array>")
 check(pretty.text(Add{1, 2}, 80), "Add{1, 2}")
-check(pretty.text(Add{Num{1}, Mul{Num{2}, Num{3}}}, 12), "Add{\n  Num{1},\n  Mul{\n    Num{2},\n    Num{3}\n  }\n}")
+check(pretty.text(Add{Num{1}, Mul{Num{2}, Num{3}}}, 12),
+    "Add{\n  Num{1},\n  Mul{\n    Num{2},\n    Num{3}\n  }\n}")
 check(pretty.text([10, 20, 30], 4), "[\n  10,\n  20,\n  30\n]")
 check(pretty.text(12345, 2), "12345")
 check(repr([1, "a"]), "[1, \"a\"]")
@@ -309,7 +319,9 @@ check(array_len(list.list_to_array([])), 0)
 check(list.list_to_array([5, 6])[1], 6)
 check(array_len(list.list_to_array([5, 6, 7])), 3)
 
-spec := [Opt{"a", "", false}, Opt{"b", "bold", false}, Opt{"c", "", false}, Opt{"o", "output", true}, Opt{"", "level", true}]
+spec :=
+    [Opt{"a", "", false}, Opt{"b", "bold", false}, Opt{"c", "", false},
+    Opt{"o", "output", true}, Opt{"", "level", true}]
 parsed(args) := getopt.parse(spec, list.list_to_array(args), 0)
 optval(r, k) := table.get(arg(r, 0), k, none)
 rest_of(r) := map(i -> array_get(arg(r, 1), i), range(0, array_len(arg(r, 1))))
@@ -324,7 +336,8 @@ check(optval(r, "output"), "out.txt")
 r = parsed(["-oout.txt"])
 check(optval(r, "output"), "out.txt")
 r = parsed(["-abo", "x"])
-check([optval(r, "a"), optval(r, "bold"), optval(r, "output")], [true, true, "x"])
+check([optval(r, "a"), optval(r, "bold"), optval(r, "output")],
+    [true, true, "x"])
 r = parsed(["-aoval"])
 check([optval(r, "a"), optval(r, "output")], [true, "val"])
 r = parsed(["--bold"])
@@ -351,7 +364,9 @@ r = parsed(["-", "x"])
 check(rest_of(r), ["-", "x"])
 r = parsed([])
 check([rest_of(r), table.len(arg(r, 0))], [[], 0])
-check(arg(getopt.parse(spec, list.list_to_array(["prog", "-a", "f"]), 1), 1)[0], "f")
+check(
+    arg(getopt.parse(spec, list.list_to_array(["prog", "-a", "f"]), 1),
+        1)[0], "f")
 check(parsed(["-z"]), Unknown{"-z"})
 check(parsed(["-az"]), Unknown{"-z"})
 check(parsed(["--nope"]), Unknown{"--nope"})

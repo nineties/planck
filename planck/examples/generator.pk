@@ -33,7 +33,8 @@ iter(t) := handle { walk(t); Done{} } with (Yield{v}, k) -> Next{v, k}
 
 fun same_iter
 same_iter = (Done{}, Done{}) -> true
-          | (Next{a, k1}, Next{b, k2}) -> if (a == b) same_iter(k1(none), k2(none)) else false
+          | (Next{a, k1}, Next{b, k2}) ->
+              if (a == b) same_iter(k1(none), k2(none)) else false
           | (_, _) -> false
 same_fringe(a, b) := same_iter(iter(a), iter(b))
 

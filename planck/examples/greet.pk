@@ -6,10 +6,13 @@ import_lib("pretty")
 
 say(s) := { print(s) }
 
-spec := [Opt{"n", "times", true}, Opt{"s", "shout", false}, Opt{"h", "help", false}]
+spec :=
+    [Opt{"n", "times", true}, Opt{"s", "shout", false}, Opt{"h", "help", false}]
 
 greet(options, name) := {
-    text := str_cat(str_cat("Hello, ", name), if (table.has(options, "shout")) "!!" else ".")
+    text :=
+        str_cat(str_cat("Hello, ", name), if (table.has(options, "shout")) "!!"
+        else ".")
     i := 0
     while (i < string.string_to_int(table.get(options, "times", "1"))) {
         say(text)
@@ -22,7 +25,8 @@ main(args) := {
     if (head(r) == 'Parsed) {
         options := arg(r, 0)
         names := arg(r, 1)
-        if (table.has(options, "help")) say("usage: greet [-s] [-n times] name ...")
+        if (table.has(options, "help")) say(
+            "usage: greet [-s] [-n times] name ...")
         else {
             i := 0
             while (i < array_len(names)) {
@@ -36,4 +40,5 @@ main(args) := {
     }
 }
 
-main(if (array_len(os_argv()) > 1) os_argv() else list.list_to_array(["greet.pk", "-sn", "2", "Ann", "--", "-Bob"]))
+main(if (array_len(os_argv()) > 1) os_argv()
+    else list.list_to_array(["greet.pk", "-sn", "2", "Ann", "--", "-Bob"]))

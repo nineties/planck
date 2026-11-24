@@ -13,7 +13,9 @@ module pretty {
         i := 0
         while (i < str_len(s)) {
             c := str_ord(s, i)
-            strbuf.add(b, if (c == 34) "\\\"" else if (c == 92) "\\\\" else if (c == 0) "\\0" else if (c == 10) "\\n" else if (c == 9) "\\t" else string.char(c))
+            strbuf.add(b, if (c == 34) "\\\"" else if (c == 92) "\\\\"
+                else if (c == 0) "\\0" else if (c == 10) "\\n"
+                else if (c == 9) "\\t" else string.char(c))
             i = i + 1
         }
         strbuf.add(b, "\"")
@@ -36,7 +38,8 @@ module pretty {
         r
     }
 
-    elements(x) := if (head(x) == 'Cons and is_list(x)) list_elems(x) else args_of(x)
+    elements(x) := if (head(x) == 'Cons and is_list(x)) list_elems(x)
+        else args_of(x)
 
     show(x) = {
         t := expr_type(x)
@@ -45,14 +48,22 @@ module pretty {
         else if (t == Symbol) sym_name(x)
         else if (t == Expr) {
             if (x == []) "[]"
-            else if (head(x) == 'Cons and is_list(x)) str_cat(str_cat("[", join(", ", map(show, list_elems(x)))), "]")
-            else if (head(x) == 'Tuple) str_cat(str_cat("(", join(", ", map(show, args_of(x)))), ")")
-            else str_cat(str_cat(str_cat(sym_name(head(x)), "{"), join(", ", map(show, args_of(x)))), "}")
+            else if (head(x) == 'Cons and
+                is_list(x)) str_cat(
+                str_cat("[", join(", ", map(show, list_elems(x)))), "]")
+            else if (head(x) ==
+                'Tuple) str_cat(
+                str_cat("(", join(", ", map(show, args_of(x)))), ")")
+            else str_cat(
+                str_cat(str_cat(sym_name(head(x)), "{"),
+                    join(", ", map(show, args_of(x)))), "}")
         }
         else if (t == Array) "<array>"
         else if (t == Type) sym_name(typename(x))
         else if (t == Function or t == Plain) "<function>"
-        else str_cat(str_cat(str_cat(sym_name(typename(t)), "{"), join(", ", map(show, args_of(x)))), "}")
+        else str_cat(
+            str_cat(str_cat(sym_name(typename(t)), "{"),
+                join(", ", map(show, args_of(x)))), "}")
     }
     export show := show
 
@@ -62,8 +73,12 @@ module pretty {
         if (t == Symbol) str_cat("'", sym_name(x))
         else if (t == Expr) {
             if (x == []) "[]"
-            else if (head(x) == 'Cons and is_list(x)) str_cat(str_cat("[", join(", ", map(repr_show, list_elems(x)))), "]")
-            else str_cat(str_cat(str_cat(sym_name(head(x)), "{"), join(", ", map(repr_show, args_of(x)))), "}")
+            else if (head(x) == 'Cons and
+                is_list(x)) str_cat(
+                str_cat("[", join(", ", map(repr_show, list_elems(x)))), "]")
+            else str_cat(
+                str_cat(str_cat(sym_name(head(x)), "{"),
+                    join(", ", map(repr_show, args_of(x)))), "}")
         }
         else show(x)
     }
@@ -71,13 +86,20 @@ module pretty {
 
     pp(x, indent, width) := {
         flat := show(x)
-        if (indent + str_len(flat) <= width or expr_type(x) != Expr or x == []) flat
+        if (indent + str_len(flat) <= width or expr_type(x) != Expr or
+            x == []) flat
         else {
-            open := if (head(x) == 'Cons and is_list(x)) "[" else if (head(x) == 'Tuple) "(" else str_cat(sym_name(head(x)), "{")
-            close := if (head(x) == 'Cons and is_list(x)) "]" else if (head(x) == 'Tuple) ")" else "}"
+            open := if (head(x) == 'Cons and is_list(x)) "["
+                else if (head(x) == 'Tuple) "("
+                else str_cat(sym_name(head(x)), "{")
+            close := if (head(x) == 'Cons and is_list(x)) "]"
+                else if (head(x) == 'Tuple) ")" else "}"
             pad := string.string_repeat(" ", indent + 2)
-            parts := map(e -> str_cat(pad, pp(e, indent + 2, width)), elements(x))
-            str_cat(str_cat(str_cat(str_cat(open, "\n"), join(",\n", parts)), str_cat("\n", string.string_repeat(" ", indent))), close)
+            parts :=
+                map(e -> str_cat(pad, pp(e, indent + 2, width)), elements(x))
+            str_cat(
+                str_cat(str_cat(str_cat(open, "\n"), join(",\n", parts)),
+                    str_cat("\n", string.string_repeat(" ", indent))), close)
         }
     }
 
@@ -86,7 +108,8 @@ module pretty {
     export print(x, pretty = true, end = "\n") := {
         t := expr_type(x)
         if (t == String) write_text(x)
-        else if (t == Int or t == Symbol or t == Expr) write_text(if (pretty) text(x, 60) else show(x))
+        else if (t == Int or t == Symbol or
+            t == Expr) write_text(if (pretty) text(x, 60) else show(x))
         else write_text(line_text(x))
         write_text(end)
     }
@@ -95,7 +118,8 @@ repr := (x) -> pretty.repr_show(x)
 
 _print_repr(x) := {
     t := expr_type(x)
-    if (t == Int or t == String or t == Symbol or t == Expr) print(repr(x)) else print(x)
+    if (t == Int or t == String or t == Symbol or t == Expr) print(repr(x))
+        else print(x)
 }
 
 print = pretty.print
