@@ -510,18 +510,45 @@ Def{peg_lc, 1}
 Def{peg_token_here, Lambda{Tuple{p}, Do{Set{peg_pv, p}, p}}}
 Def{peg_loc_at, Lambda{Tuple{p0}, Do{
     Def{p, Apply{peg_skip_ws, Tuple{p0}}},
-    If{Apply{int_lt, Tuple{p, peg_lp}}, Do{
-        Set{peg_lp, 0},
-        Set{peg_ll, Apply{arg, Tuple{peg_loc0, 1}}},
-        Set{peg_lc, Apply{arg, Tuple{peg_loc0, 2}}}}, none},
-    While{Apply{int_lt, Tuple{peg_lp, p}}, Do{
-        If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{peg_lp}}, 10}},
-            Do{Set{peg_ll, Apply{int_add, Tuple{peg_ll, 1}}}, Set{peg_lc, 1}},
-            Set{peg_lc, Apply{int_add, Tuple{peg_lc, 1}}}},
-        Set{peg_lp, Apply{int_add, Tuple{peg_lp, 1}}}}},
+    Def{row, Apply{peg_row, Tuple{p}}},
+    Def{lslot, Apply{int_sub, Tuple{peg_memo_w, 2}}},
+    Def{cslot, Apply{int_sub, Tuple{peg_memo_w, 1}}},
+    If{Apply{equal, Tuple{Apply{array_get, Tuple{row, lslot}}, none}}, Do{
+        If{Apply{int_lt, Tuple{p, peg_lp}}, Do{
+            Def{i, peg_lp},
+            Def{l, peg_ll},
+            While{Apply{int_gt, Tuple{i, p}}, Do{
+                Set{i, Apply{int_sub, Tuple{i, 1}}},
+                If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{i}}, 10}},
+                    Set{l, Apply{int_sub, Tuple{l, 1}}}, none}}},
+            Def{j, p},
+            While{
+                If{Apply{int_gt, Tuple{j, 0}},
+                    Apply{not_equal,
+                        Tuple{Apply{peg_char_at,
+                                Tuple{Apply{int_sub, Tuple{j, 1}}}}, 10}},
+                    false},
+                Set{j, Apply{int_sub, Tuple{j, 1}}}},
+            Set{peg_ll, l},
+            Set{peg_lc,
+                If{Apply{int_gt, Tuple{j, 0}},
+                    Apply{int_add, Tuple{Apply{int_sub, Tuple{p, j}}, 1}},
+                    Apply{int_add,
+                        Tuple{Apply{arg, Tuple{peg_loc0, 2}}, p}}}},
+            Set{peg_lp, p}}, none},
+        While{Apply{int_lt, Tuple{peg_lp, p}}, Do{
+            If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{peg_lp}}, 10}},
+                Do{Set{peg_ll, Apply{int_add, Tuple{peg_ll, 1}}},
+                    Set{peg_lc, 1}},
+                Set{peg_lc, Apply{int_add, Tuple{peg_lc, 1}}}},
+            Set{peg_lp, Apply{int_add, Tuple{peg_lp, 1}}}}},
+        Apply{array_set, Tuple{row, lslot, peg_ll}},
+        Apply{array_set, Tuple{row, cslot, peg_lc}}}, none},
     Apply{expr,
         Tuple{Quote{Loc},
-            Tuple{Apply{arg, Tuple{peg_loc0, 0}}, peg_ll, peg_lc}}}}}}
+            Tuple{Apply{arg, Tuple{peg_loc0, 0}},
+                Apply{array_get, Tuple{row, lslot}},
+                Apply{array_get, Tuple{row, cslot}}}}}}}}
 
 " peg_at(l, e) is e wrapped in At{loc, e} with the position of the token at l, "
 "   when the text is parsed with a position (peg_loc0 is not none) "
@@ -662,7 +689,8 @@ Def{peg_parse_from, Lambda{Tuple{r, s, pos, loc}, Do{
                 Apply{arg, Tuple{loc, 2}}}}}, none},
     Set{peg_loc0, loc},
     Set{peg_srclen, Apply{str_len, Tuple{s}}},
-    Set{peg_memo_w, Apply{int_mul, Tuple{peg_nrules, 3}}},
+    Set{peg_memo_w,
+        Apply{int_add, Tuple{Apply{int_mul, Tuple{peg_nrules, 3}}, 2}}},
     Set{peg_far, 0},
     Def{p, Apply{peg_skip_ws, Tuple{pos}}},
     If{Apply{int_ge, Tuple{p, peg_srclen}}, Tuple{Eof{}, peg_srclen}, Do{
