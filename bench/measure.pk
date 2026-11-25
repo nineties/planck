@@ -1,0 +1,137 @@
+# Copyright (C) 2026 nineties
+
+import_lib("list")
+import_lib("string")
+import_lib("table")
+
+measure_options := table.new()
+measure_args := os_argv()
+measure_i := 1
+while (measure_i < array_len(measure_args)) {
+    parts := string.split(measure_args[measure_i], "=")
+    table.set(measure_options, list.nth(parts, 0),
+        string.join("=", list.drop(parts, 1)))
+    measure_i = measure_i + 1
+}
+
+option(key) := table.get(measure_options, key, "")
+
+measure_planck0 := option("planck0_bin")
+measure_cur := option("cur")
+measure_out := option("out")
+measure_samples_cur := f"{measure_out}/samples-cur.pk"
+
+run_checked(program, args, dir) := {
+    r := unwrap(os_run(program, args, "", dir))
+    if (r[0] != 0) {
+        print(r[1])
+        print(r[2])
+        print(f"{program} stopped with status {r[0]}")
+        os_exit(1)
+    }
+    r
+}
+
+measure_once(dir, samples) := {
+    args := array_new(3)
+    args[0] = f"{measure_cur}/bench/run.pk"
+    args[1] = samples
+    args[2] = f"{os_time_ns()}"
+    run_checked(measure_planck0, args, dir)
+}
+
+rounds := string.string_to_int(option("rounds"))
+r := 0
+while (r < rounds) {
+    measure_once(measure_cur, measure_samples_cur)
+    r = r + 1
+}
+
+cat_args := array_new(1)
+cat_args[0] = "/proc/cpuinfo"
+cpuinfo := string.split(run_checked("/bin/cat", cat_args, "")[1], "\n")
+cpu_name := ""
+cpu_count := 0
+for (line in cpuinfo) {
+    if (string.starts_with(line, "processor")) cpu_count = cpu_count + 1
+    if (cpu_name == "" and string.starts_with(line, "model name")) {
+        cpu_name = string.trim(list.nth(string.split(line, ":"), 1))
+    }
+}
+
+memory_kib := 0
+meminfo_args := array_new(1)
+meminfo_args[0] = "/proc/meminfo"
+for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "\n")) {
+    if (string.starts_with(line, "MemTotal:")) {
+        memory_kib = string.string_to_int(
+            list.nth(
+                string.split(string.trim(list.nth(string.split(line, ":"), 1)),
+                    " "), 0))
+    }
+}
+cpu_name = f"{cpu_name}, {(memory_kib * 10 // 1048576) // 10}.{(memory_kib * 10 // 1048576) % 10} GiB memory"
+
+os_name := ""
+for (line in string.split(unwrap(os_read_file("/etc/os-release")), "\n")) {
+    if (string.starts_with(line, "PRETTY_NAME=")) {
+        value :=
+            string.trim(string.join("=", list.drop(string.split(line, "="), 1)))
+        os_name = str_sub(value, 1, str_len(value) - 1)
+    }
+}
+
+date_args := array_new(2)
+date_args[0] = "-u"
+date_args[1] = "+%Y-%m-%dT%H:%M:%SZ"
+date_text := run_checked("/bin/date", date_args, "")[1]
+measure_date := str_sub(date_text, 0, str_len(date_text) - 1)
+
+measure_meta := f"ref={option("ref")}\ncommit={option("commit")}\nplanck0={option("planck0")}\nnproc={cpu_count}\nos={os_name}\ncpu={cpu_name}\ndate={measure_date}\nrounds={rounds}\n"
+measure_meta_path := f"{measure_out}/meta.txt"
+os_write_file(measure_meta_path, measure_meta)
+
+this_run := f"{measure_out}/this-run.pk"
+this_run_md := f"{measure_out}/this-run.md"
+record_args := array_new(4)
+record_args[0] = f"{measure_cur}/bench/record.pk"
+record_args[1] = this_run
+record_args[2] = measure_samples_cur
+record_args[3] = measure_meta_path
+run_checked(measure_planck0, record_args, measure_cur)
+
+report_args := array_new(3)
+report_args[0] = f"{measure_cur}/bench/report.pk"
+report_args[1] = this_run
+report_args[2] = this_run_md
+run_checked(measure_planck0, report_args, measure_cur)
+
+append_text(path, text) := {
+    old := match os_read_file(path) {
+        Ok{t} -> t
+      | Err{_} -> none
+    }
+    os_write_file(path, str_cat(if (old == none) "" else old, text))
+}
+
+if (option("summary") != "") {
+    append_text(option("summary"),
+        f"# Benchmark {option("ref")}\n{unwrap(os_read_file(this_run_md))}")
+}
+
+if (option("results") != "") {
+    results_old := match os_read_file(option("results")) {
+        Ok{t} -> t
+      | Err{_} -> ""
+    }
+    run_lines := string.split(unwrap(os_read_file(this_run)), "\n")
+    recorded :=
+        if (string.starts_with(results_old, "machine(")) list.drop(run_lines, 1)
+        else run_lines
+    append_text(option("results"), string.join("\n", recorded))
+    report_all := array_new(3)
+    report_all[0] = f"{measure_cur}/bench/report.pk"
+    report_all[1] = option("results")
+    report_all[2] = option("results_md")
+    run_checked(measure_planck0, report_all, measure_cur)
+}
