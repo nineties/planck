@@ -29,7 +29,7 @@ collect(path) := {
     acc_table = table.new()
     acc_names = []
     load(path)
-    (acc_table, list.reverse(acc_names))
+    (acc_table, reverse(acc_names))
 }
 
 median(xs) := {
