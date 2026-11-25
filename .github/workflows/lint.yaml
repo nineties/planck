@@ -1,0 +1,12 @@
+name: lint
+on:
+  pull_request:
+jobs:
+  toplevel-underscore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: No new top-level names that start with an underscore
+        run: bash .github/check_toplevel_underscore.sh origin/${{ github.base_ref }}
