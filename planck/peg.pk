@@ -65,15 +65,13 @@ Def{peg_is_head, Lambda{Tuple{e, h},
 
 " peg_map_args(f, Head{a, ...}) = Head{f(a), ...} "
 Def{peg_map_args, Lambda{Tuple{f, m}, Do{
-    Def{r, Apply{expr, Tuple{Apply{head, Tuple{m}}, Tuple{}}}},
     Def{i, 0},
     Def{n, Apply{arity, Tuple{m}}},
+    Def{r, Apply{array_new, Tuple{n}}},
     While{Apply{int_lt, Tuple{i, n}}, Do{
-        Set{r,
-            Apply{array_push,
-                Tuple{r, Apply{f, Tuple{Apply{arg, Tuple{m, i}}}}}}},
+        Apply{array_set, Tuple{r, i, Apply{f, Tuple{Apply{arg, Tuple{m, i}}}}}},
         Set{i, Apply{peg_inc, Tuple{i}}}}},
-    r}}}
+    Apply{expr, Tuple{Apply{head, Tuple{m}}, r}}}}}
 
 Def{peg_fail, Lambda{Tuple{p}, Do{
     If{Apply{int_gt, Tuple{p, peg_far}}, Set{peg_far, p}, none},
@@ -229,13 +227,15 @@ Def{peg_run_rule, none}
 Def{peg_px_seq, Lambda{Tuple{e, p}, Do{
     Def{n, Apply{arity, Tuple{e}}},
     Def{i, 0},
-    Def{vs, Tuple{}},
+    Def{vs, Apply{stk_mark, Tuple{}}},
     While{If{Apply{int_lt, Tuple{i, n}}, Apply{int_ge, Tuple{p, 0}}, false}, Do{
         Set{p, Apply{peg_px, Tuple{Apply{arg, Tuple{e, i}}, p}}},
         If{Apply{int_ge, Tuple{p, 0}},
-            Set{vs, Apply{array_push, Tuple{vs, peg_pv}}}, none},
+            Apply{stk_push, Tuple{peg_pv}}, none},
         Set{i, Apply{peg_inc, Tuple{i}}}}},
-    If{Apply{int_ge, Tuple{p, 0}}, Set{peg_pv, vs}, none},
+    If{Apply{int_ge, Tuple{p, 0}},
+        Set{peg_pv, Apply{stk_expr, Tuple{Quote{Tuple}, vs}}},
+        Apply{stk_drop, Tuple{vs}}},
     p}}}
 
 Def{peg_px_choice, Lambda{Tuple{e, p}, Do{
@@ -249,31 +249,31 @@ Def{peg_px_choice, Lambda{Tuple{e, p}, Do{
 
 " the values of e repeated while it consumes input "
 Def{peg_px_many, Lambda{Tuple{e, p}, Do{
-    Def{vs, Tuple{}},
+    Def{vs, Apply{stk_mark, Tuple{}}},
     Def{q, Apply{peg_px, Tuple{e, p}}},
     While{Apply{int_gt, Tuple{q, p}}, Do{
-        Set{vs, Apply{array_push, Tuple{vs, peg_pv}}},
+        Apply{stk_push, Tuple{peg_pv}},
         Set{p, q},
         Set{q, Apply{peg_px, Tuple{e, p}}}}},
-    Set{peg_pv, vs},
+    Set{peg_pv, Apply{stk_expr, Tuple{Quote{Tuple}, vs}}},
     p}}}
 
 Def{peg_px_delimited, Lambda{Tuple{e, sep, p}, Do{
     Def{q, Apply{peg_px, Tuple{e, p}}},
-    Def{vs, Tuple{}},
+    Def{vs, Apply{stk_mark, Tuple{}}},
     Def{r, 0},
     If{Apply{int_lt, Tuple{q, 0}}, Do{Set{peg_pv, Tuple{}}, p}, Do{
-        Set{vs, Tuple{peg_pv}},
+        Apply{stk_push, Tuple{peg_pv}},
         Set{r, Apply{peg_px, Tuple{sep, q}}},
         If{Apply{int_ge, Tuple{r, 0}},
             Set{r, Apply{peg_px, Tuple{e, r}}}, none},
         While{Apply{int_ge, Tuple{r, 0}}, Do{
-            Set{vs, Apply{array_push, Tuple{vs, peg_pv}}},
+            Apply{stk_push, Tuple{peg_pv}},
             Set{q, r},
             Set{r, Apply{peg_px, Tuple{sep, q}}},
             If{Apply{int_ge, Tuple{r, 0}}, Set{r, Apply{peg_px, Tuple{e, r}}},
                 none}}},
-        Set{peg_pv, vs},
+        Set{peg_pv, Apply{stk_expr, Tuple{Quote{Tuple}, vs}}},
         q}}}}}
 
 Def{peg_px_key, Lambda{Tuple{s, p}, Do{
@@ -564,10 +564,17 @@ Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
                 Tuple{"unexpected input",
                     Apply{peg_line_at, Tuple{peg_far}}}}}}},
     If{Apply{equal, Tuple{loc0, none}}, e,
-        Apply{array_push,
-            Tuple{e,
-                Apply{peg_count_loc,
-                    Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}}}}}}
+        Do{Def{n, Apply{arity, Tuple{e}}},
+            Def{a, Apply{array_new, Tuple{Apply{int_add, Tuple{n, 1}}}}},
+            Def{i, 0},
+            While{Apply{int_lt, Tuple{i, n}}, Do{
+                Apply{array_set, Tuple{a, i, Apply{arg, Tuple{e, i}}}},
+                Set{i, Apply{int_add, Tuple{i, 1}}}}},
+            Apply{array_set,
+                Tuple{a, n,
+                    Apply{peg_count_loc,
+                        Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}},
+            Apply{expr, Tuple{Apply{head, Tuple{e}}, a}}}}}}}
 
 " the decimal text of a natural number "
 Def{peg_dec, none}

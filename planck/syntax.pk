@@ -488,24 +488,23 @@ Def{
     Lambda{
         Tuple{n},
         Do{
-            Def{vs, Tuple{}},
+            Def{vs, Apply{array_new, Tuple{n}}},
             Def{i, 1},
             While{
                 Apply{int_le, Tuple{i, n}},
                 Do{
-                    Set{vs,
-                        Apply{array_push,
-                            Tuple{vs,
-                                Apply{sym_intern,
-                                    Tuple{
-                                        Apply{str_cat,
-                                            Tuple{"%v",
-                                                Apply{peg_itoa,
-                                                    Tuple{i}}}}}}}}},
+                    Apply{array_set,
+                        Tuple{vs, Apply{int_sub, Tuple{i, 1}},
+                            Apply{sym_intern,
+                                Tuple{
+                                    Apply{str_cat,
+                                        Tuple{"%v",
+                                            Apply{peg_itoa,
+                                                Tuple{i}}}}}}}},
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
-            vs
+            Apply{expr, Tuple{Quote{Tuple}, vs}}
         }
     }}
 
@@ -1365,32 +1364,29 @@ Def{
                                     Tuple{Apply{type, Tuple{x}}, Expr}},
                                 Do{
                                     Def{r,
-                                        Apply{expr,
-                                            Tuple{Apply{head, Tuple{x}},
-                                                Tuple{}}}},
+                                        Apply{array_new,
+                                            Tuple{Apply{arity, Tuple{x}}}}},
                                     Def{i, 0},
                                     While{
                                         Apply{int_lt,
                                             Tuple{i, Apply{arity, Tuple{x}}}},
                                         Do{
-                                            Set{
-                                                r,
-                                                Apply{
-                                                    array_push,
-                                                    Tuple{
-                                                        r,
-                                                        Apply{go,
-                                                            Tuple{
-                                                                Apply{arg,
-                                                                    Tuple{
-                                                                        x, i}}}}
-                                                    }
+                                            Apply{
+                                                array_set,
+                                                Tuple{
+                                                    r,
+                                                    i,
+                                                    Apply{go,
+                                                        Tuple{
+                                                            Apply{arg,
+                                                                Tuple{
+                                                                    x, i}}}}
                                                 }
                                             },
                                             Set{i, Apply{int_add, Tuple{i, 1}}}
                                         }
                                     },
-                                    r
+                                    Apply{expr, Tuple{Apply{head, Tuple{x}}, r}}
                                 },
                                 x
                             }
@@ -1908,44 +1904,46 @@ Def{
                 Apply{equal, Tuple{k, n}},
                 Tuple{ps, e},
                 Do{
-                    Def{plain, Tuple{}},
+                    Def{plain, Apply{array_new, Tuple{Apply{int_add, Tuple{k, 1}}}}},
                     Def{i, 0},
                     While{
                         Apply{int_lt, Tuple{i, k}},
                         Do{
-                            Set{plain,
-                                Apply{array_push,
-                                    Tuple{plain, Apply{arg, Tuple{ps, i}}}}},
+                            Apply{array_set,
+                                Tuple{plain, i, Apply{arg, Tuple{ps, i}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
-                    Def{names, Tuple{}},
-                    Def{items, Tuple{}},
+                    Apply{array_set, Tuple{plain, k, Quote{_Rest{_kwrest}}}},
+                    Def{names, Apply{array_new, Tuple{Apply{int_sub, Tuple{n, k}}}}},
+                    Def{items, Apply{array_new, Tuple{Apply{int_sub, Tuple{n, k}}}}},
                     While{
                         Apply{int_lt, Tuple{i, n}},
                         Do{
                             Def{d, Apply{arg, Tuple{ps, i}}},
                             Def{name, Apply{arg, Tuple{d, 0}}},
                             Def{idx, Apply{int_sub, Tuple{i, k}}},
-                            Set{names, Apply{array_push, Tuple{names, name}}},
-                            Set{items, Apply{array_push, Tuple{items, QuasiQuote{Def{UnQuote{name}, Apply{_kwarg, Tuple{_kwrest, UnQuote{idx}, Quote{UnQuote{name}}, Lambda{Tuple{}, UnQuote{Apply{arg, Tuple{d, 1}}}}}}}}}}},
+                            Apply{array_set, Tuple{names, idx, name}},
+                            Apply{array_set, Tuple{items, idx, QuasiQuote{Def{UnQuote{name}, Apply{_kwarg, Tuple{_kwrest, UnQuote{idx}, Quote{UnQuote{name}}, Lambda{Tuple{}, UnQuote{Apply{arg, Tuple{d, 1}}}}}}}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
-                    Def{all,
-                        Apply{array_push,
-                            Tuple{Tuple{},
-                                QuasiQuote{
-                                    Apply{_kwcheck,
-                                        Tuple{_kwrest,
-                                            Quote{UnQuote{names}}}}}}}},
+                    Def{nametuple, Apply{expr, Tuple{Quote{Tuple}, names}}},
+                    Def{all, Apply{array_new, Tuple{Apply{int_add, Tuple{Apply{int_sub, Tuple{n, k}}, 2}}}}},
+                    Apply{array_set,
+                        Tuple{all, 0,
+                            QuasiQuote{
+                                Apply{_kwcheck,
+                                    Tuple{_kwrest,
+                                        Quote{UnQuote{nametuple}}}}}}},
                     Set{i, 0},
                     While{
-                        Apply{int_lt, Tuple{i, Apply{arity, Tuple{items}}}},
+                        Apply{int_lt, Tuple{i, Apply{int_sub, Tuple{n, k}}}},
                         Do{
-                            Set{all,
-                                Apply{array_push,
-                                    Tuple{all, Apply{arg, Tuple{items, i}}}}},
+                            Apply{array_set,
+                                Tuple{all, Apply{int_add, Tuple{i, 1}},
+                                    Apply{array_get, Tuple{items, i}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
-                    Set{all, Apply{array_push, Tuple{all, e}}},
+                    Apply{array_set,
+                        Tuple{all, Apply{int_add, Tuple{Apply{int_sub, Tuple{n, k}}, 1}}, e}},
                     Tuple{
-                        Apply{array_push, Tuple{plain, Quote{_Rest{_kwrest}}}},
+                        Apply{expr, Tuple{Quote{Tuple}, plain}},
                         Apply{expr, Tuple{Quote{Do}, all}}}}}}}}
 
 " a lambda with the parameters of a definition, which may have defaults "
@@ -1965,20 +1963,20 @@ Def{
     Lambda{
         Tuple{x, xs},
         Do{
-            Def{r, Apply{array_push, Tuple{Tuple{}, x}}},
+            Def{r, Apply{array_new, Tuple{Apply{int_add, Tuple{Apply{arity, Tuple{xs}}, 1}}}}},
             Def{i, 0},
+            Apply{array_set, Tuple{r, 0, x}},
             While{
                 Apply{int_lt, Tuple{i, Apply{arity, Tuple{xs}}}},
                 Do{
-                    Set{r,
-                        Apply{array_push,
-                            Tuple{r,
-                                Apply{arg,
-                                    Tuple{Apply{arg, Tuple{xs, i}}, 1}}}}},
+                    Apply{array_set,
+                        Tuple{r, Apply{int_add, Tuple{i, 1}},
+                            Apply{arg,
+                                Tuple{Apply{arg, Tuple{xs, i}}, 1}}}},
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
-            r
+            Apply{expr, Tuple{Quote{Tuple}, r}}
         }}}
 
 " peg_tuple_cat(a, b) is the Tuple of the elements of a and then those of b "
@@ -1987,17 +1985,28 @@ Def{
     Lambda{
         Tuple{a, b},
         Do{
-            Def{r, a},
+            Def{na, Apply{arity, Tuple{a}}},
+            Def{nb, Apply{arity, Tuple{b}}},
+            Def{r, Apply{array_new, Tuple{Apply{int_add, Tuple{na, nb}}}}},
             Def{i, 0},
             While{
-                Apply{int_lt, Tuple{i, Apply{arity, Tuple{b}}}},
+                Apply{int_lt, Tuple{i, na}},
                 Do{
-                    Set{r,
-                        Apply{array_push, Tuple{r, Apply{arg, Tuple{b, i}}}}},
+                    Apply{array_set, Tuple{r, i, Apply{arg, Tuple{a, i}}}},
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
-            r
+            Set{i, 0},
+            While{
+                Apply{int_lt, Tuple{i, nb}},
+                Do{
+                    Apply{array_set,
+                        Tuple{r, Apply{int_add, Tuple{na, i}},
+                            Apply{arg, Tuple{b, i}}}},
+                    Set{i, Apply{int_add, Tuple{i, 1}}}
+                }
+            },
+            Apply{expr, Tuple{Apply{head, Tuple{a}}, r}}
         }}}
 
 " An argument is an expression or name = expression (_Kw{'name, e}). The ones "
@@ -2285,11 +2294,11 @@ peg_import(p, a, o) := {
     }
     m := arg(p, n - 1)
     load := `Apply{_import_module, Tuple{!file, Quote{!m}}}
-    ds := Tuple{}
+    ds := stk_mark()
     if (arity(a) > 0) {
         name := arg(arg(a, 0), 2)
-        ds = array_push(ds, `Def{!name, !load})
-    } else ds = array_push(ds, load)
+        stk_push(`Def{!name, !load})
+    } else stk_push(load)
     if (arity(o) > 0) {
         kind := arg(arg(o, 0), 0)
         ns := arg(arg(o, 0), 1)
@@ -2297,18 +2306,19 @@ peg_import(p, a, o) := {
             j := 0
             while (j < arity(ns)) {
                 x := arg(ns, j)
-                ds = array_push(ds,
+                stk_push(
                     `Def{!x, Apply{_record_get, Tuple{!load, Quote{!x}}}})
                 j = j + 1
             }
         } else {
             hidden := if (kind == 'hiding) ns else Tuple{}
-            ds = array_push(ds,
+            stk_push(
                 `Apply{eval,
                     Tuple{Apply{_import_defs, Tuple{!load, Quote{!hidden}}}}})
         }
     }
-    expr('Do, array_push(ds, none))
+    stk_push(none)
+    stk_expr('Do, ds)
 }
 
 " the name that a definition marked export defines: x for Def{x, e}, f for "
@@ -2327,8 +2337,8 @@ peg_module(n, reverse) := {
         items = Cons{arg(reverse, 0), items}
         reverse = arg(reverse, 1)
     }
-    blocks := Tuple{}
-    cur := Tuple{}
+    blocks := stk_mark()
+    cur := blocks
     names := Nil{}
     while (head(items) == 'Cons) {
         s := arg(items, 0)
@@ -2340,15 +2350,15 @@ peg_module(n, reverse) := {
                 s = d
             }
         }
-        cur = array_push(cur, s)
-        if (arity(cur) == 32) {
-            blocks = array_push(blocks, expr('Do, cur))
-            cur = Tuple{}
+        stk_push(s)
+        if (stk_mark() - cur == 32) {
+            stk_push(stk_expr('Do, cur))
+            cur = stk_mark()
         }
     }
-    if (arity(cur) > 0) blocks = array_push(blocks, expr('Do, cur))
-    blocks = array_push(blocks, `Apply{_module, Tuple{Quote{!names}, !names}})
-    `Def{!n, Apply{Lambda{Tuple{}, !expr('Do, blocks)}, Tuple{}}}
+    if (stk_mark() > cur) stk_push(stk_expr('Do, cur))
+    stk_push(`Apply{_module, Tuple{Quote{!names}, !names}})
+    `Def{!n, Apply{Lambda{Tuple{}, !stk_expr('Do, blocks)}, Tuple{}}}
 }
 
 " === Macro === "
@@ -2392,11 +2402,11 @@ fun expand_macro
     "   level level "
     expand_macro_args(e, level, from) := {
         n := arity(e)
-        xs := Tuple{}
+        xs := array_new(n)
         i := 0
         while (i < n) {
             a := arg(e, i)
-            xs = array_push(xs, if (i < from) a else expand_macro(a, level))
+            array_set(xs, i, if (i < from) a else expand_macro(a, level))
             i = i + 1
         }
         expr(head(e), xs)
@@ -2506,26 +2516,27 @@ _record_with(t, make) := {
     }
     (d @ t, name, v) -> {
         if (_record_index(d, name) == none) record_with_error(d, name)
-        args := Tuple{}
+        args := array_new(arity(fs))
         i := 0
         while (i < arity(fs)) {
-            args = array_push(args,
+            array_set(args, i,
                 expr('Quote, Tuple{if (arg(fs, i) == name) v else arg(_fields(d), i)}))
             i = i + 1
         }
-        eval(expr('Apply, Tuple{expr('Quote, Tuple{make}), args}))
+        eval(expr('Apply, Tuple{expr('Quote, Tuple{make}), expr('Tuple, args)}))
     }
 }
 
 " the names of (a, b, ...): Tuple{a, b, ...} "
 peg_names(a, bs) := {
-    names := Tuple{a}
+    names := array_new(arity(bs) + 1)
+    array_set(names, 0, a)
     i := 0
     while (i < arity(bs)) {
-        names = array_push(names, arg(bs, i))
+        array_set(names, i + 1, arg(bs, i))
         i = i + 1
     }
-    names
+    expr('Tuple, names)
 }
 
 " a variable that no program names "
@@ -2556,11 +2567,12 @@ peg_record(n, fs, m) := {
 peg_destruct(kind, ns, e) := {
     names := peg_names(arg(ns, 0), arg(ns, 1))
     t := peg_fresh()
-    items := Tuple{`Def{!t, !e}}
+    items := array_new(arity(names) + 1)
+    array_set(items, 0, `Def{!t, !e})
     i := 0
     while (i < arity(names)) {
         v := `Apply{_destructure, Tuple{!t, !i, !arity(names)}}
-        items = array_push(items, if (kind == 'Def) `Def{!arg(names, i), !v}
+        array_set(items, i + 1, if (kind == 'Def) `Def{!arg(names, i), !v}
             else `Set{!arg(names, i), !v})
         i = i + 1
     }
@@ -2606,20 +2618,25 @@ peg_index_update(a, i, op, v) := {
 peg_pat_var(p) := type(p) == Symbol and p != '_ and p != 'true and
     p != 'false and p != 'none
 
-" the variables of a pattern in order, pushed on the tuple acc "
-peg_pat_names(p, acc) := {
-    if (type(p) == Symbol) {
-        if (peg_pat_var(p)) acc = array_push(acc, p)
-        return acc
+" the variables of a pattern in order "
+peg_pat_names(p) := {
+    start := stk_mark()
+    collect := none
+    collect = p -> {
+        if (type(p) == Symbol) {
+            if (peg_pat_var(p)) stk_push(p)
+            return none
+        }
+        if (type(p) != Expr or head(p) == 'Quote) return none
+        n := if (head(p) == '_TypeOf) 1 else arity(p)
+        i := 0
+        while (i < n) {
+            collect(arg(p, i))
+            i = i + 1
+        }
     }
-    if (type(p) != Expr or head(p) == 'Quote) return acc
-    n := if (head(p) == '_TypeOf) 1 else arity(p)
-    i := 0
-    while (i < n) {
-        acc = peg_pat_names(arg(p, i), acc)
-        i = i + 1
-    }
-    acc
+    collect(p)
+    stk_expr('Tuple, start)
 }
 
 " a name that is in the tuple twice, or none "
@@ -2647,11 +2664,19 @@ peg_pat_has_or(p) := {
     false
 }
 
-" the alternatives of p or q or ... pushed on the tuple acc "
-peg_or_alts(p, acc) :=
-    if (type(p) == Expr and head(p) == peg_or) peg_or_alts(arg(p, 1),
-        peg_or_alts(arg(p, 0), acc))
-    else array_push(acc, p)
+" the alternatives of p or q or ... "
+peg_or_alts(p) := {
+    start := stk_mark()
+    collect := none
+    collect = p -> {
+        if (type(p) == Expr and head(p) == peg_or) {
+            collect(arg(p, 0))
+            collect(arg(p, 1))
+        } else stk_push(p)
+    }
+    collect(p)
+    stk_expr('Tuple, start)
+}
 
 " the tests all true "
 peg_conj(ts) := {
@@ -2671,10 +2696,10 @@ peg_pat_literals(p) := {
         p == 'none) expr('Quote, Tuple{p}) else p
     if (type(p) != Expr or head(p) == 'Quote) return p
     n := if (head(p) == '_TypeOf) 1 else arity(p)
-    args := Tuple{}
+    args := array_new(arity(p))
     i := 0
     while (i < arity(p)) {
-        args = array_push(args, if (i < n) peg_pat_literals(arg(p, i))
+        array_set(args, i, if (i < n) peg_pat_literals(arg(p, i))
             else arg(p, i))
         i = i + 1
     }
@@ -2719,49 +2744,52 @@ peg_same_names(a, b) := {
 
 " p with every or replaced by a variable and every name written a second time "
 "   by a new variable. "
-" st[0] is the tests, st[1] is Tuple{variable, alternatives} of the or that "
-"   bind variables, "
-" st[2] is the names seen and st[3] is the names of or. "
+" st[0] is the table of the names seen and st[1] is the table of the names of "
+"   or. The tests and the alternatives of or that bind variables are pushed "
+"   on the shared array, a 0 and a test, or a 1 and Tuple{variable, "
+"   alternatives}. "
 peg_pat_walk(p, st) := {
     if (type(p) == Symbol) {
         if (not peg_pat_var(p)) return p
-        if (peg_has_name(st[3], p)) peg_pat_error(
+        if (table_get(st[1], p, false)) peg_pat_error(
             str_cat("a variable of or is written more than once: ",
                 sym_name(p)))
-        if (peg_has_name(st[2], p)) {
+        if (table_get(st[0], p, false)) {
             d := peg_fresh("%d")
-            st[0] = array_push(st[0], `Apply{equal, Tuple{!p, !d}})
+            stk_push(0)
+            stk_push(`Apply{equal, Tuple{!p, !d}})
             return d
         }
-        st[2] = array_push(st[2], p)
+        table_set(st[0], p, true)
         return p
     }
     if (type(p) != Expr or head(p) == 'Quote) return p
     if (head(p) == peg_or) {
-        alts := Tuple{}
         ns := Tuple{}
         i := 0
-        alts0 := peg_or_alts(p, Tuple{})
+        alts0 := peg_or_alts(p)
+        altarr := array_new(arity(alts0))
         while (i < arity(alts0)) {
             a := peg_pat_literals(arg(alts0, i))
-            ni := peg_pat_names(a, Tuple{})
+            ni := peg_pat_names(a)
             if (i > 0 and
                 not peg_same_names(ns, ni)) peg_pat_error(
                 "every alternative of or must bind the same variables")
             ns = ni
-            alts = array_push(alts, a)
+            array_set(altarr, i, a)
             i = i + 1
         }
+        alts := expr('Tuple, altarr)
         i = 0
         while (i < arity(ns)) {
             n := arg(ns, i)
-            if (peg_has_name(st[2], n) and
-                not peg_has_name(st[3], n)) peg_pat_error(
+            if (table_get(st[0], n, false) and
+                not table_get(st[1], n, false)) peg_pat_error(
                 str_cat("a variable of or is written more than once: ",
                     sym_name(n)))
-            if (not peg_has_name(st[3], n)) {
-                st[2] = array_push(st[2], n)
-                st[3] = array_push(st[3], n)
+            if (not table_get(st[1], n, false)) {
+                table_set(st[0], n, true)
+                table_set(st[1], n, true)
             }
             i = i + 1
         }
@@ -2772,17 +2800,19 @@ peg_pat_walk(p, st) := {
             i = i - 1
         }
         t := peg_fresh("%o")
-        st[0] = array_push(st[0], `Apply{!chain, Tuple{!t}})
+        stk_push(0)
+        stk_push(`Apply{!chain, Tuple{!t}})
         if (arity(ns) > 0) {
-            st[1] = array_push(st[1], Tuple{t, alts})
+            stk_push(1)
+            stk_push(Tuple{t, alts})
         }
         return t
     }
     n := if (head(p) == '_TypeOf) 1 else arity(p)
-    args := Tuple{}
+    args := array_new(arity(p))
     i := 0
     while (i < arity(p)) {
-        args = array_push(args, if (i < n) peg_pat_walk(arg(p, i), st)
+        array_set(args, i, if (i < n) peg_pat_walk(arg(p, i), st)
             else arg(p, i))
         i = i + 1
     }
@@ -2796,15 +2826,36 @@ peg_pat_walk(p, st) := {
 " there is nothing to test. wraps is for peg_wrap. "
 peg_pats(ps) := {
     if (not peg_pat_has_or(ps) and
-        peg_pat_dup(peg_pat_names(ps, Tuple{})) == none) return Tuple{ps, none,
+        peg_pat_dup(peg_pat_names(ps)) == none) return Tuple{ps, none,
         Tuple{}}
-    st := array_new(4)
-    st[0] = Tuple{}
-    st[1] = Tuple{}
-    st[2] = Tuple{}
-    st[3] = Tuple{}
+    st := array_new(2)
+    st[0] = table_new()
+    st[1] = table_new()
+    start := stk_mark()
     ps2 := peg_pat_walk(ps, st)
-    Tuple{ps2, peg_conj(st[0]), st[1]}
+    all := stk_expr('Tuple, start)
+    nt := 0
+    i := 0
+    while (i < arity(all)) {
+        if (arg(all, i) == 0) nt = nt + 1
+        i = i + 2
+    }
+    tests := array_new(nt)
+    wraps := array_new(arity(all) / 2 - nt)
+    nt = 0
+    nw := 0
+    i = 0
+    while (i < arity(all)) {
+        if (arg(all, i) == 0) {
+            array_set(tests, nt, arg(all, i + 1))
+            nt = nt + 1
+        } else {
+            array_set(wraps, nw, arg(all, i + 1))
+            nw = nw + 1
+        }
+        i = i + 2
+    }
+    Tuple{ps2, peg_conj(expr('Tuple, tests)), expr('Tuple, wraps)}
 }
 
 " the variables of an or are bound by matching its value again with each "
@@ -2852,7 +2903,7 @@ peg_def_arm(f, ps0, g, e0) := {
     ps := arg(r, 0)
     e := arg(r, 1)
     sp := peg_pat_has_or(ps) or
-        peg_pat_dup(peg_pat_names(ps, Tuple{})) != none or arity(g) > 0
+        peg_pat_dup(peg_pat_names(ps)) != none or arity(g) > 0
     lambda := if (arity(g) > 0) peg_guard(ps, arg(arg(g, 0), 1), e)
         else peg_lambda(ps, e)
     Tuple{f, sp, lambda}
@@ -2941,13 +2992,15 @@ _define_rule('special_arm, peg_token_special)
 " Set{f, Fusion{f, p-arm | q-arm | ...}}. A guard or an or that does not apply "
 "   goes on to the next arm. "
 peg_def_run(a, rest) := {
-    arms := array_push(Tuple{}, a)
+    armarr := array_new(arity(rest) + 1)
+    array_set(armarr, 0, a)
     i := 0
     while (i < arity(rest)) {
-        arms = array_push(arms, arg(arg(rest, i), 1))
+        array_set(armarr, i + 1, arg(arg(rest, i), 1))
         i = i + 1
     }
-    stmts := Tuple{}
+    arms := expr('Tuple, armarr)
+    stmts := stk_mark()
     i = 0
     while (i < arity(arms)) {
         f := arg(arg(arms, i), 0)
@@ -2959,11 +3012,12 @@ peg_def_run(a, rest) := {
             lambda = peg_fuse(arg(arg(arms, k), 2), lambda)
             k = k - 1
         }
-        stmts = array_push(stmts,
+        stk_push(
             `DefFun{!f, !lambda})
         i = j
     }
-    if (arity(stmts) == 1) arg(stmts, 0) else expr('Do, stmts)
+    done := stk_expr('Do, stmts)
+    if (arity(done) == 1) arg(done, 0) else done
 }
 
 def_arm ::= &(postfix (":=" | 'if)) f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" g:('if or_expr)? ":=" e:expr { peg_def_arm(f, ps, g, e) }
