@@ -8,11 +8,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Check whether the code changed
         id: changes
         run: |
-          if [ "$GITHUB_EVENT_NAME" = pull_request ] && ! git diff --name-only HEAD^1 HEAD | grep -qE '^(planck/|\.github/workflows/runtests\.yaml$)'; then
+          if [ "$GITHUB_REF_NAME" != main ] && ! git diff --name-only origin/main...HEAD | grep -qE '^(planck/|\.github/workflows/runtests\.yaml$)'; then
             echo "code=false" >> "$GITHUB_OUTPUT"
           else
             echo "code=true" >> "$GITHUB_OUTPUT"
