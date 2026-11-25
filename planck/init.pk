@@ -16,6 +16,16 @@ Def{expr, mexpr_new}
 Def{typename, type_name}
 Def{_fields, none}
 
+Def{array_push, Lambda{Tuple{m, x}, Do{
+    Def{n, Apply{mexpr_arity, Tuple{m}}},
+    Def{a, Apply{array_new, Tuple{Apply{int_add, Tuple{n, 1}}}}},
+    Def{i, 0},
+    While{Apply{int_lt, Tuple{i, n}}, Do{
+        Apply{array_set, Tuple{a, i, Apply{mexpr_arg, Tuple{m, i}}}},
+        Set{i, Apply{int_add, Tuple{i, 1}}}}},
+    Apply{array_set, Tuple{a, n, x}},
+    Apply{mexpr_new, Tuple{Apply{mexpr_head, Tuple{m}}, a}}}}}
+
 " === Basic Functions === "
 Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 " text(x) is the text of x on one line. A string is its characters, an integer "

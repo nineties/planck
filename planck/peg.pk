@@ -79,7 +79,12 @@ Def{peg_fail, Lambda{Tuple{p}, Do{
     If{Apply{int_gt, Tuple{p, peg_far}}, Set{peg_far, p}, none},
     -1}}}
 
-Def{peg_char_at, Lambda{Tuple{p}, Apply{str_ord, Tuple{peg_src, p}}}}
+Def{peg_ord, Lambda{Tuple{s, i},
+    If{Apply{int_lt, Tuple{i, 0}}, -1,
+    If{Apply{int_lt, Tuple{i, Apply{str_len, Tuple{s}}}},
+        Apply{str_ord, Tuple{s, i}}, -1}}}}
+
+Def{peg_char_at, Lambda{Tuple{p}, Apply{peg_ord, Tuple{peg_src, p}}}}
 
 Def{peg_is_blank, Lambda{Tuple{c},
     If{Apply{equal, Tuple{c, 32}}, true,
@@ -136,7 +141,7 @@ Def{peg_literal, Lambda{Tuple{s, p}, Do{
     Def{i, 0},
     While{If{Apply{int_lt, Tuple{i, n}},
             Apply{equal,
-                Tuple{Apply{str_ord, Tuple{s, i}},
+                Tuple{Apply{peg_ord, Tuple{s, i}},
                     Apply{peg_char_at, Tuple{Apply{int_add, Tuple{p, i}}}}}},
             false},
         Set{i, Apply{peg_inc, Tuple{i}}}},
@@ -167,7 +172,7 @@ Def{peg_charset, Lambda{Tuple{s}, Do{
     Def{d, 0},
     Def{ok, true},
     While{If{ok, Apply{int_lt, Tuple{i, n}}, false}, Do{
-        Set{c, Apply{str_ord, Tuple{s, i}}},
+        Set{c, Apply{peg_ord, Tuple{s, i}}},
         If{Apply{equal, Tuple{c, 92}},
             If{Apply{equal, Tuple{Apply{peg_inc, Tuple{i}}, n}},
                 Set{ok, false}, Do{
@@ -175,18 +180,18 @@ Def{peg_charset, Lambda{Tuple{s}, Do{
                     Tuple{t,
                         Apply{peg_escape_code,
                             Tuple{
-                                Apply{str_ord,
+                                Apply{peg_ord,
                                     Tuple{s,
                                         Apply{peg_inc, Tuple{i}}}}}}, true}},
                 Set{i, Apply{int_add, Tuple{i, 2}}}}},
         If{
             If{Apply{peg_is_alnum, Tuple{c}},
                 Apply{equal,
-                    Tuple{Apply{str_ord, Tuple{s, Apply{peg_inc, Tuple{i}}}},
+                    Tuple{Apply{peg_ord, Tuple{s, Apply{peg_inc, Tuple{i}}}},
                         45}}, false},
             If{Apply{int_ge, Tuple{Apply{int_add, Tuple{i, 2}}, n}},
                 Set{ok, false}, Do{
-                Set{d, Apply{str_ord, Tuple{s, Apply{int_add, Tuple{i, 2}}}}},
+                Set{d, Apply{peg_ord, Tuple{s, Apply{int_add, Tuple{i, 2}}}}},
                 If{Apply{int_gt, Tuple{c, d}}, Set{ok, false}, Do{
                     While{Apply{int_le, Tuple{c, d}}, Do{
                         Apply{table_set, Tuple{t, c, true}},
@@ -530,7 +535,7 @@ Def{peg_count_loc, Lambda{Tuple{s, n, loc}, Do{
     Def{c, Apply{arg, Tuple{loc, 2}}},
     Def{i, 0},
     While{Apply{int_lt, Tuple{i, n}}, Do{
-        If{Apply{equal, Tuple{Apply{str_ord, Tuple{s, i}}, 10}},
+        If{Apply{equal, Tuple{Apply{peg_ord, Tuple{s, i}}, 10}},
             Do{Set{l, Apply{int_add, Tuple{l, 1}}}, Set{c, 1}},
             Set{c, Apply{int_add, Tuple{c, 1}}}},
         Set{i, Apply{int_add, Tuple{i, 1}}}}},

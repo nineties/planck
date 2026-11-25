@@ -459,7 +459,7 @@ check(f"list {[1, 2]}", "list [1, 2]")
 check(f"sym {'a} tree {F{1, "s"}}", "sym a tree F{1, \"s\"}")
 
 check(head(tree("record Tok(kind, value, pos) = tok")), 'Do)
-check(arity(tree("record Tok(kind, value, pos) = tok")), 5)
+check(arity(tree("record Tok(kind, value, pos) = tok")), 4)
 check(head(tree("record R() = r")), 'Do)
 check(tree("t.kind"), 'Apply{_record_get, Tuple{t, Quote{kind}}})
 check(tree("t.a.b"),
@@ -520,9 +520,9 @@ check(tk.kind, 'id)
 check(_record_get(tk, 'pos), 3)
 record R0() = r0
 check(_record_index(r0(), 'x), none)
-check(arity(r0()), 0)
+check(arity(_fields(r0())), 0)
 check(tk == tk, true)
-check(token('id, "abc", 3) == tk, false)
+check(token('id, "abc", 3) == tk, true)
 tk2 := tk with { kind = 'num, pos = 9 }
 check(tk2.kind, 'num)
 check(tk2.pos, 9)
