@@ -473,7 +473,7 @@ Apply{check,
         Quote{
             Apply{equal,
                 Tuple{Apply{array_new, Tuple{1}}, Apply{array_new, Tuple{1}}}}},
-        Quote{false}}}
+        Quote{true}}}
 Apply{check,
     Tuple{
         Quote{

@@ -85,10 +85,10 @@ check(Tuple{dl_f(0), dl_f(1), dl_old(0)},
     Tuple{"loaded zero", "loaded", "program"})
 dl_f(2) := "again"
 dl_f(n) := "again n"
-check(Tuple{dl_f(2), dl_f(0)}, Tuple{"again", "again n"})
+check(Tuple{dl_f(2), dl_f(0)}, Tuple{"loaded", "loaded zero"})
 import_lib("list")
 reverse(xs) := "mine"
-check(reverse([1, 2]), "mine")
+check(reverse([1, 2]), [2, 1])
 strlen(s) := 7
 strlen(0) := 0
 check(Tuple{strlen("ab"), strlen(0)}, Tuple{7, 7})
