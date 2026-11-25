@@ -22,7 +22,7 @@ measure_out := option("out")
 measure_samples_cur := f"{measure_out}/samples-cur.pk"
 
 run_checked(program, args, dir) := {
-    r := os_run(program, args, "", dir)
+    r := unwrap(os_run(program, args, "", dir))
     if (r[0] != 0) {
         print(r[1])
         print(r[2])
