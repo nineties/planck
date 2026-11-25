@@ -81,7 +81,7 @@ _import_module(file, m) := {
 "   import runs by eval "
 _import_defs(m @ Module, hidden) := {
     a := arg(_fields(arg(_fields(m), 0)), 0)
-    ds := Tuple{}
+    ds := stack_mark()
     b := array_get(a, 0)
     i := 0
     while (i < array_len(b)) {
@@ -96,11 +96,12 @@ _import_defs(m @ Module, hidden) := {
             }
             if (not skip) {
                 v := array_get(e, 1)
-                ds = array_push(ds, `Def{!k, Quote{!v}})
+                stack_push(`Def{!k, Quote{!v}})
             }
             e = array_get(e, 2)
         }
         i = i + 1
     }
-    expr('Do, array_push(ds, none))
+    stack_push(none)
+    stack_expr('Do, ds)
 }
