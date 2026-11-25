@@ -603,15 +603,6 @@ Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
                         Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}},
             Apply{expr, Tuple{Apply{head, Tuple{e}}, a}}}}}}}
 
-" the decimal text of a natural number "
-Def{peg_dec, none}
-Set{peg_dec, Lambda{Tuple{n},
-    If{Apply{int_lt, Tuple{n, 10}},
-        Apply{str_sub, Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
-        Apply{str_cat,
-            Tuple{Apply{peg_dec, Tuple{Apply{int_div, Tuple{n, 10}}}},
-                Apply{peg_dec, Tuple{Apply{int_mod, Tuple{n, 10}}}}}}}}}
-
 " the position that SyntaxError e has as its last argument, or none "
 Def{peg_error_loc, Lambda{Tuple{e}, Do{
     Def{last,
@@ -636,11 +627,11 @@ Def{peg_error_text, Lambda{Tuple{e}, Do{
         Apply{str_cat, Tuple{
             Apply{str_cat,
                 Tuple{Apply{str_cat, Tuple{Apply{arg, Tuple{loc, 0}}, ":"}},
-                    Apply{peg_dec, Tuple{Apply{arg, Tuple{loc, 1}}}}}},
+                    Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 1}}, 10}}}},
             Apply{str_cat,
                 Tuple{":",
                     Apply{str_cat,
-                        Tuple{Apply{peg_dec, Tuple{Apply{arg, Tuple{loc, 2}}}},
+                        Tuple{Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 2}}, 10}},
                             Apply{str_cat,
                                 Tuple{": syntax error: ", m}}}}}}}}}}}}
 
