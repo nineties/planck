@@ -13,6 +13,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 concurrency:
   group: planck-bench
   cancel-in-progress: false
@@ -99,7 +100,9 @@ jobs:
           git add bench/results.pk bench/results.md
           git commit -m "bench: record the result of $REF"
           git push origin "$branch"
-          gh pr create --base main --head "$branch" --title "bench: record the result of $REF" --body "Result of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          url=$(gh pr create --base main --head "$branch" --title "bench: record the result of $REF" --body "Result of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+          gh pr merge "$url" --auto --merge
+          gh workflow run runtests.yaml --ref "$branch"
   stop-vm:
     needs: [start-vm, bench]
     if: always()
