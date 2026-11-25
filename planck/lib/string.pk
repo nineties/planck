@@ -12,23 +12,7 @@ module strbuf {
         if (n == 0) "" else {
             a := array_new(n)
             for (i in 0..n - 1) array_set(a, i, vector.get(b, i))
-            m := n
-            while (m > 1) {
-                i := 0
-                j := 0
-                while (i + 1 < m) {
-                    array_set(a, j,
-                        str_cat(array_get(a, i), array_get(a, i + 1)))
-                    i = i + 2
-                    j = j + 1
-                }
-                if (i < m) {
-                    array_set(a, j, array_get(a, i))
-                    j = j + 1
-                }
-                m = j
-            }
-            array_get(a, 0)
+            str_join(a)
         }
     }
 }
@@ -55,12 +39,8 @@ module string {
     export ends_with(s, p) := str_len(p) <= str_len(s) and
         str_sub(s, str_len(s) - str_len(p), str_len(s)) == p
 
-    export index_of_string(s, part, from) := {
-        for (i in from..str_len(s) - str_len(part)) {
-            if (str_sub(s, i, i + str_len(part)) == part) return i
-        }
-        -1
-    }
+    export index_of_string(s, part, from) :=
+        if (from > str_len(s)) -1 else str_find(s, part, from)
 
     export string_repeat(s, n) := {
         r := ""
@@ -71,15 +51,7 @@ module string {
         r
     }
 
-    export string_cmp(a, b) := {
-        n := if (str_len(a) < str_len(b)) str_len(a) else str_len(b)
-        for (i in 0..n - 1) {
-            if (str_ord(a, i) < str_ord(b, i)) return -1
-            if (str_ord(a, i) > str_ord(b, i)) return 1
-        }
-        if (str_len(a) < str_len(b)) -1
-            else if (str_len(a) > str_len(b)) 1 else 0
-    }
+    export string_cmp := str_cmp
 
     export string_less(a, b) := string_cmp(a, b) < 0
 

@@ -13,6 +13,7 @@ Def{head, mexpr_head}
 Def{arity, mexpr_arity}
 Def{arg, mexpr_arg}
 Def{expr, mexpr_new}
+Def{expr_args, mexpr_args}
 Def{typename, type_name}
 Def{_fields, none}
 
