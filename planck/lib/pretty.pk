@@ -10,13 +10,11 @@ module pretty {
     export quote_string(s) := {
         b := strbuf.new()
         strbuf.add(b, "\"")
-        i := 0
-        while (i < str_len(s)) {
+        for (i in 0..str_len(s) - 1) {
             c := str_ord(s, i)
             strbuf.add(b, if (c == 34) "\\\"" else if (c == 92) "\\\\"
                 else if (c == 0) "\\0" else if (c == 10) "\\n"
                 else if (c == 9) "\\t" else string.char(c))
-            i = i + 1
         }
         strbuf.add(b, "\"")
         strbuf.string(b)

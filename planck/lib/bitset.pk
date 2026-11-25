@@ -25,57 +25,40 @@ module bitset {
     }
 
     clear(s) := {
-        i := 0
-        while (i < parray_len(s)) {
-            s[i] = 0
-            i = i + 1
-        }
+        for (i in 0..parray_len(s) - 1) s[i] = 0
     }
 
     export union(dst, src) := {
         changed := false
-        i := 0
-        while (i < parray_len(dst)) {
+        for (i in 0..parray_len(dst) - 1) {
             w := bit_or(dst[i], src[i])
             if (w != dst[i]) {
                 dst[i] = w
                 changed = true
             }
-            i = i + 1
         }
         changed
     }
 
     export minus(dst, src) := {
-        i := 0
-        while (i < parray_len(dst)) {
+        for (i in 0..parray_len(dst) - 1) {
             dst[i] = bit_and(dst[i], bit_not(src[i]))
-            i = i + 1
         }
     }
 
     export equal(a, b) := {
-        i := 0
-        ok := true
-        while (ok and i < parray_len(a)) {
-            if (a[i] != b[i]) ok = false
-            i = i + 1
-        }
-        ok
+        for (i in 0..parray_len(a) - 1) if (a[i] != b[i]) return false
+        true
     }
 
     export each(s, f) := {
-        i := 0
-        while (i < parray_len(s)) {
+        for (i in 0..parray_len(s) - 1) {
             w := s[i]
             if (w != 0) {
-                k := 0
-                while (k < 30) {
+                for (k in 0..29) {
                     if (bit_and(w, bit_shl(1, k)) != 0) f(i * 30 + k)
-                    k = k + 1
                 }
             }
-            i = i + 1
         }
     }
 

@@ -28,18 +28,11 @@ module bytes {
     }
 
     export string(b, s) := {
-        i := 0
-        while (i < str_len(s)) {
-            u8(b, str_ord(s, i))
-            i = i + 1
-        }
+        for (i in 0..str_len(s) - 1) u8(b, str_ord(s, i))
     }
 
     export zeros(b, n) := {
-        while (n > 0) {
-            u8(b, 0)
-            n = n - 1
-        }
+        for (_ in 1..n) u8(b, 0)
     }
 
     export align(b, a) := {
@@ -47,11 +40,7 @@ module bytes {
     }
 
     export append(b, c) := {
-        i := 0
-        while (i < len(c)) {
-            u8(b, vector.get(c, i))
-            i = i + 1
-        }
+        for (x in c) u8(b, x)
     }
 
     export get(b, i) := vector.get(b, i)
@@ -67,11 +56,7 @@ module bytes {
     export to_u8(b) := {
         n := len(b)
         a := parray_new_u8(n)
-        i := 0
-        while (i < n) {
-            a[i] = vector.get(b, i)
-            i = i + 1
-        }
+        for (i in 0..n - 1) a[i] = vector.get(b, i)
         a
     }
 }
