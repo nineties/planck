@@ -2294,11 +2294,11 @@ peg_import(p, a, o) := {
     }
     m := arg(p, n - 1)
     load := `Apply{_import_module, Tuple{!file, Quote{!m}}}
-    ds := stk_mark()
+    ds := stack_mark()
     if (arity(a) > 0) {
         name := arg(arg(a, 0), 2)
-        stk_push(`Def{!name, !load})
-    } else stk_push(load)
+        stack_push(`Def{!name, !load})
+    } else stack_push(load)
     if (arity(o) > 0) {
         kind := arg(arg(o, 0), 0)
         ns := arg(arg(o, 0), 1)
@@ -2306,19 +2306,19 @@ peg_import(p, a, o) := {
             j := 0
             while (j < arity(ns)) {
                 x := arg(ns, j)
-                stk_push(
+                stack_push(
                     `Def{!x, Apply{_record_get, Tuple{!load, Quote{!x}}}})
                 j = j + 1
             }
         } else {
             hidden := if (kind == 'hiding) ns else Tuple{}
-            stk_push(
+            stack_push(
                 `Apply{eval,
                     Tuple{Apply{_import_defs, Tuple{!load, Quote{!hidden}}}}})
         }
     }
-    stk_push(none)
-    stk_expr('Do, ds)
+    stack_push(none)
+    stack_expr('Do, ds)
 }
 
 " the name that a definition marked export defines: x for Def{x, e}, f for "
@@ -2337,7 +2337,7 @@ peg_module(n, reverse) := {
         items = Cons{arg(reverse, 0), items}
         reverse = arg(reverse, 1)
     }
-    blocks := stk_mark()
+    blocks := stack_mark()
     cur := blocks
     names := Nil{}
     while (head(items) == 'Cons) {
@@ -2350,15 +2350,15 @@ peg_module(n, reverse) := {
                 s = d
             }
         }
-        stk_push(s)
-        if (stk_mark() - cur == 32) {
-            stk_push(stk_expr('Do, cur))
-            cur = stk_mark()
+        stack_push(s)
+        if (stack_mark() - cur == 32) {
+            stack_push(stack_expr('Do, cur))
+            cur = stack_mark()
         }
     }
-    if (stk_mark() > cur) stk_push(stk_expr('Do, cur))
-    stk_push(`Apply{_module, Tuple{Quote{!names}, !names}})
-    `Def{!n, Apply{Lambda{Tuple{}, !stk_expr('Do, blocks)}, Tuple{}}}
+    if (stack_mark() > cur) stack_push(stack_expr('Do, cur))
+    stack_push(`Apply{_module, Tuple{Quote{!names}, !names}})
+    `Def{!n, Apply{Lambda{Tuple{}, !stack_expr('Do, blocks)}, Tuple{}}}
 }
 
 " === Macro === "
@@ -2620,11 +2620,11 @@ peg_pat_var(p) := type(p) == Symbol and p != '_ and p != 'true and
 
 " the variables of a pattern in order "
 peg_pat_names(p) := {
-    start := stk_mark()
+    start := stack_mark()
     collect := none
     collect = p -> {
         if (type(p) == Symbol) {
-            if (peg_pat_var(p)) stk_push(p)
+            if (peg_pat_var(p)) stack_push(p)
             return none
         }
         if (type(p) != Expr or head(p) == 'Quote) return none
@@ -2636,7 +2636,7 @@ peg_pat_names(p) := {
         }
     }
     collect(p)
-    stk_expr('Tuple, start)
+    stack_expr('Tuple, start)
 }
 
 " a name that is in the tuple twice, or none "
@@ -2666,16 +2666,16 @@ peg_pat_has_or(p) := {
 
 " the alternatives of p or q or ... "
 peg_or_alts(p) := {
-    start := stk_mark()
+    start := stack_mark()
     collect := none
     collect = p -> {
         if (type(p) == Expr and head(p) == peg_or) {
             collect(arg(p, 0))
             collect(arg(p, 1))
-        } else stk_push(p)
+        } else stack_push(p)
     }
     collect(p)
-    stk_expr('Tuple, start)
+    stack_expr('Tuple, start)
 }
 
 " the tests all true "
@@ -2756,8 +2756,8 @@ peg_pat_walk(p, st) := {
                 sym_name(p)))
         if (table_get(st[0], p, false)) {
             d := peg_fresh("%d")
-            stk_push(0)
-            stk_push(`Apply{equal, Tuple{!p, !d}})
+            stack_push(0)
+            stack_push(`Apply{equal, Tuple{!p, !d}})
             return d
         }
         table_set(st[0], p, true)
@@ -2800,11 +2800,11 @@ peg_pat_walk(p, st) := {
             i = i - 1
         }
         t := peg_fresh("%o")
-        stk_push(0)
-        stk_push(`Apply{!chain, Tuple{!t}})
+        stack_push(0)
+        stack_push(`Apply{!chain, Tuple{!t}})
         if (arity(ns) > 0) {
-            stk_push(1)
-            stk_push(Tuple{t, alts})
+            stack_push(1)
+            stack_push(Tuple{t, alts})
         }
         return t
     }
@@ -2831,9 +2831,9 @@ peg_pats(ps) := {
     st := array_new(2)
     st[0] = table_new()
     st[1] = table_new()
-    start := stk_mark()
+    start := stack_mark()
     ps2 := peg_pat_walk(ps, st)
-    all := stk_expr('Tuple, start)
+    all := stack_expr('Tuple, start)
     nt := 0
     i := 0
     while (i < arity(all)) {
@@ -3000,7 +3000,7 @@ peg_def_run(a, rest) := {
         i = i + 1
     }
     arms := expr('Tuple, armarr)
-    stmts := stk_mark()
+    stmts := stack_mark()
     i = 0
     while (i < arity(arms)) {
         f := arg(arg(arms, i), 0)
@@ -3012,11 +3012,11 @@ peg_def_run(a, rest) := {
             lambda = peg_fuse(arg(arg(arms, k), 2), lambda)
             k = k - 1
         }
-        stk_push(
+        stack_push(
             `DefFun{!f, !lambda})
         i = j
     }
-    done := stk_expr('Do, stmts)
+    done := stack_expr('Do, stmts)
     if (arity(done) == 1) arg(done, 0) else done
 }
 
