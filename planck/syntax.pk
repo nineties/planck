@@ -155,44 +155,130 @@ Apply{table_set, Tuple{peg_escapes, 39, "'"}}
 Apply{table_set, Tuple{peg_escapes, 92, "\\"}}
 
 " string: \"...\" with the peg_escapes above, in one line "
-Def{peg_token_string, Lambda{Tuple{p}, Do{
-    Set{p, Apply{peg_skip_ws, Tuple{p}}},
-    Def{q, Apply{peg_inc, Tuple{p}}},
-    Def{start, q},
-    Def{acc, ""},
-    Def{c, Apply{peg_char_at, Tuple{q}}},
-    Def{e, none},
-    If{Apply{not_equal, Tuple{Apply{peg_char_at, Tuple{p}}, 34}},
-        Apply{peg_fail, Tuple{p}}, Do{
-        While{
-            If{Apply{not_equal, Tuple{c, 34}},
-                If{Apply{not_equal, Tuple{c, 10}}, Apply{int_ge, Tuple{c, 0}},
-                    false}, false}, Do{
-            If{Apply{equal, Tuple{c, 92}}, Do{
-                Set{e,
-                    Apply{table_get,
-                        Tuple{peg_escapes,
-                            Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}},
-                            none}}},
-                If{Apply{equal, Tuple{e, none}},
-                    Do{Set{c, -1}, Set{q, Apply{peg_fail, Tuple{q}}}}, Do{
-                    Set{acc,
+Def{peg_token_string, none}
+Def{peg_token_istr_text, none}
+Apply{Lambda{Tuple{}, Do{
+    Def{join, Lambda{Tuple{m}, Do{
+        Def{e, Apply{stack_expr, Tuple{Quote{Tuple}, m}}},
+        Def{n, Apply{arity, Tuple{e}}},
+        Def{a, Apply{array_new, Tuple{Apply{int_add, Tuple{n, 1}}}}},
+        Def{i, 0},
+        While{Apply{int_lt, Tuple{i, n}}, Do{
+            Apply{array_set, Tuple{a, i, Apply{arg, Tuple{e, i}}}},
+            Set{i, Apply{int_add, Tuple{i, 1}}}}},
+        Apply{array_set, Tuple{a, n, ""}},
+        Set{n, Apply{int_add, Tuple{n, 1}}},
+        While{Apply{int_gt, Tuple{n, 1}}, Do{
+            Def{j, 0},
+            Set{i, 0},
+            While{Apply{int_lt, Tuple{Apply{int_add, Tuple{i, 1}}, n}}, Do{
+                Apply{array_set,
+                    Tuple{a, j,
                         Apply{str_cat,
-                            Tuple{acc,
-                                Apply{str_sub, Tuple{peg_src, start, q}}}}},
-                    Set{acc, Apply{str_cat, Tuple{acc, e}}},
-                    Set{q, Apply{int_add, Tuple{q, 2}}},
-                    Set{start, q}}}},
-                Set{q, Apply{peg_inc, Tuple{q}}}},
-            If{Apply{int_ge, Tuple{c, 0}}, Set{c, Apply{peg_char_at, Tuple{q}}},
-                none}}},
-        If{Apply{equal, Tuple{c, 34}},
+                            Tuple{Apply{array_get, Tuple{a, i}},
+                                Apply{array_get,
+                                    Tuple{a, Apply{int_add, Tuple{i, 1}}}}}}}},
+                Set{j, Apply{int_add, Tuple{j, 1}}},
+                Set{i, Apply{int_add, Tuple{i, 2}}}}},
+            If{Apply{int_lt, Tuple{i, n}}, Do{
+                Apply{array_set,
+                    Tuple{a, j, Apply{array_get, Tuple{a, i}}}},
+                Set{j, Apply{int_add, Tuple{j, 1}}}}, none},
+            Set{n, j}}},
+        Apply{array_get, Tuple{a, 0}}}}},
+    Set{peg_token_string, Lambda{Tuple{p}, Do{
+        Set{p, Apply{peg_skip_ws, Tuple{p}}},
+        Def{q, Apply{peg_inc, Tuple{p}}},
+        Def{start, q},
+        Def{m, Apply{stack_mark, Tuple{}}},
+        Def{c, Apply{peg_char_at, Tuple{q}}},
+        Def{e, none},
+        If{Apply{not_equal, Tuple{Apply{peg_char_at, Tuple{p}}, 34}},
+            Apply{peg_fail, Tuple{p}}, Do{
+            While{
+                If{Apply{not_equal, Tuple{c, 34}},
+                    If{Apply{not_equal, Tuple{c, 10}},
+                        Apply{int_ge, Tuple{c, 0}}, false}, false}, Do{
+                If{Apply{equal, Tuple{c, 92}}, Do{
+                    Set{e,
+                        Apply{table_get,
+                            Tuple{peg_escapes,
+                                Apply{peg_char_at,
+                                    Tuple{Apply{peg_inc, Tuple{q}}}},
+                                none}}},
+                    If{Apply{equal, Tuple{e, none}},
+                        Do{Set{c, -1}, Set{q, Apply{peg_fail, Tuple{q}}}}, Do{
+                        Apply{stack_push,
+                            Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
+                        Apply{stack_push, Tuple{e}},
+                        Set{q, Apply{int_add, Tuple{q, 2}}},
+                        Set{start, q}}}},
+                    Set{q, Apply{peg_inc, Tuple{q}}}},
+                If{Apply{int_ge, Tuple{c, 0}},
+                    Set{c, Apply{peg_char_at, Tuple{q}}}, none}}},
+            If{Apply{equal, Tuple{c, 34}},
+                Do{
+                    Apply{stack_push,
+                        Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
+                    Set{peg_pv, Apply{join, Tuple{m}}},
+                    Apply{peg_inc, Tuple{q}}},
+                Do{Apply{stack_pop, Tuple{m}}, Apply{peg_fail, Tuple{q}}}}}}}}},
+    Set{peg_token_istr_text, Lambda{Tuple{p}, Do{
+        Def{q, p},
+        Def{start, p},
+        Def{m, Apply{stack_mark, Tuple{}}},
+        Def{ok, true},
+        Def{go, true},
+        Def{c, Apply{peg_char_at, Tuple{q}}},
+        Def{e, none},
+        Def{flush, Lambda{Tuple{x}, Do{
+            Apply{stack_push,
+                Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
+            Apply{stack_push, Tuple{x}},
+            Set{q, Apply{int_add, Tuple{q, 2}}},
+            Set{start, q},
+            Set{c, Apply{peg_char_at, Tuple{q}}}}}},
+        While{go, Do{
+            If{
+                If{Apply{equal, Tuple{c, 34}}, true,
+                    If{Apply{int_lt, Tuple{c, 0}}, true,
+                        Apply{equal, Tuple{c, 10}}}},
+                Set{go, false},
+                If{Apply{equal, Tuple{c, 123}},
+                    If{Apply{equal,
+                            Tuple{Apply{peg_char_at,
+                                    Tuple{Apply{int_add, Tuple{q, 1}}}}, 123}},
+                        Apply{flush, Tuple{"{"}},
+                        Set{go, false}},
+                    If{Apply{equal, Tuple{c, 125}},
+                        If{Apply{equal,
+                                Tuple{Apply{peg_char_at,
+                                        Tuple{Apply{int_add, Tuple{q, 1}}}},
+                                    125}},
+                            Apply{flush, Tuple{"}"}},
+                            Do{Set{ok, false}, Set{go, false}}},
+                        If{Apply{equal, Tuple{c, 92}},
+                            Do{
+                                Set{e,
+                                    Apply{table_get,
+                                        Tuple{peg_escapes,
+                                            Apply{peg_char_at,
+                                                Tuple{Apply{int_add,
+                                                        Tuple{q, 1}}}},
+                                            none}}},
+                                If{Apply{equal, Tuple{e, none}},
+                                    Do{Set{ok, false}, Set{go, false}},
+                                    Apply{flush, Tuple{e}}}},
+                            Do{Set{q, Apply{int_add, Tuple{q, 1}}},
+                                Set{c, Apply{peg_char_at, Tuple{q}}}}}}}}}},
+        If{ok,
             Do{
-                Set{peg_pv,
-                    Apply{str_cat,
-                        Tuple{acc, Apply{str_sub, Tuple{peg_src, start, q}}}}},
-                Apply{peg_inc, Tuple{q}}},
-            Apply{peg_fail, Tuple{q}}}}}}}}
+                Apply{stack_push,
+                    Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
+                Set{peg_pv, Apply{join, Tuple{m}}},
+                q},
+            Do{Apply{stack_pop, Tuple{m}}, Apply{peg_fail, Tuple{q}}}}}}},
+    none}}, Tuple{}}
 
 " 'word in a grammar: Key{\"word\"} "
 Def{peg_token_keyword, Lambda{Tuple{p}, Do{
@@ -805,169 +891,6 @@ Def{
                 },
                 Do{Set{peg_pv, none}, Apply{int_add, Tuple{p, 2}}},
                 Apply{peg_fail, Tuple{p}}
-            }
-        }
-    }}
-
-Def{
-    peg_token_istr_text,
-    Lambda{
-        Tuple{p},
-        Do{
-            Def{q, p},
-            Def{start, p},
-            Def{acc, ""},
-            Def{ok, true},
-            Def{go, true},
-            Def{c, Apply{peg_char_at, Tuple{q}}},
-            While{
-                go,
-                Do{
-                    If{
-                        If{
-                            Apply{equal, Tuple{c, 34}},
-                            true,
-                            If{Apply{int_lt, Tuple{c, 0}}, true,
-                                Apply{equal, Tuple{c, 10}}}
-                        },
-                        Set{go, false},
-                        If{
-                            Apply{equal, Tuple{c, 123}},
-                            Do{
-                                If{
-                                    Apply{equal,
-                                        Tuple{
-                                            Apply{peg_char_at,
-                                                Tuple{
-                                                    Apply{int_add,
-                                                        Tuple{q, 1}}}}, 123}},
-                                    Do{
-                                        Set{
-                                            acc,
-                                            Apply{
-                                                str_cat,
-                                                Tuple{
-                                                    Apply{
-                                                        str_cat,
-                                                        Tuple{acc,
-                                                            Apply{str_sub,
-                                                                Tuple{peg_src,
-                                                                    start, q}}}
-                                                    },
-                                                    "{"
-                                                }
-                                            }
-                                        },
-                                        Set{q, Apply{int_add, Tuple{q, 2}}},
-                                        Set{start, q},
-                                        Set{c, Apply{peg_char_at, Tuple{q}}}
-                                    },
-                                    Set{go, false}
-                                }
-                            },
-                            If{
-                                Apply{equal, Tuple{c, 125}},
-                                Do{
-                                    If{
-                                        Apply{
-                                            equal,
-                                            Tuple{
-                                                Apply{peg_char_at,
-                                                    Tuple{
-                                                        Apply{int_add,
-                                                            Tuple{q, 1}}}}, 125}
-                                        },
-                                        Do{
-                                            Set{
-                                                acc,
-                                                Apply{
-                                                    str_cat,
-                                                    Tuple{
-                                                        Apply{
-                                                            str_cat,
-                                                            Tuple{
-                                                                acc,
-                                                                Apply{str_sub,
-                                                                    Tuple{
-                                                                        peg_src,
-                                                                        start,
-                                                                        q}}
-                                                            }
-                                                        },
-                                                        "}"
-                                                    }
-                                                }
-                                            },
-                                            Set{q, Apply{int_add, Tuple{q, 2}}},
-                                            Set{start, q},
-                                            Set{c, Apply{peg_char_at, Tuple{q}}}
-                                        },
-                                        Do{Set{ok, false}, Set{go, false}}
-                                    }
-                                },
-                                If{
-                                    Apply{equal, Tuple{c, 92}},
-                                    Do{
-                                        Def{
-                                            e,
-                                            Apply{
-                                                table_get,
-                                                Tuple{
-                                                    peg_escapes,
-                                                    Apply{peg_char_at,
-                                                        Tuple{
-                                                            Apply{int_add,
-                                                                Tuple{q, 1}}}},
-                                                    none
-                                                }
-                                            }
-                                        },
-                                        If{
-                                            Apply{equal, Tuple{e, none}},
-                                            Do{Set{ok, false}, Set{go, false}},
-                                            Do{
-                                                Set{
-                                                    acc,
-                                                    Apply{
-                                                        str_cat,
-                                                        Tuple{
-                                                            Apply{
-                                                                str_cat,
-                                                                Tuple{
-                                                                    acc,
-                                                                    Apply{str_sub, Tuple{peg_src, start, q}}
-                                                                }
-                                                            },
-                                                            e
-                                                        }
-                                                    }
-                                                },
-                                                Set{q,
-                                                    Apply{int_add,
-                                                        Tuple{q, 2}}},
-                                                Set{start, q},
-                                                Set{c,
-                                                    Apply{peg_char_at,
-                                                        Tuple{q}}}
-                                            }
-                                        }
-                                    },
-                                    Do{Set{q, Apply{int_add, Tuple{q, 1}}},
-                                        Set{c, Apply{peg_char_at, Tuple{q}}}}
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            If{
-                ok,
-                Do{
-                    Set{peg_pv,
-                        Apply{str_cat,
-                            Tuple{acc,
-                                Apply{str_sub, Tuple{peg_src, start, q}}}}}, q},
-                Apply{peg_fail, Tuple{q}}
             }
         }
     }}
