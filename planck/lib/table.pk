@@ -9,7 +9,8 @@ module table {
 
     export len(tb @ Table) := array_get(arg(_unwrap_table(tb), 0), 1)
 
-    export has(tb @ Table, k) := table_find(arg(_unwrap_table(tb), 0), k, hash(k)) != none
+    export has(tb @ Table, k) :=
+        table_find(arg(_unwrap_table(tb), 0), k, hash(k)) != none
 
     export items(tb @ Table) := {
         r := []
