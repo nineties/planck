@@ -2979,7 +2979,7 @@ _iter(Range{a, b}) := {
     } else end
 }
 
-" an array and a plain array: the elements from 0 "
+" an array, a plain array and an M-expression: the elements from 0 "
 _iter(a @ Array) := {
     i := 0
     n := array_len(a)
@@ -2994,6 +2994,14 @@ _iter(a @ PArray) := {
     (end) -> if (i < n) {
         i += 1
         parray_get(a, i - 1)
+    } else end
+}
+_iter(e @ Expr) := {
+    i := 0
+    n := arity(e)
+    (end) -> if (i < n) {
+        i += 1
+        arg(e, i - 1)
     } else end
 }
 

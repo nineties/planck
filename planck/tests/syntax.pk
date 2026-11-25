@@ -631,6 +631,9 @@ av := array_new(3)
 av[0] = 7
 av[2] = 9
 check(collect(av), [7, none, 9])
+check(collect(Tuple{1, 2, 3}), [1, 2, 3])
+check(collect(Tuple{}), [])
+check(collect(Pair{1, 2}), [1, 2])
 check(collect(array_new(0)), [])
 pv := parray_new_u8(3)
 pv[1] = 200
