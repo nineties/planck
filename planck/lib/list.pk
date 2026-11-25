@@ -85,10 +85,10 @@ module list {
     export list_to_array(xs) := {
         a := array_new(length(xs))
         i := 0
-        each(x -> {
+        for (x in xs) {
             array_set(a, i, x)
             i = i + 1
-        }, xs)
+        }
         a
     }
 

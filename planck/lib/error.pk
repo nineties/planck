@@ -7,13 +7,12 @@ module error {
     export line_col(src, pos) := {
         line := 1
         col := 1
-        i := 0
-        while (i < pos and i < str_len(src)) {
+        n := if (pos < str_len(src)) pos else str_len(src)
+        for (i in 0..n - 1) {
             if (str_ord(src, i) == 10) {
                 line = line + 1
                 col = 1
             } else col = col + 1
-            i = i + 1
         }
         Tuple{line, col}
     }
