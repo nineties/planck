@@ -1,7 +1,5 @@
 name: bench
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
     inputs:
       ref:
@@ -12,14 +10,10 @@ on:
         description: Number of runs of the measured version
         required: false
         default: '5'
-      pr:
-        description: Open a pull request that records the result in bench/results.md
-        type: boolean
-        required: false
-        default: false
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 concurrency:
   group: planck-bench
   cancel-in-progress: false
@@ -50,17 +44,14 @@ jobs:
         env:
           INPUT_REF: ${{ inputs.ref }}
           INPUT_ROUNDS: ${{ inputs.rounds }}
-          INPUT_PR: ${{ inputs.pr }}
         run: |
           ref=${INPUT_REF:-$GITHUB_REF_NAME}
           commit=$(git rev-parse --verify -q "$ref^{commit}" || git rev-parse --verify -q "origin/$ref^{commit}")
-          if [ "$GITHUB_EVENT_NAME" = push ] || [ "$INPUT_PR" = true ]; then record=true; else record=false; fi
           git show "$commit:bench/run.pk" > /dev/null
           {
             echo "ref=$ref"
             echo "commit=$commit"
             echo "rounds=${INPUT_ROUNDS:-5}"
-            echo "record=$record"
           } >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
@@ -76,7 +67,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - uses: actions/checkout@v4
-        if: steps.refs.outputs.record == 'true'
         with:
           ref: main
           path: main
@@ -85,13 +75,11 @@ jobs:
           REF: ${{ steps.refs.outputs.ref }}
           COMMIT: ${{ steps.refs.outputs.commit }}
           ROUNDS: ${{ steps.refs.outputs.rounds }}
-          RECORD: ${{ steps.refs.outputs.record }}
         run: |
           rm -rf out
           mkdir out
-          results=
-          results_md=
-          if [ "$RECORD" = true ]; then results=$PWD/main/bench/results.pk; results_md=$PWD/main/bench/results.md; fi
+          results=$PWD/main/bench/results.pk
+          results_md=$PWD/main/bench/results.md
           cd cur
           ../planck0 bench/measure.pk "planck0_bin=$PWD/../planck0" "cur=$PWD" "out=$PWD/../out" "ref=$REF" "commit=$COMMIT" "planck0=$(cat ../planck0.version)" "rounds=$ROUNDS" "summary=$GITHUB_STEP_SUMMARY" "results=$results" "results_md=$results_md"
       - uses: actions/upload-artifact@v4
@@ -100,7 +88,6 @@ jobs:
           path: out
           if-no-files-found: ignore
       - name: Open a pull request that records the result
-        if: steps.refs.outputs.record == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           REF: ${{ steps.refs.outputs.ref }}
@@ -113,7 +100,9 @@ jobs:
           git add bench/results.pk bench/results.md
           git commit -m "bench: record the result of $REF"
           git push origin "$branch"
-          gh pr create --base main --head "$branch" --title "bench: record the result of $REF" --body "Result of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          url=$(gh pr create --base main --head "$branch" --title "bench: record the result of $REF" --body "Result of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+          gh pr merge "$url" --auto --merge
+          gh workflow run runtests.yaml --ref "$branch"
   stop-vm:
     needs: [start-vm, bench]
     if: always()
