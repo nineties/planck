@@ -6,8 +6,6 @@ module list {
     export foldl(f, acc, Nil{}) := acc
     foldl(f, acc, x :: xs) := foldl(f, f(acc, x), xs)
 
-    export reverse(xs) := foldl((acc, x) -> x :: acc, [], xs)
-
     export foldr(f, init, xs) := foldl((acc, x) -> f(x, acc), init, reverse(xs))
 
     export length(xs) := foldl((n, _) -> n + 1, 0, xs)
@@ -113,7 +111,6 @@ module list {
 }
 
 foldl := list.foldl
-reverse := list.reverse
 length := list.length
 append := list.append
 map := list.map

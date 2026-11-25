@@ -8,9 +8,6 @@ import_lib := (() -> {
 
     preprocess_hook := none
 
-    reverse_onto(Nil{}, acc) := acc
-    reverse_onto(x :: xs, acc) := reverse_onto(xs, x :: acc)
-
     read_preprocessed(path, state, text) := {
         s := match os_read_file(path) {
             Ok{text} -> text
@@ -42,7 +39,7 @@ import_lib := (() -> {
         last := arg(acc, 0)
         if (type(last) != Expr or head(last) != 'PreprocessEnd or
             arity(last) != 1 or arg(last, 0) != n - 1) return none
-        reverse_onto(arg(acc, 1), [])
+        reverse(arg(acc, 1))
     }
 
     load_lib(name) :=
@@ -80,23 +77,11 @@ _import_module(file, m) := {
 " the definitions of the fields of the module that are not in hidden, which "
 "   import runs by eval "
 _import_defs(m @ Module, hidden) := {
-    a := arg(_fields(arg(_fields(m), 0)), 0)
     ds := stack_mark()
-    b := array_get(a, 0)
-    i := 0
-    while (i < array_len(b)) {
-        e := array_get(b, i)
-        while (e != none) {
-            k := array_get(e, 0)
-            skip := false
-            for (h in hidden) if (h == k) skip = true
-            if (not skip) {
-                v := array_get(e, 1)
-                stack_push(`Def{!k, Quote{!v}})
-            }
-            e = array_get(e, 2)
-        }
-        i = i + 1
+    for (Tuple{k, v} in arg(_fields(m), 0)) {
+        skip := false
+        for (h in hidden) if (h == k) skip = true
+        if (not skip) stack_push(`Def{!k, Quote{!v}})
     }
     stack_push(none)
     stack_expr('Do, ds)

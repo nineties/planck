@@ -383,32 +383,6 @@ Def{peg_to_list, Lambda{Tuple{t}, Do{
 " The functions peg_* and the rules of the syntax sugar. They come before the "
 "   grammar since the actions of its rules call them. "
 
-" the decimal text of an integer "
-
-Def{peg_itoa, none}
-Set{peg_itoa,
-    Lambda{
-        Tuple{n},
-        If{
-            Apply{int_lt, Tuple{n, 0}},
-            Apply{str_cat,
-                Tuple{"-",
-                    Apply{peg_itoa, Tuple{Apply{int_sub, Tuple{0, n}}}}}},
-            If{
-                Apply{int_lt, Tuple{n, 10}},
-                Apply{str_sub,
-                    Tuple{"0123456789", n, Apply{int_add, Tuple{n, 1}}}},
-                Apply{
-                    str_cat,
-                    Tuple{
-                        Apply{peg_itoa, Tuple{Apply{int_div, Tuple{n, 10}}}},
-                        Apply{peg_itoa, Tuple{Apply{int_mod, Tuple{n, 10}}}}
-                    }
-                }
-            }
-        }
-    }}
-
 " a function that matches no arguments: what follows p if c -> e when no | "
 "   follows it "
 
@@ -585,8 +559,8 @@ Def{
                                 Tuple{
                                     Apply{str_cat,
                                         Tuple{"%v",
-                                            Apply{peg_itoa,
-                                                Tuple{i}}}}}}}},
+                                            Apply{int_to_str,
+                                                Tuple{i, 10}}}}}}}},
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
@@ -866,7 +840,7 @@ Def{
             Fusion{
                 Lambda{Tuple{_TypeOf{s, String}}, s},
                 Fusion{
-                    Lambda{Tuple{_TypeOf{n, Int}}, Apply{peg_itoa, Tuple{n}}},
+                    Lambda{Tuple{_TypeOf{n, Int}}, Apply{int_to_str, Tuple{n, 10}}},
                     Lambda{Tuple{_}, Apply{show, Tuple{x}}}
                 }
             },
@@ -2207,6 +2181,9 @@ expr ::= syntax_decl
 "   follows "
 toplevel ::= e:expr (";" | !same | &expr) { e }
 
+fun reverse
+fun panic
+
 peg_import(p, a, o) := {
     n := arity(p)
     file := sym_name(arg(p, 0))
@@ -2249,17 +2226,13 @@ peg_import(p, a, o) := {
 peg_export_name(d) := if (head(d) == 'Def or head(d) == 'DefFun) arg(d, 0)
     else arg(arg(d, 1), 0)
 
-" module n { ... }: reverse is the list of the statements of the body, the "
+" module n { ... }: rev is the list of the statements of the body, the "
 "   last one first. The module is "
 " n := (() -> { statements; _module(names, values) })(). An M-expression holds "
 "   at most 64 arguments, so "
 " the statements are gathered in blocks of 32 (a block does not make a scope). "
-peg_module(n, reverse) := {
-    items := Nil{}
-    while (head(reverse) == 'Cons) {
-        items = Cons{arg(reverse, 0), items}
-        reverse = arg(reverse, 1)
-    }
+peg_module(n, rev) := {
+    items := reverse(rev)
     blocks := stack_mark()
     cur := blocks
     names := Nil{}
@@ -2350,12 +2323,7 @@ fun expand_macro
         saved_exports := macro_exports
         macro_exports = Nil{}
         r := expand_macro_args(e, 0, 1)
-        xs := macro_exports
-        ys := Nil{}
-        while (head(xs) == 'Cons) {
-            ys = Cons{arg(xs, 0), ys}
-            xs = arg(xs, 1)
-        }
+        ys := reverse(macro_exports)
         macros = saved
         while (head(ys) == 'Cons) {
             macros = Fusion{arg(ys, 0), macros}
@@ -2429,14 +2397,7 @@ peg_with(o, fs) := {
 "   field name replaced by v. make makes the data of t. "
 _record_with(t, make) := {
     fs := table_get(record_fields, t, none)
-    record_with_error(t, name) := {
-        os_put("no field ")
-        os_put(sym_name(name))
-        os_put(" in ")
-        print(t, end = "")
-        os_put("\n")
-        os_exit(1)
-    }
+    record_with_error(t, name) := panic(f"no field {sym_name(name)} in {t}")
     (d @ t, name, v) -> {
         if (_record_index(d, name) == none) record_with_error(d, name)
         args := array_new(arity(fs))
@@ -2465,7 +2426,7 @@ peg_names(a, bs) := {
 " a variable that no program names "
 peg_fresh() := {
     peg_fresh_count = peg_fresh_count + 1
-    sym_intern(str_cat("%d", peg_itoa(peg_fresh_count)))
+    sym_intern(str_cat("%d", int_to_str(peg_fresh_count, 10)))
 }
 
 " record T(f, ...) = make defines T (the type) and make (the function that "
@@ -2505,8 +2466,7 @@ peg_destruct(kind, ns, e) := {
 " the element i of t, which must be a tuple of n elements "
 _destructure(t, i, n) := {
     if (type(t) != Expr or head(t) != 'Tuple or arity(t) != n) {
-        print(f"cannot assign {t} to {peg_itoa(n)} names")
-        os_exit(1)
+        panic(f"cannot assign {t} to {int_to_str(n, 10)} names")
     }
     arg(t, i)
 }
@@ -2629,16 +2589,13 @@ peg_pat_literals(p) := {
     expr(head(p), args)
 }
 
-peg_pat_error(msg) := {
-    print(f"error: {msg}")
-    os_exit(1)
-}
+peg_pat_error(msg) := panic(f"error: {msg}")
 
 " a name made for the walk below: %o1, %d2, ... "
 peg_fresh_n := 0
 peg_fresh(pre) := {
     peg_fresh_n = peg_fresh_n + 1
-    sym_intern(str_cat(pre, peg_itoa(peg_fresh_n)))
+    sym_intern(str_cat(pre, int_to_str(peg_fresh_n, 10)))
 }
 
 peg_has_name(ns, n) := {
@@ -2862,10 +2819,7 @@ peg_def_arm(f, ps0, g, e0) := {
         -1
     }
 
-    kwfail(msg) := {
-        print(f"error: {msg}")
-        os_exit(1)
-    }
+    kwfail(msg) := panic(f"error: {msg}")
 
     " _kwcheck(rest, names) stops the program for an argument that no parameter "
     "   has, for too many arguments and for a parameter given twice "
@@ -3034,4 +2988,18 @@ peg_for(xs, f) := {
         x = next(end)
     }
     none
+}
+
+reverse = (xs) -> {
+    r := Nil{}
+    while (head(xs) == 'Cons) {
+        r = Cons{arg(xs, 0), r}
+        xs = arg(xs, 1)
+    }
+    r
+}
+
+panic = (msg) -> {
+    print(f"{msg}")
+    os_exit(1)
 }

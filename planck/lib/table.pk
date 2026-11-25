@@ -14,16 +14,7 @@ module table {
 
     export items(tb @ Table) := {
         r := []
-        b := array_get(arg(_unwrap_table(tb), 0), 0)
-        i := 0
-        while (i < array_len(b)) {
-            e := array_get(b, i)
-            while (e != none) {
-                r = Tuple{array_get(e, 0), array_get(e, 1)} :: r
-                e = array_get(e, 2)
-            }
-            i = i + 1
-        }
+        for (kv in tb) r = kv :: r
         r
     }
 
