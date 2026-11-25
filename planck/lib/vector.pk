@@ -21,11 +21,7 @@ module vector {
         d := array_get(v, 0)
         if (n == array_len(d)) {
             nd := array_new(n * 2)
-            i := 0
-            while (i < n) {
-                array_set(nd, i, array_get(d, i))
-                i = i + 1
-            }
+            array_copy(nd, 0, d, 0, n)
             array_set(v, 0, nd)
             d = nd
         }
