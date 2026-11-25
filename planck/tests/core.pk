@@ -421,23 +421,20 @@ Apply{check,
     Tuple{Quote{Tuple{Apply{fz_f, Tuple{0}}, Apply{fz_f, Tuple{3}}}},
         Tuple{0, 6}}}
 
-" Declare{x} is Def{x, none} unless x is a variable of the same place, and its "
-"   value is none "
-Def{dc_x, 5}
-Def{dc_g, Lambda{Tuple{}, dc_x}}
-Apply{check, Tuple{Quote{Declare{dc_x}}, none}}
-Declare{dc_x}
-Apply{check, Tuple{Quote{Tuple{dc_x, Apply{dc_g, Tuple{}}}}, Tuple{5, 5}}}
-Declare{dc_y}
-Apply{check, Tuple{Quote{dc_y}, none}}
+" DefFun{x, f} makes x first when x is not a variable of the same place, and "
+"   adds f to x when it is "
+DefFun{dc_x, Lambda{Tuple{0}, 1}}
+DefFun{dc_x, Lambda{Tuple{n}, 2}}
+Apply{check, Tuple{Quote{Tuple{Apply{dc_x, Tuple{0}}, Apply{dc_x, Tuple{3}}}},
+    Tuple{1, 2}}}
 " in a function: a parameter or a variable of the function, not a variable "
 "   outside "
 Def{dc_f,
     Lambda{Tuple{a},
-        Do{Def{b, 2}, Declare{a}, Declare{b}, Declare{dc_x},
-            Tuple{a, b, dc_x}}}}
-Apply{check, Tuple{Quote{Apply{dc_f, Tuple{1}}}, Tuple{1, 2, none}}}
-Apply{check, Tuple{Quote{dc_x}, 5}}
+        Do{DefFun{dc_x, Lambda{Tuple{0}, 3}},
+            Apply{dc_x, Tuple{0}}}}}
+Apply{check, Tuple{Quote{Apply{dc_f, Tuple{1}}}, 3}}
+Apply{check, Tuple{Quote{Apply{dc_x, Tuple{0}}}, 1}}
 
 " the same in a function: the variables of a block are those of the function "
 Def{nm_blk, Lambda{Tuple{n}, Do{

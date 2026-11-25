@@ -57,9 +57,10 @@ module _importer {
             trees := read_preprocessed(f"planck/lib/{name}.pkm", state, text)
             if (trees == none) load(path)
             else {
-                prev := os_set_file(path)
+                prev := _file_defs
+                _file_defs = table_new()
                 for (e in trees) eval(e)
-                os_set_file(prev)
+                _file_defs = prev
             }
         }
         if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={expr_hash(text)}"

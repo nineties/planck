@@ -2194,8 +2194,7 @@ def_params ::= a:def_plain_list "," d:def_default_list { peg_tuple_cat(a, d) }
 " a branch of if: an expression without | outside of brackets, "
 " so that a | after if (c) a else b goes on with the functions around the if "
 branch ::= &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:branch {
-               `Do{Declare{!f},
-                   Set{!f, Fusion{!f, !peg_lambda_defaults(ps, e)}}}
+               `DefFun{!f, !peg_lambda_defaults(ps, e)}
            }
          | ns:destruct_names ":=" e:branch { peg_destruct('Def, ns, e) }
          | ns:destruct_names "=" !nospace("=") e:branch { peg_destruct('Set, ns, e) }
@@ -2247,8 +2246,7 @@ idents ::= delimited(ident, ",")
 " module m { ... }: export marks the definitions that stand directly in the "
 "   body, which are the fields (peg_module) "
 module_def ::= &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:expr {
-                   `Do{Declare{!f},
-                       Set{!f, Fusion{!f, !peg_lambda_defaults(ps, e)}}}
+                   `DefFun{!f, !peg_lambda_defaults(ps, e)}
                }
              | x:ident ":=" e:expr { `Def{!x, !e} }
              | 'macro p:pattern ":=" e:expr { peg_macro(p, e) }
@@ -2279,11 +2277,11 @@ import_option ::= same "(" "*" ")" { Tuple{'all, Tuple{}} }
 
 import_expr ::= 'import p:delimited1(ident, "::") a:(same 'as ident)? o:import_option? { peg_import(p, a, o) }
 
-" f(p, ...) := e adds to f when f is already a variable of the place (Declare) "
+" f(p, ...) := e adds to f when f is already a variable of the place (DefFun) "
 expr ::= syntax_decl
        | def_run
        | &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:expr {
-             `Do{Declare{!f}, Set{!f, Fusion{!f, !peg_lambda_defaults(ps, e)}}}
+             `DefFun{!f, !peg_lambda_defaults(ps, e)}
          }
        | ns:destruct_names ":=" e:expr { peg_destruct('Def, ns, e) }
        | ns:destruct_names "=" !nospace("=") e:expr { peg_destruct('Set, ns, e) }
@@ -2344,9 +2342,9 @@ peg_import(p, a, o) := {
 }
 
 " the name that a definition marked export defines: x for Def{x, e}, f for "
-"   Do{Declare{f}, ...}, the type for a record "
-peg_export_name(d) := if (head(d) == 'Def) arg(d, 0)
-    else if (head(arg(d, 0)) == 'Def) arg(arg(d, 1), 0) else arg(arg(d, 0), 0)
+"   DefFun{f, e}, the type for a record "
+peg_export_name(d) := if (head(d) == 'Def or head(d) == 'DefFun) arg(d, 0)
+    else arg(arg(d, 1), 0)
 
 " module n { ... }: reverse is the list of the statements of the body, the "
 "   last one first. The module is "
@@ -2476,7 +2474,7 @@ expand_macro_sub(e, level) := {
             head(arg(e, 0)) == 'Macro) expand_macro_define(arg(e, 0), true)
         else if (h == 'Lambda) expand_macro_scope(e)
         else if (h == 'Def or h == 'Set or
-            h == 'Declare) expand_macro_args(e, 0, 1)
+            h == 'DefFun) expand_macro_args(e, 0, 1)
         else expand_macro_args(e, 0, 0)
     }
 }
@@ -2504,8 +2502,8 @@ eval = e -> {
         _macro_steps = 0
         x := expand_macro(e, 0)
         _macro_steps = saved
-        _eval_expanded(x)
-    } else _eval_expanded(e)
+        _eval_expanded(_rewrite_globals(x))
+    } else _eval_expanded(_rewrite_globals(e))
 }
 
 " e with { f = v, ... } is _with(_with(e, 'f, v), 'g, w) ... _with is defined "
@@ -2576,8 +2574,7 @@ peg_record(n, fs, m) := {
         Def{!r, Apply{_record, Tuple{Quote{!n}, Quote{!fs}}}},
         Def{!n, Apply{arg, Tuple{!r, 0}}},
         Def{!m, Apply{arg, Tuple{!r, 1}}},
-        Declare{_with},
-        Set{_with, Fusion{_with, Apply{_record_with, Tuple{!n, !m}}}}
+        DefFun{_with, Apply{_record_with, Tuple{!n, !m}}}
     }
 }
 
@@ -2987,7 +2984,7 @@ peg_def_run(a, rest) := {
             k = k - 1
         }
         stmts = array_push(stmts,
-            `Do{Declare{!f}, Set{!f, Fusion{!f, !lambda}}})
+            `DefFun{!f, !lambda})
         i = j
     }
     if (arity(stmts) == 1) arg(stmts, 0) else expr('Do, stmts)

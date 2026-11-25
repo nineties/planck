@@ -190,6 +190,33 @@ Def{peg_file_error_text, none}
 " parse_from(s, pos) is the parse of the text s from the byte position pos: "
 "   Tuple{value, next position}. planck/syntax.pk defines it. "
 Def{parse_from, none}
+Def{_file_defs, none}
+Def{_rewrite_globals, none}
+Set{_rewrite_globals, Lambda{Tuple{e},
+    If{If{Apply{expr_eq, Tuple{_file_defs, none}}, true,
+            Apply{expr_ne, Tuple{Apply{expr_type, Tuple{e}}, Expr}}},
+        e,
+    If{Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{Def}}},
+        Do{Apply{table_set, Tuple{_file_defs, Apply{arg, Tuple{e, 0}}, true}},
+            e},
+    If{Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{DefFun}}},
+        If{Apply{table_get, Tuple{_file_defs, Apply{arg, Tuple{e, 0}}, false}},
+            e,
+            Do{Apply{table_set,
+                    Tuple{_file_defs, Apply{arg, Tuple{e, 0}}, true}},
+                QuasiQuote{Do{Def{UnQuote{Apply{arg, Tuple{e, 0}}}, none},
+                    UnQuote{e}}}}},
+    If{Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, Quote{Do}}},
+        Do{Def{xs, Tuple{}},
+            Def{i, 0},
+            While{Apply{int_lt, Tuple{i, Apply{arity, Tuple{e}}}}, Do{
+                Set{xs, Apply{array_push,
+                    Tuple{xs, Apply{_rewrite_globals,
+                        Tuple{Apply{arg, Tuple{e, i}}}}}}},
+                Set{i, Apply{int_add, Tuple{i, 1}}}}},
+            Apply{expr, Tuple{Quote{Do}, xs}}},
+        e}}}}}}
+
 Def{load, Apply{Lambda{Tuple{}, Do{
     Def{_parse0, parse},
     Lambda{Tuple{path}, Do{
@@ -197,7 +224,8 @@ Def{load, Apply{Lambda{Tuple{}, Do{
         Def{s0, s},
         Def{pos, 0},
         Def{next, 0},
-        Def{prev, Apply{os_set_file, Tuple{path}}},
+        Def{prev, _file_defs},
+        Set{_file_defs, Apply{table_new, Tuple{}}},
         Def{r, none},
         Def{e, none},
         Def{go, true},
@@ -231,12 +259,12 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                         Apply{print, Tuple{text}}},
                     Apply{os_exit, Tuple{1}}},
                 Do{
-                    Apply{eval, Tuple{e}},
+                    Apply{eval, Tuple{Apply{_rewrite_globals, Tuple{e}}}},
                     Set{pos, next},
                     Set{s,
                         If{Apply{expr_ne, Tuple{parse, _parse0}}, s0,
                             Apply{arg, Tuple{r, 1}}}}}}}}},
-        Apply{os_set_file, Tuple{prev}},
+        Set{_file_defs, prev},
         none}}}}, Tuple{}}}
 
 " === Syntax === "
