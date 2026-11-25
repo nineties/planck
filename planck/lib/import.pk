@@ -89,11 +89,7 @@ _import_defs(m @ Module, hidden) := {
         while (e != none) {
             k := array_get(e, 0)
             skip := false
-            j := 0
-            while (j < arity(hidden)) {
-                if (arg(hidden, j) == k) skip = true
-                j = j + 1
-            }
+            for (h in hidden) if (h == k) skip = true
             if (not skip) {
                 v := array_get(e, 1)
                 stack_push(`Def{!k, Quote{!v}})
