@@ -4,7 +4,7 @@ import_lib("base")
 import_lib("list")
 
 module bitset {
-    export new(n) := plain_i32(n / 30 + 1)
+    export new(n) := parray_new_i32(n / 30 + 1)
 
     export add(s, i) := {
         w := i / 30
@@ -19,14 +19,14 @@ module bitset {
     export has(s, i) := bit_and(s[i / 30], bit_shl(1, i % 30)) != 0
 
     export copy(s) := {
-        r := plain_i32(plain_len(s))
-        plain_copy(r, 0, s, 0, plain_len(s))
+        r := parray_new_i32(parray_len(s))
+        parray_copy(r, 0, s, 0, parray_len(s))
         r
     }
 
     clear(s) := {
         i := 0
-        while (i < plain_len(s)) {
+        while (i < parray_len(s)) {
             s[i] = 0
             i = i + 1
         }
@@ -35,7 +35,7 @@ module bitset {
     export union(dst, src) := {
         changed := false
         i := 0
-        while (i < plain_len(dst)) {
+        while (i < parray_len(dst)) {
             w := bit_or(dst[i], src[i])
             if (w != dst[i]) {
                 dst[i] = w
@@ -48,7 +48,7 @@ module bitset {
 
     export minus(dst, src) := {
         i := 0
-        while (i < plain_len(dst)) {
+        while (i < parray_len(dst)) {
             dst[i] = bit_and(dst[i], bit_not(src[i]))
             i = i + 1
         }
@@ -57,7 +57,7 @@ module bitset {
     export equal(a, b) := {
         i := 0
         ok := true
-        while (ok and i < plain_len(a)) {
+        while (ok and i < parray_len(a)) {
             if (a[i] != b[i]) ok = false
             i = i + 1
         }
@@ -66,7 +66,7 @@ module bitset {
 
     export each(s, f) := {
         i := 0
-        while (i < plain_len(s)) {
+        while (i < parray_len(s)) {
             w := s[i]
             if (w != 0) {
                 k := 0

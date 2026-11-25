@@ -8,7 +8,7 @@ Def{failed, 0}
 
 Def{check, Lambda{Tuple{e, expected}, Do{
     Def{actual, Apply{eval, Tuple{e}}},
-    If{Apply{expr_eq, Tuple{actual, expected}},
+    If{Apply{equal, Tuple{actual, expected}},
         Set{passed, Apply{int_add, Tuple{passed, 1}}},
         Do{
             Set{failed, Apply{int_add, Tuple{failed, 1}}},
@@ -30,9 +30,9 @@ Apply{check, Tuple{Quote{"abc"}, "abc"}}
 Apply{check, Tuple{Quote{Apply{str_len, Tuple{"a\0b"}}}, 3}}
 Apply{check, Tuple{Quote{Apply{str_ord, Tuple{"a\0b", 1}}}, 0}}
 Apply{check, Tuple{Quote{Apply{str_ord, Tuple{"a\0b", 2}}}, 98}}
-Apply{check, Tuple{Quote{Apply{expr_eq, Tuple{"a\0b", "a\0b"}}}, Quote{true}}}
-Apply{check, Tuple{Quote{Apply{expr_eq, Tuple{"a\0b", "a\0c"}}}, Quote{false}}}
-Apply{check, Tuple{Quote{Apply{expr_eq, Tuple{"a\0b", "a"}}}, Quote{false}}}
+Apply{check, Tuple{Quote{Apply{equal, Tuple{"a\0b", "a\0b"}}}, Quote{true}}}
+Apply{check, Tuple{Quote{Apply{equal, Tuple{"a\0b", "a\0c"}}}, Quote{false}}}
+Apply{check, Tuple{Quote{Apply{equal, Tuple{"a\0b", "a"}}}, Quote{false}}}
 Apply{check,
     Tuple{Quote{Apply{str_len, Tuple{Apply{str_cat, Tuple{"a\0", "\0b"}}}}}, 4}}
 Apply{check,
@@ -59,9 +59,9 @@ Apply{check, Tuple{Quote{Apply{int_lt, Tuple{-1, 0}}}, true}}
 Apply{check, Tuple{Quote{Apply{int_le, Tuple{2, 2}}}, true}}
 Apply{check, Tuple{Quote{Apply{int_gt, Tuple{2, 2}}}, false}}
 Apply{check, Tuple{Quote{Apply{int_ge, Tuple{3, 2}}}, true}}
-Apply{check, Tuple{Quote{Apply{expr_eq, Tuple{"abc", "abc"}}}, true}}
-Apply{check, Tuple{Quote{Apply{expr_eq, Tuple{"abc", "abd"}}}, false}}
-Apply{check, Tuple{Quote{Apply{expr_ne, Tuple{1, 2}}}, true}}
+Apply{check, Tuple{Quote{Apply{equal, Tuple{"abc", "abc"}}}, true}}
+Apply{check, Tuple{Quote{Apply{equal, Tuple{"abc", "abd"}}}, false}}
+Apply{check, Tuple{Quote{Apply{not_equal, Tuple{1, 2}}}, true}}
 Apply{check, Tuple{Quote{Apply{_not, Tuple{false}}}, true}}
 Apply{check, Tuple{Quote{Apply{_not, Tuple{0}}}, false}}
 
@@ -202,11 +202,11 @@ Apply{check, Tuple{Quote{Apply{arity, Tuple{Quote{F{1, 2}}}}}, 2}}
 Apply{check, Tuple{Quote{Apply{arg, Tuple{Quote{F{1, 2}}, 1}}}, 2}}
 Apply{check,
     Tuple{Quote{Apply{expr, Tuple{Quote{G}, Tuple{1, 2}}}}, Quote{G{1, 2}}}}
-Apply{check, Tuple{Quote{Apply{expr_type, Tuple{1}}}, Int}}
-Apply{check, Tuple{Quote{Apply{expr_type, Tuple{"s"}}}, String}}
-Apply{check, Tuple{Quote{Apply{expr_type, Tuple{Quote{a}}}}, Symbol}}
-Apply{check, Tuple{Quote{Apply{expr_type, Tuple{Quote{F{}}}}}, Expr}}
-Apply{check, Tuple{Quote{Apply{expr_type, Tuple{inc}}}, Function}}
+Apply{check, Tuple{Quote{Apply{type, Tuple{1}}}, Int}}
+Apply{check, Tuple{Quote{Apply{type, Tuple{"s"}}}, String}}
+Apply{check, Tuple{Quote{Apply{type, Tuple{Quote{a}}}}, Symbol}}
+Apply{check, Tuple{Quote{Apply{type, Tuple{Quote{F{}}}}}, Expr}}
+Apply{check, Tuple{Quote{Apply{type, Tuple{inc}}}, Function}}
 
 " === Quote, QuasiQuote, UnQuote === "
 Apply{check,
@@ -388,18 +388,18 @@ Apply{check,
 Def{nm_up, none}
 Set{nm_up,
     Lambda{Tuple{n},
-        If{Apply{expr_eq, Tuple{n, 0}}, 0,
+        If{Apply{equal, Tuple{n, 0}}, 0,
             Apply{int_add,
                 Tuple{1, Apply{nm_up, Tuple{Apply{int_sub, Tuple{n, 1}}}}}}}}}
 Apply{check, Tuple{Quote{Apply{nm_up, Tuple{5}}}, 5}}
 Def{nm_od, none}
 Def{nm_ev,
     Lambda{Tuple{n},
-        If{Apply{expr_eq, Tuple{n, 0}}, true,
+        If{Apply{equal, Tuple{n, 0}}, true,
             Apply{nm_od, Tuple{Apply{int_sub, Tuple{n, 1}}}}}}}
 Set{nm_od,
     Lambda{Tuple{n},
-        If{Apply{expr_eq, Tuple{n, 0}}, false,
+        If{Apply{equal, Tuple{n, 0}}, false,
             Apply{nm_ev, Tuple{Apply{int_sub, Tuple{n, 1}}}}}}}
 Apply{check,
     Tuple{Quote{Tuple{Apply{nm_ev, Tuple{10}}, Apply{nm_od, Tuple{10}}}},
@@ -408,7 +408,7 @@ Apply{check,
 " Fusion{none, g} is g, and Fusion{f, g} tries f first "
 Def{fz_g, Lambda{Tuple{x}, 1}}
 Apply{check,
-    Tuple{Quote{Apply{expr_eq, Tuple{Fusion{none, fz_g}, fz_g}}}, true}}
+    Tuple{Quote{Apply{equal, Tuple{Fusion{none, fz_g}, fz_g}}}, true}}
 Def{fz_f, none}
 Set{fz_f, Fusion{fz_f, Lambda{Tuple{0}, 0}}}
 Set{fz_f,
@@ -421,34 +421,31 @@ Apply{check,
     Tuple{Quote{Tuple{Apply{fz_f, Tuple{0}}, Apply{fz_f, Tuple{3}}}},
         Tuple{0, 6}}}
 
-" Declare{x} is Def{x, none} unless x is a variable of the same place, and its "
-"   value is none "
-Def{dc_x, 5}
-Def{dc_g, Lambda{Tuple{}, dc_x}}
-Apply{check, Tuple{Quote{Declare{dc_x}}, none}}
-Declare{dc_x}
-Apply{check, Tuple{Quote{Tuple{dc_x, Apply{dc_g, Tuple{}}}}, Tuple{5, 5}}}
-Declare{dc_y}
-Apply{check, Tuple{Quote{dc_y}, none}}
+" DefFun{x, f} makes x first when x is not a variable of the same place, and "
+"   adds f to x when it is "
+DefFun{dc_x, Lambda{Tuple{0}, 1}}
+DefFun{dc_x, Lambda{Tuple{n}, 2}}
+Apply{check, Tuple{Quote{Tuple{Apply{dc_x, Tuple{0}}, Apply{dc_x, Tuple{3}}}},
+    Tuple{1, 2}}}
 " in a function: a parameter or a variable of the function, not a variable "
 "   outside "
 Def{dc_f,
     Lambda{Tuple{a},
-        Do{Def{b, 2}, Declare{a}, Declare{b}, Declare{dc_x},
-            Tuple{a, b, dc_x}}}}
-Apply{check, Tuple{Quote{Apply{dc_f, Tuple{1}}}, Tuple{1, 2, none}}}
-Apply{check, Tuple{Quote{dc_x}, 5}}
+        Do{DefFun{dc_x, Lambda{Tuple{0}, 3}},
+            Apply{dc_x, Tuple{0}}}}}
+Apply{check, Tuple{Quote{Apply{dc_f, Tuple{1}}}, 3}}
+Apply{check, Tuple{Quote{Apply{dc_x, Tuple{0}}}, 1}}
 
 " the same in a function: the variables of a block are those of the function "
 Def{nm_blk, Lambda{Tuple{n}, Do{
     Def{od, none},
     Def{ev,
         Lambda{Tuple{m},
-            If{Apply{expr_eq, Tuple{m, 0}}, true,
+            If{Apply{equal, Tuple{m, 0}}, true,
                 Apply{od, Tuple{Apply{int_sub, Tuple{m, 1}}}}}}},
     Set{od,
         Lambda{Tuple{m},
-            If{Apply{expr_eq, Tuple{m, 0}}, false,
+            If{Apply{equal, Tuple{m, 0}}, false,
                 Apply{ev, Tuple{Apply{int_sub, Tuple{m, 1}}}}}}},
     Apply{ev, Tuple{n}}}}}
 Apply{check,
@@ -465,7 +462,7 @@ Apply{check, Tuple{Quote{Apply{nm_call, Tuple{}}}, "global"}}
 " === Arrays and tables === "
 Def{arr, Apply{array_new, Tuple{3}}}
 Apply{check, Tuple{Quote{Apply{array_len, Tuple{arr}}}, 3}}
-Apply{check, Tuple{Quote{Apply{expr_type, Tuple{arr}}}, Array}}
+Apply{check, Tuple{Quote{Apply{type, Tuple{arr}}}, Array}}
 Apply{check, Tuple{Quote{Apply{array_get, Tuple{arr, 2}}}, Quote{none}}}
 Apply{check, Tuple{Quote{Apply{array_set, Tuple{arr, 1, 42}}}, Quote{none}}}
 Apply{check, Tuple{Quote{Apply{array_get, Tuple{arr, 1}}}, 42}}
@@ -474,15 +471,15 @@ Apply{check,
 Apply{check,
     Tuple{
         Quote{
-            Apply{expr_eq,
+            Apply{equal,
                 Tuple{Apply{array_new, Tuple{1}}, Apply{array_new, Tuple{1}}}}},
-        Quote{false}}}
+        Quote{true}}}
 Apply{check,
     Tuple{
         Quote{
-            Apply{expr_eq,
-                Tuple{Apply{expr_hash, Tuple{"ab"}},
-                    Apply{expr_hash, Tuple{Apply{str_cat, Tuple{"a", "b"}}}}}}},
+            Apply{equal,
+                Tuple{Apply{hash, Tuple{"ab"}},
+                    Apply{hash, Tuple{Apply{str_cat, Tuple{"a", "b"}}}}}}},
         Quote{true}}}
 
 Def{tab, Apply{table_new, Tuple{}}}
@@ -549,7 +546,7 @@ Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Pair{1, 2}}}}, "long"}}
 Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Other{1, 2}}}}, "short"}}
 
 Apply{os_put, Tuple{"Tests passed "}}
-Apply{os_put, Tuple{Apply{int_to_string, Tuple{passed}}}}
+Apply{os_put, Tuple{Apply{int_to_str, Tuple{passed, 10}}}}
 Apply{os_put, Tuple{"/"}}
 Apply{print, Tuple{Apply{int_add, Tuple{passed, failed}}}}
-If{Apply{expr_eq, Tuple{failed, 0}}, none, Apply{os_exit, Tuple{1}}}
+If{Apply{equal, Tuple{failed, 0}}, none, Apply{os_exit, Tuple{1}}}

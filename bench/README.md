@@ -11,13 +11,13 @@ planck0 bench/run.pk SAMPLES [START]
 ```
 
 * `bench/cases/NAME.pk` is a benchmark and `bench/cases/NAME.out` is its expected standard output. `run.pk` loads each case with `load`, collects what it prints by replacing `put`, and stops with an error if the text differs from the `.out` file.
-* For every case, `run.pk` takes the elapsed time (`os_time_ns`), the bytes allocated (`gc_heap_allocated`) and the number of garbage collections (`gc_count`), and appends one `sample("NAME", ns, bytes, gcs)` line to the file `SAMPLES`.
+* For every case, `run.pk` takes the elapsed time (`os_time_ns`), the bytes allocated (`gc_allocated_bytes`) and the number of garbage collections (`gc_count`), and appends one `sample("NAME", ns, bytes, gcs)` line to the file `SAMPLES`.
 * `START` is a value of `os_time_ns` taken just before `planck0` was started. When it is given, `run.pk` also records `startup`: the time from that moment to the first line of `run.pk`, which is the time `planck0` takes to read `init.pk`, `peg.pk` and `syntax.pk` and to start the program.
 * The first case, `use_libs`, loads every library file with `import_lib`. The later cases do not pay for loading a library again, so `use_libs` is the benchmark of loading libraries and the others measure the use of them. `syntax_extension` is the last case because it extends the grammar of the process.
 
 A case is a plain Planck program that prints its result. It can be run alone with `planck0 bench/cases/NAME.pk`.
 
-The measuring programs need the builtins `os_time_ns`, `gc_heap_allocated`, `gc_count`, `os_run` and `os_list_dir` of `planck0`.
+The measuring programs need the builtins `os_time_ns`, `gc_allocated_bytes`, `gc_count`, `os_run` and `os_list_dir` of `planck0`.
 
 ## Start-up is a benchmark of its own
 

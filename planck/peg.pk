@@ -59,8 +59,8 @@ Def{peg_pv, none}
 Def{peg_inc, Lambda{Tuple{n}, Apply{int_add, Tuple{n, 1}}}}
 
 Def{peg_is_head, Lambda{Tuple{e, h},
-    If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}},
-        Apply{expr_eq, Tuple{Apply{head, Tuple{e}}, h}},
+    If{Apply{equal, Tuple{Apply{type, Tuple{e}}, Expr}},
+        Apply{equal, Tuple{Apply{head, Tuple{e}}, h}},
         false}}}
 
 " peg_map_args(f, Head{a, ...}) = Head{f(a), ...} "
@@ -79,13 +79,18 @@ Def{peg_fail, Lambda{Tuple{p}, Do{
     If{Apply{int_gt, Tuple{p, peg_far}}, Set{peg_far, p}, none},
     -1}}}
 
-Def{peg_char_at, Lambda{Tuple{p}, Apply{str_ord, Tuple{peg_src, p}}}}
+Def{peg_ord, Lambda{Tuple{s, i},
+    If{Apply{int_lt, Tuple{i, 0}}, -1,
+    If{Apply{int_lt, Tuple{i, Apply{str_len, Tuple{s}}}},
+        Apply{str_ord, Tuple{s, i}}, -1}}}}
+
+Def{peg_char_at, Lambda{Tuple{p}, Apply{peg_ord, Tuple{peg_src, p}}}}
 
 Def{peg_is_blank, Lambda{Tuple{c},
-    If{Apply{expr_eq, Tuple{c, 32}}, true,
-    If{Apply{expr_eq, Tuple{c, 10}}, true,
-    If{Apply{expr_eq, Tuple{c, 9}}, true,
-        Apply{expr_eq, Tuple{c, 13}}}}}}}
+    If{Apply{equal, Tuple{c, 32}}, true,
+    If{Apply{equal, Tuple{c, 10}}, true,
+    If{Apply{equal, Tuple{c, 9}}, true,
+        Apply{equal, Tuple{c, 13}}}}}}}
 
 Def{peg_is_digit,
     Lambda{Tuple{c},
@@ -97,7 +102,7 @@ Def{peg_is_alpha, Lambda{Tuple{c},
     If{
         If{Apply{int_le, Tuple{97, c}}, Apply{int_le, Tuple{c, 122}},
             false}, true,
-        Apply{expr_eq, Tuple{c, 95}}}}}}
+        Apply{equal, Tuple{c, 95}}}}}}
 Def{peg_is_alnum,
     Lambda{Tuple{c},
         If{Apply{peg_is_alpha, Tuple{c}}, true, Apply{peg_is_digit, Tuple{c}}}}}
@@ -109,9 +114,9 @@ Def{peg_skip_ws, Lambda{Tuple{p}, Do{
     While{go, Do{
         Set{c, Apply{peg_char_at, Tuple{p}}},
         If{Apply{peg_is_blank, Tuple{c}}, Set{p, Apply{peg_inc, Tuple{p}}},
-        If{Apply{expr_eq, Tuple{c, 35}},
+        If{Apply{equal, Tuple{c, 35}},
             While{
-                If{Apply{int_ge, Tuple{c, 0}}, Apply{expr_ne, Tuple{c, 10}},
+                If{Apply{int_ge, Tuple{c, 0}}, Apply{not_equal, Tuple{c, 10}},
                     false}, Do{
                 Set{p, Apply{peg_inc, Tuple{p}}},
                 Set{c, Apply{peg_char_at, Tuple{p}}}}},
@@ -122,12 +127,12 @@ Def{peg_skip_ws, Lambda{Tuple{p}, Do{
 Def{peg_same_line, Lambda{Tuple{p}, Do{
     Def{c, Apply{peg_char_at, Tuple{p}}},
     While{
-        If{Apply{expr_eq, Tuple{c, 32}}, true, Apply{expr_eq, Tuple{c, 9}}}, Do{
+        If{Apply{equal, Tuple{c, 32}}, true, Apply{equal, Tuple{c, 9}}}, Do{
         Set{p, Apply{peg_inc, Tuple{p}}},
         Set{c, Apply{peg_char_at, Tuple{p}}}}},
-    If{Apply{expr_eq, Tuple{c, 10}}, false,
-    If{Apply{expr_eq, Tuple{c, 13}}, false,
-    If{Apply{expr_eq, Tuple{c, 35}}, false,
+    If{Apply{equal, Tuple{c, 10}}, false,
+    If{Apply{equal, Tuple{c, 13}}, false,
+    If{Apply{equal, Tuple{c, 35}}, false,
         Apply{int_ge, Tuple{c, 0}}}}}}}}
 
 " match the text s at p "
@@ -135,26 +140,26 @@ Def{peg_literal, Lambda{Tuple{s, p}, Do{
     Def{n, Apply{str_len, Tuple{s}}},
     Def{i, 0},
     While{If{Apply{int_lt, Tuple{i, n}},
-            Apply{expr_eq,
-                Tuple{Apply{str_ord, Tuple{s, i}},
+            Apply{equal,
+                Tuple{Apply{peg_ord, Tuple{s, i}},
                     Apply{peg_char_at, Tuple{Apply{int_add, Tuple{p, i}}}}}},
             false},
         Set{i, Apply{peg_inc, Tuple{i}}}},
-    If{Apply{expr_eq, Tuple{i, n}},
+    If{Apply{equal, Tuple{i, n}},
         Do{Set{peg_pv, s}, Apply{int_add, Tuple{p, n}}},
         Apply{peg_fail, Tuple{p}}}}}}
 
 " === Character sets === "
 " the code of the character that a backslash and c stand for "
 Def{peg_escape_code, Lambda{Tuple{c},
-    If{Apply{expr_eq, Tuple{c, 97}}, 7,
-    If{Apply{expr_eq, Tuple{c, 98}}, 8,
-    If{Apply{expr_eq, Tuple{c, 102}}, 12,
-    If{Apply{expr_eq, Tuple{c, 110}}, 10,
-    If{Apply{expr_eq, Tuple{c, 114}}, 13,
-    If{Apply{expr_eq, Tuple{c, 116}}, 9,
-    If{Apply{expr_eq, Tuple{c, 118}}, 11,
-    If{Apply{expr_eq, Tuple{c, 48}}, 0, c}}}}}}}}}}
+    If{Apply{equal, Tuple{c, 97}}, 7,
+    If{Apply{equal, Tuple{c, 98}}, 8,
+    If{Apply{equal, Tuple{c, 102}}, 12,
+    If{Apply{equal, Tuple{c, 110}}, 10,
+    If{Apply{equal, Tuple{c, 114}}, 13,
+    If{Apply{equal, Tuple{c, 116}}, 9,
+    If{Apply{equal, Tuple{c, 118}}, 11,
+    If{Apply{equal, Tuple{c, 48}}, 0, c}}}}}}}}}}
 
 " peg_charset(s) is the table from the codes of the characters of the set s to "
 "   true, or none when s is not a set. "
@@ -167,26 +172,26 @@ Def{peg_charset, Lambda{Tuple{s}, Do{
     Def{d, 0},
     Def{ok, true},
     While{If{ok, Apply{int_lt, Tuple{i, n}}, false}, Do{
-        Set{c, Apply{str_ord, Tuple{s, i}}},
-        If{Apply{expr_eq, Tuple{c, 92}},
-            If{Apply{expr_eq, Tuple{Apply{peg_inc, Tuple{i}}, n}},
+        Set{c, Apply{peg_ord, Tuple{s, i}}},
+        If{Apply{equal, Tuple{c, 92}},
+            If{Apply{equal, Tuple{Apply{peg_inc, Tuple{i}}, n}},
                 Set{ok, false}, Do{
                 Apply{table_set,
                     Tuple{t,
                         Apply{peg_escape_code,
                             Tuple{
-                                Apply{str_ord,
+                                Apply{peg_ord,
                                     Tuple{s,
                                         Apply{peg_inc, Tuple{i}}}}}}, true}},
                 Set{i, Apply{int_add, Tuple{i, 2}}}}},
         If{
             If{Apply{peg_is_alnum, Tuple{c}},
-                Apply{expr_eq,
-                    Tuple{Apply{str_ord, Tuple{s, Apply{peg_inc, Tuple{i}}}},
+                Apply{equal,
+                    Tuple{Apply{peg_ord, Tuple{s, Apply{peg_inc, Tuple{i}}}},
                         45}}, false},
             If{Apply{int_ge, Tuple{Apply{int_add, Tuple{i, 2}}, n}},
                 Set{ok, false}, Do{
-                Set{d, Apply{str_ord, Tuple{s, Apply{int_add, Tuple{i, 2}}}}},
+                Set{d, Apply{peg_ord, Tuple{s, Apply{int_add, Tuple{i, 2}}}}},
                 If{Apply{int_gt, Tuple{c, d}}, Set{ok, false}, Do{
                     While{Apply{int_le, Tuple{c, d}}, Do{
                         Apply{table_set, Tuple{t, c, true}},
@@ -305,7 +310,7 @@ Apply{table_set,
             Apply{peg_px_many, Tuple{Apply{arg, Tuple{e, 0}}, p}}}}}
 Apply{table_set, Tuple{peg_handlers, Quote{Many1}, Lambda{Tuple{e, p}, Do{
         Def{q, Apply{peg_px_many, Tuple{Apply{arg, Tuple{e, 0}}, p}}},
-        If{Apply{expr_eq, Tuple{Apply{arity, Tuple{peg_pv}}, 0}},
+        If{Apply{equal, Tuple{Apply{arity, Tuple{peg_pv}}, 0}},
             Apply{peg_fail, Tuple{p}}, q}}}}}
 Apply{table_set, Tuple{peg_handlers, Quote{Option}, Lambda{Tuple{e, p}, Do{
         Def{q, Apply{peg_px, Tuple{Apply{arg, Tuple{e, 0}}, p}}},
@@ -331,7 +336,7 @@ Apply{table_set, Tuple{peg_handlers, Quote{Delimited1}, Lambda{Tuple{e, p}, Do{
         Def{q,
             Apply{peg_px_delimited,
                 Tuple{Apply{arg, Tuple{e, 0}}, Apply{arg, Tuple{e, 1}}, p}}},
-        If{Apply{expr_eq, Tuple{Apply{arity, Tuple{peg_pv}}, 0}},
+        If{Apply{equal, Tuple{Apply{arity, Tuple{peg_pv}}, 0}},
             Apply{peg_fail, Tuple{p}}, q}}}}}
 Apply{table_set, Tuple{peg_handlers, Quote{Same}, Lambda{Tuple{e, p}, Do{
         Set{peg_pv, none},
@@ -356,11 +361,11 @@ Apply{table_set,
             Apply{peg_px_char, Tuple{Apply{arg, Tuple{e, 0}}, false, p}}}}}
 
 Set{peg_px, Lambda{Tuple{e, p}, Do{
-    Def{t, Apply{expr_type, Tuple{e}}},
-    If{Apply{expr_eq, Tuple{t, String}},
+    Def{t, Apply{type, Tuple{e}}},
+    If{Apply{equal, Tuple{t, String}},
         Apply{peg_literal, Tuple{e, Apply{peg_skip_ws, Tuple{p}}}},
-    If{Apply{expr_eq, Tuple{t, Symbol}}, Apply{peg_call_rule, Tuple{e, p}},
-    If{Apply{expr_eq, Tuple{t, Function}}, Apply{e, Tuple{p}},
+    If{Apply{equal, Tuple{t, Symbol}}, Apply{peg_call_rule, Tuple{e, p}},
+    If{Apply{equal, Tuple{t, Function}}, Apply{e, Tuple{p}},
         Apply{
             Apply{table_get, Tuple{peg_handlers, Apply{head, Tuple{e}}, none}},
             Tuple{e, p}}}}}}}}
@@ -378,7 +383,7 @@ Set{peg_px, Lambda{Tuple{e, p}, Do{
 
 Def{peg_row, Lambda{Tuple{p}, Do{
     Def{row, Apply{array_get, Tuple{peg_memo, p}}},
-    If{Apply{expr_eq, Tuple{row, none}}, Do{
+    If{Apply{equal, Tuple{row, none}}, Do{
         Set{row, Apply{array_new, Tuple{peg_memo_w}}},
         If{Apply{int_lt, Tuple{peg_row_lo, 0}},
             Do{Set{peg_row_lo, p}, Set{peg_row_hi, p}},
@@ -392,15 +397,15 @@ Def{peg_row, Lambda{Tuple{p}, Do{
 
 Set{peg_call_rule, Lambda{Tuple{r, p}, Do{
     Def{id, Apply{table_get, Tuple{peg_ids, r, none}}},
-    If{Apply{expr_eq, Tuple{id, none}}, Do{
+    If{Apply{equal, Tuple{id, none}}, Do{
         Apply{os_put, Tuple{"undefined rule: "}},
         Apply{print, Tuple{r}},
         Apply{os_exit, Tuple{1}}}, none},
     Def{row, Apply{peg_row, Tuple{p}}},
     Def{b, Apply{int_mul, Tuple{id, 3}}},
     Def{m, Apply{array_get, Tuple{row, b}}},
-    If{Apply{expr_eq, Tuple{m, none}}, Apply{peg_run_rule, Tuple{r, p, row, b}},
-    If{Apply{expr_eq, Tuple{m, -2}}, Do{
+    If{Apply{equal, Tuple{m, none}}, Apply{peg_run_rule, Tuple{r, p, row, b}},
+    If{Apply{equal, Tuple{m, -2}}, Do{
         Apply{array_set, Tuple{row, b, -1}},
         Apply{array_set, Tuple{row, Apply{int_add, Tuple{b, 2}}, true}},
         -1},
@@ -416,7 +421,7 @@ Set{peg_run_rule, Lambda{Tuple{r, p, row, b}, Do{
     Apply{array_set, Tuple{row, b, q}},
     Apply{array_set, Tuple{row, b1, peg_pv}},
     If{
-        Apply{expr_eq,
+        Apply{equal,
             Tuple{Apply{array_get, Tuple{row, Apply{int_add, Tuple{b, 2}}}},
                 true}}, Do{
         Def{go, Apply{int_ge, Tuple{q, 0}}},
@@ -437,7 +442,7 @@ Def{peg_prepare, none}
 "   run "
 Def{peg_prepare_set, Lambda{Tuple{e}, Do{
     Def{t, Apply{peg_charset, Tuple{Apply{arg, Tuple{e, 0}}}}},
-    If{Apply{expr_eq, Tuple{t, none}}, Do{
+    If{Apply{equal, Tuple{t, none}}, Do{
         Apply{os_put, Tuple{"invalid character set: "}},
         Apply{print, Tuple{Apply{arg, Tuple{e, 0}}}},
         Apply{os_exit, Tuple{1}}}, none},
@@ -450,7 +455,7 @@ Set{peg_prepare, Lambda{Tuple{e},
     If{Apply{peg_is_head, Tuple{e, Quote{Act}}},
         Act{Apply{peg_prepare, Tuple{Apply{arg, Tuple{e, 0}}}},
             Apply{eval, Tuple{Apply{arg, Tuple{e, 1}}}}},
-    If{Apply{expr_eq, Tuple{Apply{expr_type, Tuple{e}}, Expr}},
+    If{Apply{equal, Tuple{Apply{type, Tuple{e}}, Expr}},
         Apply{peg_map_args, Tuple{peg_prepare, e}},
         e}}}}}
 
@@ -467,7 +472,7 @@ Def{peg_subst_prev, Lambda{Tuple{e, old},
 " _define_rule(name, e) defines or replaces the rule "
 Def{_define_rule, Lambda{Tuple{name, e}, Do{
     If{
-        Apply{expr_eq,
+        Apply{equal,
             Tuple{Apply{table_get, Tuple{peg_ids, name, none}}, none}}, Do{
         Apply{table_set, Tuple{peg_ids, name, peg_nrules}},
         Set{peg_nrules, Apply{peg_inc, Tuple{peg_nrules}}}}, none},
@@ -487,7 +492,7 @@ Def{peg_line_at, Lambda{Tuple{p}, Do{
     Def{q, p},
     While{
         If{Apply{int_ge, Tuple{Apply{peg_char_at, Tuple{q}}, 0}},
-            Apply{expr_ne, Tuple{Apply{peg_char_at, Tuple{q}}, 10}}, false},
+            Apply{not_equal, Tuple{Apply{peg_char_at, Tuple{q}}, 10}}, false},
         Set{q, Apply{peg_inc, Tuple{q}}}},
     Apply{str_sub, Tuple{peg_src, p, q}}}}}
 
@@ -510,7 +515,7 @@ Def{peg_loc_at, Lambda{Tuple{p0}, Do{
         Set{peg_ll, Apply{arg, Tuple{peg_loc0, 1}}},
         Set{peg_lc, Apply{arg, Tuple{peg_loc0, 2}}}}, none},
     While{Apply{int_lt, Tuple{peg_lp, p}}, Do{
-        If{Apply{expr_eq, Tuple{Apply{peg_char_at, Tuple{peg_lp}}, 10}},
+        If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{peg_lp}}, 10}},
             Do{Set{peg_ll, Apply{int_add, Tuple{peg_ll, 1}}}, Set{peg_lc, 1}},
             Set{peg_lc, Apply{int_add, Tuple{peg_lc, 1}}}},
         Set{peg_lp, Apply{int_add, Tuple{peg_lp, 1}}}}},
@@ -520,7 +525,7 @@ Def{peg_loc_at, Lambda{Tuple{p0}, Do{
 
 " peg_at(l, e) is e wrapped in At{loc, e} with the position of the token at l, "
 "   when the text is parsed with a position (peg_loc0 is not none) "
-Def{peg_at, Lambda{Tuple{l, e}, If{Apply{expr_ne, Tuple{peg_loc0, none}},
+Def{peg_at, Lambda{Tuple{l, e}, If{Apply{not_equal, Tuple{peg_loc0, none}},
     Apply{expr, Tuple{Quote{At}, Tuple{Apply{peg_loc_at, Tuple{l}}, e}}}, e}}}
 
 " peg_count_loc(s, n, loc) is the position after the first n bytes of s, when "
@@ -530,7 +535,7 @@ Def{peg_count_loc, Lambda{Tuple{s, n, loc}, Do{
     Def{c, Apply{arg, Tuple{loc, 2}}},
     Def{i, 0},
     While{Apply{int_lt, Tuple{i, n}}, Do{
-        If{Apply{expr_eq, Tuple{Apply{str_ord, Tuple{s, i}}, 10}},
+        If{Apply{equal, Tuple{Apply{peg_ord, Tuple{s, i}}, 10}},
             Do{Set{l, Apply{int_add, Tuple{l, 1}}}, Set{c, 1}},
             Set{c, Apply{int_add, Tuple{c, 1}}}},
         Set{i, Apply{int_add, Tuple{i, 1}}}}},
@@ -558,7 +563,7 @@ Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
             Tuple{Quote{SyntaxError},
                 Tuple{"unexpected input",
                     Apply{peg_line_at, Tuple{peg_far}}}}}}},
-    If{Apply{expr_eq, Tuple{loc0, none}}, e,
+    If{Apply{equal, Tuple{loc0, none}}, e,
         Apply{array_push,
             Tuple{e,
                 Apply{peg_count_loc,
@@ -585,14 +590,14 @@ Def{peg_error_loc, Lambda{Tuple{e}, Do{
 Def{peg_error_text, Lambda{Tuple{e}, Do{
     Def{loc, Apply{peg_error_loc, Tuple{e}}},
     Def{n,
-        If{Apply{expr_eq, Tuple{loc, none}}, Apply{arity, Tuple{e}},
+        If{Apply{equal, Tuple{loc, none}}, Apply{arity, Tuple{e}},
             Apply{int_sub, Tuple{Apply{arity, Tuple{e}}, 1}}}},
     Def{m, If{Apply{int_gt, Tuple{n, 1}},
         Apply{str_cat,
             Tuple{Apply{str_cat, Tuple{Apply{arg, Tuple{e, 0}}, ": \""}},
                 Apply{str_cat, Tuple{Apply{arg, Tuple{e, 1}}, "\""}}}},
         Apply{arg, Tuple{e, 0}}}},
-    If{Apply{expr_eq, Tuple{loc, none}},
+    If{Apply{equal, Tuple{loc, none}},
         Apply{str_cat, Tuple{"syntax error: ", m}},
         Apply{str_cat, Tuple{
             Apply{str_cat,
@@ -625,8 +630,8 @@ Def{peg_clear_rows, Lambda{Tuple{}, Do{
 
 Def{peg_parse_from, Lambda{Tuple{r, s, pos, loc}, Do{
     If{
-        If{Apply{expr_eq, Tuple{peg_memo_src, none}}, true,
-            Apply{expr_ne, Tuple{peg_memo_src, s}}}, Do{
+        If{Apply{equal, Tuple{peg_memo_src, none}}, true,
+            Apply{not_equal, Tuple{peg_memo_src, s}}}, Do{
         Set{peg_memo_src, s},
         Set{peg_memo,
             Apply{array_new,
@@ -635,18 +640,18 @@ Def{peg_parse_from, Lambda{Tuple{r, s, pos, loc}, Do{
         Set{peg_row_hi, -1},
         Set{peg_lp, 0},
         Set{peg_ll,
-            If{Apply{expr_eq, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 1}}}},
+            If{Apply{equal, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 1}}}},
         Set{peg_lc,
-            If{Apply{expr_eq, Tuple{loc, none}}, 1,
+            If{Apply{equal, Tuple{loc, none}}, 1,
                 Apply{arg, Tuple{loc, 2}}}}},
         Apply{peg_clear_rows, Tuple{}}},
     Set{peg_src, s},
-    If{Apply{expr_ne, Tuple{loc, peg_loc0}}, Do{
+    If{Apply{not_equal, Tuple{loc, peg_loc0}}, Do{
         Set{peg_lp, 0},
         Set{peg_ll,
-            If{Apply{expr_eq, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 1}}}},
+            If{Apply{equal, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 1}}}},
         Set{peg_lc,
-            If{Apply{expr_eq, Tuple{loc, none}}, 1,
+            If{Apply{equal, Tuple{loc, none}}, 1,
                 Apply{arg, Tuple{loc, 2}}}}}, none},
     Set{peg_loc0, loc},
     Set{peg_srclen, Apply{str_len, Tuple{s}}},

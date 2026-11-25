@@ -139,7 +139,7 @@ module probe {
         check(1, 2)
     }
 }
-check(expr_type(probe), Module)
+check(type(probe), Module)
 check(_testing, false)
 
 finish()

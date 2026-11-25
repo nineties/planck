@@ -146,7 +146,7 @@ compile(stmts) := {
     vector.to_list(code)
 }
 
-show_operand(o) := if (expr_type(o) == Int) string.int_to_string(o)
+show_operand(o) := if (type(o) == Int) string.int_to_string(o)
     else sym_name(o)
 show_instr(Bin{d, op, a, b, _}) :=
     join(" ", [show_operand(d), "=", show_operand(a), op, show_operand(b)])
@@ -160,7 +160,7 @@ run_code(code) := {
     table.set(ops, "-", (a, b) -> a - b)
     table.set(ops, "*", (a, b) -> a * b)
     table.set(ops, "/", (a, b) -> a / b)
-    value(o) := if (expr_type(o) == Int) o else table.get(vars, o, none)
+    value(o) := if (type(o) == Int) o else table.get(vars, o, none)
     each((Bin{d, op, a, b, p}) -> {
              y := value(b)
              if (op == "/" and y == 0) error.at(here(p), "division by zero")

@@ -7,7 +7,7 @@ all_skipped := array_new(3)
 all_skipped[0] = "run_all.pk"
 all_skipped[1] = "define_load.pk"
 all_skipped[2] = "lib.pk"
-all_names := os_list_dir(all_dir)
+all_names := unwrap(os_list_dir(all_dir))
 all_total := 0
 all_passed := 0
 
@@ -48,7 +48,7 @@ all_program(name) := {
 
 all_run(name) := {
     all_total = all_total + 1
-    r := os_run(all_planck0, all_program(name), "", "")
+    r := unwrap(os_run(all_planck0, all_program(name), "", ""))
     if (r[0] == 0) {
         all_passed = all_passed + 1
         print(f"PASS {name}")

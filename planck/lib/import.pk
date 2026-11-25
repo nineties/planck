@@ -3,7 +3,7 @@
 used_libs := table_new()
 
 module _importer {
-    grammar_chain := f"{expr_hash(unwrap(os_read_file("planck/init.pk")))}.{expr_hash(unwrap(os_read_file("planck/peg.pk")))}.{expr_hash(unwrap(os_read_file("planck/syntax.pk")))}"
+    grammar_chain := f"{hash(unwrap(os_read_file("planck/init.pk")))}.{hash(unwrap(os_read_file("planck/peg.pk")))}.{hash(unwrap(os_read_file("planck/syntax.pk")))}"
     grammar_state() := f"{grammar_chain}@{peg_version}"
 
     preprocess_hook := none
@@ -19,7 +19,7 @@ module _importer {
         if (s == none) return none
         r := parse_mexpr(s)
         h := arg(r, 0)
-        if (expr_type(h) != Expr or head(h) != 'Preprocessed or
+        if (type(h) != Expr or head(h) != 'Preprocessed or
             arity(h) != 2) return none
         if (arg(h, 0) != state or arg(h, 1) != text) return none
         s = arg(r, 1)
@@ -30,7 +30,7 @@ module _importer {
             r = parse_mexpr(s)
             e := arg(r, 0)
             if (e == Eof{}) go = false
-            else if (expr_type(e) == Expr and
+            else if (type(e) == Expr and
                 head(e) == 'SyntaxError) return none
             else {
                 acc = e :: acc
@@ -40,7 +40,7 @@ module _importer {
         }
         if (acc == []) return none
         last := arg(acc, 0)
-        if (expr_type(last) != Expr or head(last) != 'PreprocessEnd or
+        if (type(last) != Expr or head(last) != 'PreprocessEnd or
             arity(last) != 1 or arg(last, 0) != n - 1) return none
         reverse_onto(arg(acc, 1), [])
     }
@@ -57,12 +57,13 @@ module _importer {
             trees := read_preprocessed(f"planck/lib/{name}.pkm", state, text)
             if (trees == none) load(path)
             else {
-                prev := os_set_file(path)
+                prev := _file_defs
+                _file_defs = table_new()
                 for (e in trees) eval(e)
-                os_set_file(prev)
+                _file_defs = prev
             }
         }
-        if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={expr_hash(text)}"
+        if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
         none
     }
 }
@@ -79,7 +80,7 @@ _import_module(file, m) := {
 " the definitions of the fields of the module that are not in hidden, which "
 "   import runs by eval "
 _import_defs(m @ Module, hidden) := {
-    a := arg(arg(m, 0), 0)
+    a := arg(_fields(arg(_fields(m), 0)), 0)
     ds := Tuple{}
     b := array_get(a, 0)
     i := 0

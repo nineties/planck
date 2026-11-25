@@ -3,7 +3,7 @@
 errors_args := os_argv()
 errors_planck0 := errors_args[1]
 errors_dir := "planck/tests/errors"
-errors_names := os_list_dir(errors_dir)
+errors_names := unwrap(os_list_dir(errors_dir))
 errors_failed := 0
 
 errors_check(name) := {
@@ -12,7 +12,7 @@ errors_check(name) := {
         base := f"{errors_dir}/{str_sub(name, 0, n - 3)}"
         program := array_new(1)
         program[0] = f"{base}.pk"
-        r := os_run(errors_planck0, program, "", "")
+        r := unwrap(os_run(errors_planck0, program, "", ""))
         if (r[0] == 0) {
             print(f"{base}.pk: should stop")
             errors_failed = errors_failed + 1

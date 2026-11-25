@@ -23,7 +23,7 @@ f(s) := {
 check(f(b), [3])
 
 import table as c
-check(expr_type(c), Module)
+check(type(c), Module)
 
 import bitset hiding (new, add, del, copy, union, minus, equal, each, to_list)
 check(Tuple{has(b, 3), count(b)}, Tuple{true, 1})
