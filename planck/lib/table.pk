@@ -7,13 +7,13 @@ module table {
     export get := table_get
     export set := table_set
 
-    export len(tb @ Table) := array_get(arg(tb, 0), 1)
+    export len(tb @ Table) := array_get(arg(_unwrap_table(tb), 0), 1)
 
-    export has(tb @ Table, k) := table_find(arg(tb, 0), k, expr_hash(k)) != none
+    export has(tb @ Table, k) := table_find(arg(_unwrap_table(tb), 0), k, hash(k)) != none
 
     export items(tb @ Table) := {
         r := []
-        b := array_get(arg(tb, 0), 0)
+        b := array_get(arg(_unwrap_table(tb), 0), 0)
         i := 0
         while (i < array_len(b)) {
             e := array_get(b, i)

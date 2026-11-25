@@ -237,8 +237,8 @@ check(table.has(t, 4), false)
 check(list.sort((a, b) -> a < b, table.values(t)), [2, 3, 10])
 check(
     list.sort(string.string_less,
-        map(k -> if (expr_type(k) == String) k
-            else if (expr_type(k) == Symbol) sym_name(k)
+        map(k -> if (type(k) == String) k
+            else if (type(k) == Symbol) sym_name(k)
             else string.int_to_string(k), table.keys(t))), ["3", "a", "b"])
 check(length(table.items(t)), 3)
 check(member(Tuple{"a", 10}, table.items(t)), true)

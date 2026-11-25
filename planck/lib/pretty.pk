@@ -42,7 +42,7 @@ module pretty {
         else args_of(x)
 
     show(x) = {
-        t := expr_type(x)
+        t := type(x)
         if (t == Int) string.int_to_string(x)
         else if (t == String) quote_string(x)
         else if (t == Symbol) sym_name(x)
@@ -60,16 +60,16 @@ module pretty {
         }
         else if (t == Array) "<array>"
         else if (t == Type) sym_name(typename(x))
-        else if (t == Function or t == Plain) "<function>"
+        else if (t == Function or t == PArray) "<function>"
         else str_cat(
             str_cat(str_cat(sym_name(typename(t)), "{"),
-                join(", ", map(show, args_of(x)))), "}")
+                join(", ", map(show, args_of(_fields(x))))), "}")
     }
     export show := show
 
     fun repr_show
     repr_show(x) = {
-        t := expr_type(x)
+        t := type(x)
         if (t == Symbol) str_cat("'", sym_name(x))
         else if (t == Expr) {
             if (x == []) "[]"
@@ -86,7 +86,7 @@ module pretty {
 
     pp(x, indent, width) := {
         flat := show(x)
-        if (indent + str_len(flat) <= width or expr_type(x) != Expr or
+        if (indent + str_len(flat) <= width or type(x) != Expr or
             x == []) flat
         else {
             open := if (head(x) == 'Cons and is_list(x)) "["
@@ -106,7 +106,7 @@ module pretty {
     export text(x, width) := pp(x, 0, width)
 
     export print(x, pretty = true, end = "\n") := {
-        t := expr_type(x)
+        t := type(x)
         if (t == String) write_text(x)
         else if (t == Int or t == Symbol or
             t == Expr) write_text(if (pretty) text(x, 60) else show(x))
@@ -117,7 +117,7 @@ module pretty {
 repr := (x) -> pretty.repr_show(x)
 
 _print_repr(x) := {
-    t := expr_type(x)
+    t := type(x)
     if (t == Int or t == String or t == Symbol or t == Expr) print(repr(x))
         else print(x)
 }

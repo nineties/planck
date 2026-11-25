@@ -34,12 +34,12 @@ bench_run(name) := {
     bench_out = ""
     os_put = bench_put
     write_text = bench_put
-    a0 := gc_heap_allocated()
+    a0 := gc_allocated_bytes()
     g0 := gc_count()
     t0 := os_time_ns()
     load(f"{bench_dir}/cases/{name}.pk")
     t1 := os_time_ns()
-    a1 := gc_heap_allocated()
+    a1 := gc_allocated_bytes()
     g1 := gc_count()
     bench_restore()
     if (bench_out != unwrap(os_read_file(f"{bench_dir}/cases/{name}.out"))) {
