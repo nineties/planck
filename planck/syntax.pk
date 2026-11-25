@@ -1115,11 +1115,21 @@ Def{
 
 " a module value is a Module, whose field is the table that holds the names "
 "   and the values of the fields of this value "
-Def{_module_type, Apply{_record, Tuple{Quote{Module}, Quote{Tuple{table}}}}}
+Def{_make_module, none}
 
-Def{Module, Apply{arg, Tuple{_module_type, 0}}}
-
-Def{_make_module, Apply{arg, Tuple{_module_type, 1}}}
+Def{Module,
+    Apply{
+        Lambda{
+            Tuple{},
+            Do{
+                Def{module_type,
+                    Apply{_record, Tuple{Quote{Module}, Quote{Tuple{table}}}}},
+                Set{_make_module, Apply{arg, Tuple{module_type, 1}}},
+                Apply{arg, Tuple{module_type, 0}}
+            }
+        },
+        Tuple{}
+    }}
 
 Def{
     _module,
@@ -2358,113 +2368,116 @@ peg_module(n, reverse) := {
 "   and in a quasi-quote only what "
 " is unquoted is rewritten. The patterns of a function and the names that Def "
 "   and Set define are not rewritten. "
-_macro_on := false
-_macro := e -> e
-" the macros that the module being rewritten exports, the last one first "
-_macro_exports := Nil{}
-_eval_expanded := eval
-" a rewriting that takes more than _macro_limit steps in one eval stops with "
-"   an error "
-_macro_limit := 1000
-_macro_steps := 0
-
-" _macro_on is set when a macro is read, so that nothing is rewritten before "
-"   the first macro "
-peg_macro(p, e) := {
-    _macro_on = true
-    `Macro{!peg_lambda(Tuple{p}, e)}
-}
 fun expand_macro
 
-" the tree whose arguments from index from on are rewritten at the quasi-quote "
-"   level level "
-expand_macro_args(e, level, from) := {
-    n := arity(e)
-    xs := Tuple{}
-    i := 0
-    while (i < n) {
-        a := arg(e, i)
-        xs = array_push(xs, if (i < from) a else expand_macro(a, level))
-        i = i + 1
-    }
-    expr(head(e), xs)
-}
+(() -> {
+    macro_on := false
+    macros := e -> e
+    " the macros that the module being rewritten exports, the last one first "
+    macro_exports := Nil{}
+    eval_expanded := eval
+    " a rewriting that takes more than macro_limit steps in one eval stops with "
+    "   an error "
+    macro_limit := 1000
+    macro_steps := 0
 
-" Macro{f}: the function of f is added to the macros, and none stays "
-expand_macro_define(m, exported) := {
-    f := _eval_expanded(expand_macro(arg(m, 0), 0))
-    _macro = Fusion{f, _macro}
-    if (exported) _macro_exports = Cons{f, _macro_exports}
-    none
-}
-
-" a function or module body is a scope: the macros of its inside end with it, "
-"   except the exported ones "
-expand_macro_scope(e) := {
-    saved := _macro
-    saved_exports := _macro_exports
-    _macro_exports = Nil{}
-    r := expand_macro_args(e, 0, 1)
-    xs := _macro_exports
-    ys := Nil{}
-    while (head(xs) == 'Cons) {
-        ys = Cons{arg(xs, 0), ys}
-        xs = arg(xs, 1)
+    " macro_on is set when a macro is read, so that nothing is rewritten before "
+    "   the first macro "
+    peg_macro = (p, e) -> {
+        macro_on = true
+        `Macro{!peg_lambda(Tuple{p}, e)}
     }
-    _macro = saved
-    while (head(ys) == 'Cons) {
-        _macro = Fusion{arg(ys, 0), _macro}
-        ys = arg(ys, 1)
-    }
-    _macro_exports = saved_exports
-    r
-}
 
-expand_macro_sub(e, level) := {
-    if (type(e) != Expr) e
-    else {
-        h := head(e)
-        if (h == 'QuasiQuote) expand_macro_args(e, level + 1, 0)
-        else if (h == 'UnQuote) { if (level == 0) e
-            else expand_macro_args(e, level - 1, 0) }
-        else if (level > 0) expand_macro_args(e, level, 0)
-        else if (h == 'Quote) e
-        else if (h == 'Macro) expand_macro_define(e, false)
-        else if (h == 'Export and type(arg(e, 0)) == Expr and
-            head(arg(e, 0)) == 'Macro) expand_macro_define(arg(e, 0), true)
-        else if (h == 'Lambda) expand_macro_scope(e)
-        else if (h == 'Def or h == 'Set or
-            h == 'DefFun) expand_macro_args(e, 0, 1)
-        else expand_macro_args(e, 0, 0)
-    }
-}
-
-expand_macro = (e, level) -> {
-    if (level != 0) expand_macro_sub(e, level)
-    else {
-        n := _macro(e)
-        while (n != e) {
-            _macro_steps = _macro_steps + 1
-            if (_macro_steps > _macro_limit) perform Error{none,
-                "macro expansion does not end"}
-            e = n
-            n = _macro(e)
+    " the tree whose arguments from index from on are rewritten at the quasi-quote "
+    "   level level "
+    expand_macro_args(e, level, from) := {
+        n := arity(e)
+        xs := Tuple{}
+        i := 0
+        while (i < n) {
+            a := arg(e, i)
+            xs = array_push(xs, if (i < from) a else expand_macro(a, level))
+            i = i + 1
         }
-        expand_macro_sub(e, 0)
+        expr(head(e), xs)
     }
-}
 
-" eval rewrites the tree by the macros first. Nothing is rewritten until the "
-"   first macro is read. "
-eval = e -> {
-    if (_macro_on) {
-        saved := _macro_steps
-        _macro_steps = 0
-        x := expand_macro(e, 0)
-        _macro_steps = saved
-        _eval_expanded(_rewrite_globals(x))
-    } else _eval_expanded(_rewrite_globals(e))
-}
+    " Macro{f}: the function of f is added to the macros, and none stays "
+    expand_macro_define(m, exported) := {
+        f := eval_expanded(expand_macro(arg(m, 0), 0))
+        macros = Fusion{f, macros}
+        if (exported) macro_exports = Cons{f, macro_exports}
+        none
+    }
+
+    " a function or module body is a scope: the macros of its inside end with it, "
+    "   except the exported ones "
+    expand_macro_scope(e) := {
+        saved := macros
+        saved_exports := macro_exports
+        macro_exports = Nil{}
+        r := expand_macro_args(e, 0, 1)
+        xs := macro_exports
+        ys := Nil{}
+        while (head(xs) == 'Cons) {
+            ys = Cons{arg(xs, 0), ys}
+            xs = arg(xs, 1)
+        }
+        macros = saved
+        while (head(ys) == 'Cons) {
+            macros = Fusion{arg(ys, 0), macros}
+            ys = arg(ys, 1)
+        }
+        macro_exports = saved_exports
+        r
+    }
+
+    expand_macro_sub(e, level) := {
+        if (type(e) != Expr) e
+        else {
+            h := head(e)
+            if (h == 'QuasiQuote) expand_macro_args(e, level + 1, 0)
+            else if (h == 'UnQuote) { if (level == 0) e
+                else expand_macro_args(e, level - 1, 0) }
+            else if (level > 0) expand_macro_args(e, level, 0)
+            else if (h == 'Quote) e
+            else if (h == 'Macro) expand_macro_define(e, false)
+            else if (h == 'Export and type(arg(e, 0)) == Expr and
+                head(arg(e, 0)) == 'Macro) expand_macro_define(arg(e, 0), true)
+            else if (h == 'Lambda) expand_macro_scope(e)
+            else if (h == 'Def or h == 'Set or
+                h == 'DefFun) expand_macro_args(e, 0, 1)
+            else expand_macro_args(e, 0, 0)
+        }
+    }
+
+    expand_macro = (e, level) -> {
+        if (level != 0) expand_macro_sub(e, level)
+        else {
+            n := macros(e)
+            while (n != e) {
+                macro_steps = macro_steps + 1
+                if (macro_steps > macro_limit) perform Error{none,
+                    "macro expansion does not end"}
+                e = n
+                n = macros(e)
+            }
+            expand_macro_sub(e, 0)
+        }
+    }
+
+    " eval rewrites the tree by the macros first. Nothing is rewritten until the "
+    "   first macro is read. "
+    eval = e -> {
+        if (macro_on) {
+            saved := macro_steps
+            macro_steps = 0
+            x := expand_macro(e, 0)
+            macro_steps = saved
+            eval_expanded(_rewrite_globals(x))
+        } else eval_expanded(_rewrite_globals(e))
+    }
+})()
 
 " e with { f = v, ... } is _with(_with(e, 'f, v), 'g, w) ... _with is defined "
 "   by record in the place of the record "
@@ -2479,21 +2492,20 @@ peg_with(o, fs) := {
     r
 }
 
-_record_with_error(t, name) := {
-    os_put("no field ")
-    os_put(sym_name(name))
-    os_put(" in ")
-    print(t, end = "")
-    os_put("\n")
-    os_exit(1)
-}
-
 " the function (d, name, v) -> a copy of the data d of the type t with the "
 "   field name replaced by v. make makes the data of t. "
 _record_with(t, make) := {
     fs := table_get(record_fields, t, none)
+    record_with_error(t, name) := {
+        os_put("no field ")
+        os_put(sym_name(name))
+        os_put(" in ")
+        print(t, end = "")
+        os_put("\n")
+        os_exit(1)
+    }
     (d @ t, name, v) -> {
-        if (_record_index(d, name) == none) _record_with_error(d, name)
+        if (_record_index(d, name) == none) record_with_error(d, name)
         args := Tuple{}
         i := 0
         while (i < arity(fs)) {
@@ -2848,61 +2860,65 @@ peg_def_arm(f, ps0, g, e0) := {
 
 " The arguments of a call with names: the rest of the parameters is a Tuple of "
 "   the arguments without names, and then _Kw{'name, value}. "
-_kwis(x) := type(x) == Expr and head(x) == '_Kw
+(_kwcheck, _kwarg) := {
+    kwis(x) := type(x) == Expr and head(x) == '_Kw
 
-" the number of the arguments without names "
-_kwpos(rest) := {
-    n := 0
-    while (n < arity(rest) and not _kwis(arg(rest, n))) n = n + 1
-    n
-}
-
-" the index in rest, from i on, of the argument named name, or -1 "
-_kwfind(rest, name, i) := {
-    while (i < arity(rest)) {
-        if (_kwis(arg(rest, i)) and arg(arg(rest, i), 0) == name) return i
-        i = i + 1
+    " the number of the arguments without names "
+    kwpos(rest) := {
+        n := 0
+        while (n < arity(rest) and not kwis(arg(rest, n))) n = n + 1
+        n
     }
-    -1
-}
 
-_kwindex(names, name) := {
-    i := 0
-    while (i < arity(names)) {
-        if (arg(names, i) == name) return i
-        i = i + 1
+    " the index in rest, from i on, of the argument named name, or -1 "
+    kwfind(rest, name, i) := {
+        while (i < arity(rest)) {
+            if (kwis(arg(rest, i)) and arg(arg(rest, i), 0) == name) return i
+            i = i + 1
+        }
+        -1
     }
-    -1
-}
 
-_kwfail(msg) := {
-    print(f"error: {msg}")
-    os_exit(1)
-}
-
-" _kwcheck(rest, names) stops the program for an argument that no parameter "
-"   has, for too many arguments and for a parameter given twice "
-_kwcheck(rest, names) := {
-    n := _kwpos(rest)
-    if (n > arity(names)) _kwfail("too many arguments")
-    i := n
-    while (i < arity(rest)) {
-        name := arg(arg(rest, i), 0)
-        j := _kwindex(names, name)
-        if (j < 0) _kwfail(str_cat("unknown argument ", sym_name(name)))
-        if (j < n or
-            _kwfind(rest, name, i + 1) >=
-            0) _kwfail(str_cat(sym_name(name), " is given twice"))
-        i = i + 1
+    kwindex(names, name) := {
+        i := 0
+        while (i < arity(names)) {
+            if (arg(names, i) == name) return i
+            i = i + 1
+        }
+        -1
     }
-}
 
-" _kwarg(rest, i, name, thunk) is the argument named name, or the i-th one "
-"   without a name, or thunk() "
-_kwarg(rest, i, name, thunk) := {
-    j := _kwfind(rest, name, 0)
-    if (j >= 0) arg(arg(rest, j), 1) else if (i < _kwpos(rest)) arg(rest, i)
-        else thunk()
+    kwfail(msg) := {
+        print(f"error: {msg}")
+        os_exit(1)
+    }
+
+    " _kwcheck(rest, names) stops the program for an argument that no parameter "
+    "   has, for too many arguments and for a parameter given twice "
+    kwcheck(rest, names) := {
+        n := kwpos(rest)
+        if (n > arity(names)) kwfail("too many arguments")
+        i := n
+        while (i < arity(rest)) {
+            name := arg(arg(rest, i), 0)
+            j := kwindex(names, name)
+            if (j < 0) kwfail(str_cat("unknown argument ", sym_name(name)))
+            if (j < n or
+                kwfind(rest, name, i + 1) >=
+                0) kwfail(str_cat(sym_name(name), " is given twice"))
+            i = i + 1
+        }
+    }
+
+    " _kwarg(rest, i, name, thunk) is the argument named name, or the i-th one "
+    "   without a name, or thunk() "
+    kwarg(rest, i, name, thunk) := {
+        j := kwfind(rest, name, 0)
+        if (j >= 0) arg(arg(rest, j), 1) else if (i < kwpos(rest)) arg(rest, i)
+            else thunk()
+    }
+
+    (kwcheck, kwarg)
 }
 
 " a definition of a special arm matches def_run with the definitions that "

@@ -2,7 +2,7 @@
 
 used_libs := table_new()
 
-module _importer {
+import_lib := (() -> {
     grammar_chain := f"{hash(unwrap(os_read_file("planck/init.pk")))}.{hash(unwrap(os_read_file("planck/peg.pk")))}.{hash(unwrap(os_read_file("planck/syntax.pk")))}"
     grammar_state() := f"{grammar_chain}@{peg_version}"
 
@@ -45,7 +45,7 @@ module _importer {
         reverse_onto(arg(acc, 1), [])
     }
 
-    export import_lib(name) :=
+    load_lib(name) :=
         if (table_get(used_libs, name, false)) none else {
         table_set(used_libs, name, true)
         path := f"planck/lib/{name}.pk"
@@ -66,9 +66,9 @@ module _importer {
         if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
         none
     }
-}
 
-import_lib := _importer.import_lib
+    load_lib
+})()
 
 " the module that import loads: use of the file loads it, and the module is "
 "   the variable of the name m "
