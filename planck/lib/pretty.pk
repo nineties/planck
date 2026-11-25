@@ -47,21 +47,15 @@ module pretty {
         else if (t == Expr) {
             if (x == []) "[]"
             else if (head(x) == 'Cons and
-                is_list(x)) str_cat(
-                str_cat("[", join(", ", map(show, list_elems(x)))), "]")
+                is_list(x)) f"[{join(", ", map(show, list_elems(x)))}]"
             else if (head(x) ==
-                'Tuple) str_cat(
-                str_cat("(", join(", ", map(show, args_of(x)))), ")")
-            else str_cat(
-                str_cat(str_cat(sym_name(head(x)), "{"),
-                    join(", ", map(show, args_of(x)))), "}")
+                'Tuple) f"({join(", ", map(show, args_of(x)))})"
+            else f"{sym_name(head(x))}{{{join(", ", map(show, args_of(x)))}}}"
         }
         else if (t == Array) "<array>"
         else if (t == Type) sym_name(typename(x))
         else if (t == Function or t == PArray) "<function>"
-        else str_cat(
-            str_cat(str_cat(sym_name(typename(t)), "{"),
-                join(", ", map(show, args_of(_fields(x))))), "}")
+        else f"{sym_name(typename(t))}{{{join(", ", map(show, args_of(_fields(x))))}}}"
     }
     export show := show
 
@@ -72,11 +66,8 @@ module pretty {
         else if (t == Expr) {
             if (x == []) "[]"
             else if (head(x) == 'Cons and
-                is_list(x)) str_cat(
-                str_cat("[", join(", ", map(repr_show, list_elems(x)))), "]")
-            else str_cat(
-                str_cat(str_cat(sym_name(head(x)), "{"),
-                    join(", ", map(repr_show, args_of(x)))), "}")
+                is_list(x)) f"[{join(", ", map(repr_show, list_elems(x)))}]"
+            else f"{sym_name(head(x))}{{{join(", ", map(repr_show, args_of(x)))}}}"
         }
         else show(x)
     }
@@ -95,9 +86,7 @@ module pretty {
             pad := string.string_repeat(" ", indent + 2)
             parts :=
                 map(e -> str_cat(pad, pp(e, indent + 2, width)), elements(x))
-            str_cat(
-                str_cat(str_cat(str_cat(open, "\n"), join(",\n", parts)),
-                    str_cat("\n", string.string_repeat(" ", indent))), close)
+            f"{open}\n{join(",\n", parts)}\n{string.string_repeat(" ", indent)}{close}"
         }
     }
 

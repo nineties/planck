@@ -1885,24 +1885,8 @@ Def{
             Def{na, Apply{arity, Tuple{a}}},
             Def{nb, Apply{arity, Tuple{b}}},
             Def{r, Apply{array_new, Tuple{Apply{int_add, Tuple{na, nb}}}}},
-            Def{i, 0},
-            While{
-                Apply{int_lt, Tuple{i, na}},
-                Do{
-                    Apply{array_set, Tuple{r, i, Apply{arg, Tuple{a, i}}}},
-                    Set{i, Apply{int_add, Tuple{i, 1}}}
-                }
-            },
-            Set{i, 0},
-            While{
-                Apply{int_lt, Tuple{i, nb}},
-                Do{
-                    Apply{array_set,
-                        Tuple{r, Apply{int_add, Tuple{na, i}},
-                            Apply{arg, Tuple{b, i}}}},
-                    Set{i, Apply{int_add, Tuple{i, 1}}}
-                }
-            },
+            Apply{array_copy, Tuple{r, 0, Apply{expr_args, Tuple{a}}, 0, na}},
+            Apply{array_copy, Tuple{r, na, Apply{expr_args, Tuple{b}}, 0, nb}},
             Apply{expr, Tuple{Apply{head, Tuple{a}}, r}}
         }}}
 
@@ -2133,13 +2117,7 @@ module_stmt ::= 'export d:module_def { `Export{!d} }
               | 'test b:block { `If{_testing, !b, none} }
               | expr
 
-" the statements of a body, the last one first (a repetition holds at most 64 "
-"   results) "
-module_stmts ::= xs:module_stmts s:module_stmt ";"? { Cons{s, xs} }
-               | s:module_stmt ";"? { Cons{s, Nil{}} }
-
-module_expr ::= 'module n:ident "{" es:module_stmts "}" { peg_module(n, es) }
-              | 'module n:ident "{" "}" { peg_module(n, Nil{}) }
+module_expr ::= 'module n:ident "{" es:(module_stmt ";"?)* "}" { peg_module(n, es) }
 
 " import a::b as m (x, y), import a::b (*), import a::b hiding (x, y): use of "
 "   the file a/b loads it. "
@@ -2189,7 +2167,7 @@ peg_import(p, a, o) := {
     file := sym_name(arg(p, 0))
     i := 1
     while (i < n) {
-        file = str_cat(str_cat(file, "/"), sym_name(arg(p, i)))
+        file = f"{file}/{sym_name(arg(p, i))}"
         i = i + 1
     }
     m := arg(p, n - 1)
@@ -2226,19 +2204,16 @@ peg_import(p, a, o) := {
 peg_export_name(d) := if (head(d) == 'Def or head(d) == 'DefFun) arg(d, 0)
     else arg(arg(d, 1), 0)
 
-" module n { ... }: rev is the list of the statements of the body, the "
-"   last one first. The module is "
-" n := (() -> { statements; _module(names, values) })(). An M-expression holds "
-"   at most 64 arguments, so "
-" the statements are gathered in blocks of 32 (a block does not make a scope). "
-peg_module(n, rev) := {
-    items := reverse(rev)
+" module n { ... }: es is the Tuple of the statements of the body, each "
+"   followed by its optional semicolon. The module is "
+" n := (() -> { statements; _module(names, values) })(). "
+peg_module(n, es) := {
     blocks := stack_mark()
-    cur := blocks
     names := Nil{}
-    while (head(items) == 'Cons) {
-        s := arg(items, 0)
-        items = arg(items, 1)
+    i := 0
+    while (i < arity(es)) {
+        s := arg(arg(es, i), 0)
+        i = i + 1
         if (type(s) == Expr and head(s) == 'Export) {
             d := arg(s, 0)
             if (head(d) != 'Macro) {
@@ -2247,12 +2222,7 @@ peg_module(n, rev) := {
             }
         }
         stack_push(s)
-        if (stack_mark() - cur == 32) {
-            stack_push(stack_expr('Do, cur))
-            cur = stack_mark()
-        }
     }
-    if (stack_mark() > cur) stack_push(stack_expr('Do, cur))
     stack_push(`Apply{_module, Tuple{Quote{!names}, !names}})
     `Def{!n, Apply{Lambda{Tuple{}, !stack_expr('Do, blocks)}, Tuple{}}}
 }
@@ -2415,11 +2385,7 @@ _record_with(t, make) := {
 peg_names(a, bs) := {
     names := array_new(arity(bs) + 1)
     array_set(names, 0, a)
-    i := 0
-    while (i < arity(bs)) {
-        array_set(names, i + 1, arg(bs, i))
-        i = i + 1
-    }
+    array_copy(names, 1, expr_args(bs), 0, arity(bs))
     expr('Tuple, names)
 }
 

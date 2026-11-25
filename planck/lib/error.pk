@@ -5,28 +5,28 @@ import_lib("string")
 
 module error {
     export line_col(src, pos) := {
-        line := 1
-        col := 1
         n := if (pos < str_len(src)) pos else str_len(src)
-        for (i in 0..n - 1) {
-            if (str_ord(src, i) == 10) {
-                line = line + 1
-                col = 1
-            } else col = col + 1
+        line := 1
+        start := 0
+        i := str_find(src, "\n", 0)
+        while (i >= 0 and i < n) {
+            line = line + 1
+            start = i + 1
+            i = str_find(src, "\n", start)
         }
-        Tuple{line, col}
+        Tuple{line, n - start + 1}
     }
 
     export line_text(src, line) := {
         i := 0
         l := 1
         while (l < line and i < str_len(src)) {
-            if (str_ord(src, i) == 10) l = l + 1
-            i = i + 1
+            j := str_find(src, "\n", i)
+            i = if (j < 0) str_len(src) else j + 1
+            l = l + 1
         }
-        j := i
-        while (j < str_len(src) and str_ord(src, j) != 10) j = j + 1
-        str_sub(src, i, j)
+        j := str_find(src, "\n", i)
+        str_sub(src, i, if (j < 0) str_len(src) else j)
     }
 
     export loc_at(file, src, pos) := {

@@ -42,6 +42,7 @@ module vector {
         if (i < 0 or
             i >= array_get(v, 1)) panic("vector.set: index out of range")
         array_set(array_get(v, 0), i, x)
+        x
     }
 
     export pop(vector @ Vector) := {
