@@ -7,7 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check whether the code changed
+        id: changes
+        run: |
+          if [ "$GITHUB_REF_NAME" != main ] && ! git diff --name-only origin/main...HEAD | grep -qE '^(planck/|\.github/workflows/runtests\.yaml$)'; then
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Download latest planck0
+        if: steps.changes.outputs.code == 'true'
         run: |
           gh release download --repo nineties/hex-to-compiler --pattern "planck0*"
           sha256sum -c planck0.sha256
@@ -15,4 +26,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Run tests
+        if: steps.changes.outputs.code == 'true'
         run: ./planck0 planck/tests/run_all.pk ./planck0
