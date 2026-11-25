@@ -116,10 +116,4 @@ module pretty {
 }
 repr := (x) -> pretty.repr_show(x)
 
-_print_repr(x) := {
-    t := type(x)
-    if (t == Int or t == String or t == Symbol or t == Expr) print(repr(x))
-        else print(x)
-}
-
 print = pretty.print
