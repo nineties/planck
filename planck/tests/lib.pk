@@ -2,7 +2,6 @@
 
 import test (*)
 
-import_lib("base")
 import_lib("list")
 import_lib("vector")
 import_lib("string")

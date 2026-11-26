@@ -12,6 +12,8 @@
 " that an action needs. The rest of the file is read by it, and the syntax of "
 "   planck is declared with ::=. "
 
+Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
+
 " === Tokens === "
 
 Def{peg_reserved, Apply{table_new, Tuple{}}}
@@ -1885,8 +1887,8 @@ Def{
             Def{na, Apply{arity, Tuple{a}}},
             Def{nb, Apply{arity, Tuple{b}}},
             Def{r, Apply{array_new, Tuple{Apply{int_add, Tuple{na, nb}}}}},
-            Apply{array_copy, Tuple{r, 0, Apply{expr_args, Tuple{a}}, 0, na}},
-            Apply{array_copy, Tuple{r, na, Apply{expr_args, Tuple{b}}, 0, nb}},
+            Apply{array_copy, Tuple{r, 0, Apply{mexpr_args, Tuple{a}}, 0, na}},
+            Apply{array_copy, Tuple{r, na, Apply{mexpr_args, Tuple{b}}, 0, nb}},
             Apply{expr, Tuple{Apply{head, Tuple{a}}, r}}
         }}}
 
@@ -2385,7 +2387,7 @@ _record_with(t, make) := {
 peg_names(a, bs) := {
     names := array_new(arity(bs) + 1)
     array_set(names, 0, a)
-    array_copy(names, 1, expr_args(bs), 0, arity(bs))
+    array_copy(names, 1, mexpr_args(bs), 0, arity(bs))
     expr('Tuple, names)
 }
 

@@ -1,7 +1,5 @@
 # Copyright (C) 2026 nineties
 
-import_lib("base")
-
 module list {
     export foldl(f, acc, Nil{}) := acc
     foldl(f, acc, x :: xs) := foldl(f, f(acc, x), xs)

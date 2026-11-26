@@ -13,43 +13,10 @@ Def{head, mexpr_head}
 Def{arity, mexpr_arity}
 Def{arg, mexpr_arg}
 Def{expr, mexpr_new}
-Def{expr_args, mexpr_args}
 Def{typename, type_name}
 Def{_fields, none}
 
-Def{stack_mark, none}
-Def{stack_push, none}
-Def{stack_expr, none}
-Def{stack_pop, none}
-Apply{Lambda{Tuple{}, Do{
-    Def{buf, Apply{array_new, Tuple{65536}}},
-    Def{n, 0},
-    Set{stack_mark, Lambda{Tuple{}, n}},
-    Set{stack_push, Lambda{Tuple{x}, Do{
-        If{Apply{int_lt, Tuple{n, Apply{array_len, Tuple{buf}}}}, none, Do{
-            Apply{os_put, Tuple{Apply{str_cat, Tuple{
-                "error: the shared array of M-expression arguments overflowed at ",
-                Apply{str_cat, Tuple{Apply{int_to_str,
-                    Tuple{Apply{array_len, Tuple{buf}}, 10}},
-                    " elements\n"}}}}}},
-            Apply{os_exit, Tuple{1}}}},
-        Apply{array_set, Tuple{buf, n, x}},
-        Set{n, Apply{int_add, Tuple{n, 1}}},
-        x}}},
-    Set{stack_expr, Lambda{Tuple{h, start}, Do{
-        Def{a, Apply{array_new, Tuple{Apply{int_sub, Tuple{n, start}}}}},
-        Def{i, start},
-        While{Apply{int_lt, Tuple{i, n}}, Do{
-            Apply{array_set,
-                Tuple{a, Apply{int_sub, Tuple{i, start}},
-                    Apply{array_get, Tuple{buf, i}}}},
-            Set{i, Apply{int_add, Tuple{i, 1}}}}},
-        Set{n, start},
-        Apply{mexpr_new, Tuple{h, a}}}}},
-    Set{stack_pop, Lambda{Tuple{start}, Set{n, start}}}}}, Tuple{}}
-
 " === Basic Functions === "
-Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 " text(x) is the text of x on one line. A string is its characters, an integer "
 "   is its decimal digits, a symbol is its name, an expression is its head and "
 "   its arguments in braces. An array and a function are <array> and "

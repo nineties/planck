@@ -1,6 +1,5 @@
 # Copyright (C) 2026 nineties
 
-import_lib("base")
 import_lib("list")
 import_lib("vector")
 
