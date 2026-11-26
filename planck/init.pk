@@ -21,8 +21,8 @@ Def{_fields, none}
 "   is its decimal digits, a symbol is its name, an expression is its head and "
 "   its arguments in braces. An array and a function are <array> and "
 "   <function>. "
-DefFun{text, Apply{Lambda{Tuple{}, Do{
-    DefFun{_args_text,
+Defun{text, Apply{Lambda{Tuple{}, Do{
+    Defun{_args_text,
         Lambda{Tuple{e, i},
             If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
         Apply{str_cat, Tuple{Apply{text, Tuple{Apply{arg, Tuple{e, i}}}},
@@ -156,14 +156,14 @@ Set{_fields,
 " === Results of files === "
 " unwrap(r) is x for Ok{x}, and performs Error{none, message} for "
 "   Err{IoError{stage, path}}. "
-DefFun{unwrap,
+Defun{unwrap,
     Lambda{Tuple{Err{e}},
     Perform{
         Error{none,
             Apply{str_join,
                 Tuple{Tuple{Apply{sym_name, Tuple{Apply{arg, Tuple{e, 0}}}}, ": ",
                     Apply{arg, Tuple{e, 1}}}}}}}}}
-DefFun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
+Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 
 " === Loading files === "
 " load(path) parses and evaluates the file by the current parse and eval. "
@@ -179,16 +179,16 @@ Def{parse_from, none}
 Def{_file_defs, none}
 Def{_rewrite_globals, none}
 Def{_rewrite_global, none}
-DefFun{_rewrite_global, Lambda{Tuple{Def{n, v}},
+Defun{_rewrite_global, Lambda{Tuple{Def{n, v}},
     Do{Apply{table_set, Tuple{_file_defs, n, true}},
         QuasiQuote{Def{UnQuote{n}, UnQuote{v}}}}}}
-DefFun{_rewrite_global, Lambda{Tuple{DefFun{n, f}},
+Defun{_rewrite_global, Lambda{Tuple{Defun{n, f}},
     If{Apply{table_get, Tuple{_file_defs, n, false}},
-        QuasiQuote{DefFun{UnQuote{n}, UnQuote{f}}},
+        QuasiQuote{Defun{UnQuote{n}, UnQuote{f}}},
         Do{Apply{table_set, Tuple{_file_defs, n, true}},
             QuasiQuote{Do{Def{UnQuote{n}, none},
-                DefFun{UnQuote{n}, UnQuote{f}}}}}}}}
-DefFun{_rewrite_global, Lambda{Tuple{Do{_Rest{es}}},
+                Defun{UnQuote{n}, UnQuote{f}}}}}}}}
+Defun{_rewrite_global, Lambda{Tuple{Do{_Rest{es}}},
     Do{Def{n, Apply{arity, Tuple{es}}},
         Def{xs, Apply{array_new, Tuple{n}}},
         Def{i, 0},
@@ -197,7 +197,7 @@ DefFun{_rewrite_global, Lambda{Tuple{Do{_Rest{es}}},
                 Tuple{Apply{arg, Tuple{es, i}}}}}},
             Set{i, Apply{int_add, Tuple{i, 1}}}}},
         Apply{expr, Tuple{Quote{Do}, xs}}}}}
-DefFun{_rewrite_global, Lambda{Tuple{e}, e}}
+Defun{_rewrite_global, Lambda{Tuple{e}, e}}
 Set{_rewrite_globals, Lambda{Tuple{e},
     If{Apply{equal, Tuple{_file_defs, none}}, e,
         Apply{_rewrite_global, Tuple{e}}}}}

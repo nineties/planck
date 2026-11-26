@@ -360,7 +360,7 @@ Def{peg_first, Lambda{Tuple{t}, Apply{arg, Tuple{t, 0}}}}
 
 " the tree t without the At of the calls in it, except in the parts !e: an "
 "   f(a, ...) in a quote is a tree to be matched or built, not a call "
-DefFun{peg_unat, Lambda{Tuple{t},
+Defun{peg_unat, Lambda{Tuple{t},
     If{Apply{not_equal, Tuple{Apply{type, Tuple{t}}, Expr}}, t,
     If{
         If{Apply{equal, Tuple{Apply{head, Tuple{t}}, Quote{At}}},
@@ -426,7 +426,7 @@ Def{
         }
     }}
 
-DefFun{peg_scan,
+Defun{peg_scan,
     Lambda{
         Tuple{e, tag},
         Do{
@@ -632,7 +632,7 @@ Def{
 " f | g: g goes in the place of the last _nomatch of the functions with a "
 "   guard in f "
 
-DefFun{peg_fuse,
+Defun{peg_fuse,
     Fusion{
         Lambda{
             Tuple{Quote{_nomatch}, g},
@@ -692,7 +692,7 @@ DefFun{peg_fuse,
 
 Def{peg_skip, Apply{sym_intern, Tuple{"%skip"}}}
 
-DefFun{peg_guarded,
+Defun{peg_guarded,
     Fusion{
         Lambda{Tuple{Fusion{_, g}}, Apply{peg_guarded, Tuple{g}}},
         Fusion{
@@ -752,7 +752,7 @@ Def{
 "   their bodies, "
 " so that a return in an arm belongs to the function around the match "
 
-DefFun{peg_arms,
+Defun{peg_arms,
     Fusion{
         Lambda{
             Tuple{Fusion{f, g}},
@@ -866,7 +866,7 @@ Def{
         }
     }}
 
-DefFun{peg_token_istr_hole,
+Defun{peg_token_istr_hole,
     Lambda{
         Tuple{p},
         If{
@@ -2050,7 +2050,7 @@ def_params ::= a:def_plain_list "," d:def_default_list { peg_tuple_cat(a, d) }
 " a branch of if: an expression without | outside of brackets, "
 " so that a | after if (c) a else b goes on with the functions around the if "
 branch ::= &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:branch {
-               `DefFun{!f, !peg_lambda_defaults(ps, e)}
+               `Defun{!f, !peg_lambda_defaults(ps, e)}
            }
          | ns:destruct_names ":=" e:branch { peg_destruct('Def, ns, e) }
          | ns:destruct_names "=" !nospace("=") e:branch { peg_destruct('Set, ns, e) }
@@ -2101,7 +2101,7 @@ idents ::= delimited(ident, ",")
 " module m { ... }: export marks the definitions that stand directly in the "
 "   body, which are the fields (peg_module) "
 module_def ::= &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:expr {
-                   `DefFun{!f, !peg_lambda_defaults(ps, e)}
+                   `Defun{!f, !peg_lambda_defaults(ps, e)}
                }
              | x:ident ":=" e:expr { `Def{!x, !e} }
              | 'macro p:pattern ":=" e:expr { peg_macro(p, e) }
@@ -2126,11 +2126,11 @@ import_option ::= same "(" "*" ")" { Tuple{'all, Tuple{}} }
 
 import_expr ::= 'import p:delimited1(ident, "::") a:(same 'as ident)? o:import_option? { peg_import(p, a, o) }
 
-" f(p, ...) := e adds to f when f is already a variable of the place (DefFun) "
+" f(p, ...) := e adds to f when f is already a variable of the place (Defun) "
 expr ::= syntax_decl
        | def_run
        | &(postfix ":=") f:ident nospace("(") &(def_params ")") ps:delimited(def_param, ",") ")" ":=" e:expr {
-             `DefFun{!f, !peg_lambda_defaults(ps, e)}
+             `Defun{!f, !peg_lambda_defaults(ps, e)}
          }
        | ns:destruct_names ":=" e:expr { peg_destruct('Def, ns, e) }
        | ns:destruct_names "=" !nospace("=") e:expr { peg_destruct('Set, ns, e) }
@@ -2195,8 +2195,8 @@ peg_import(p, a, o) := {
 }
 
 " the name that a definition marked export defines: x for Def{x, e}, f for "
-"   DefFun{f, e}, the type for a record "
-peg_export_name(d) := if (head(d) == 'Def or head(d) == 'DefFun) arg(d, 0)
+"   Defun{f, e}, the type for a record "
+peg_export_name(d) := if (head(d) == 'Def or head(d) == 'Defun) arg(d, 0)
     else arg(arg(d, 1), 0)
 
 " module n { ... }: es is the Tuple of the statements of the body, each "
@@ -2312,7 +2312,7 @@ fun expand_macro
                 head(arg(e, 0)) == 'Macro) expand_macro_define(arg(e, 0), true)
             else if (h == 'Lambda) expand_macro_scope(e)
             else if (h == 'Def or h == 'Set or
-                h == 'DefFun) expand_macro_args(e, 0, 1)
+                h == 'Defun) expand_macro_args(e, 0, 1)
             else expand_macro_args(e, 0, 0)
         }
     }
@@ -2402,7 +2402,7 @@ peg_record(n, fs, m) := {
         Def{!r, Apply{_record, Tuple{Quote{!n}, Quote{!fs}}}},
         Def{!n, Apply{arg, Tuple{!r, 0}}},
         Def{!m, Apply{arg, Tuple{!r, 1}}},
-        DefFun{_with, Apply{_record_with, Tuple{!n, !m}}}
+        Defun{_with, Apply{_record_with, Tuple{!n, !m}}}
     }
 }
 
@@ -2851,7 +2851,7 @@ peg_def_run(a, rest) := {
             k = k - 1
         }
         stack_push(
-            `DefFun{!f, !lambda})
+            `Defun{!f, !lambda})
         i = j
     }
     done := stack_expr('Do, stmts)
