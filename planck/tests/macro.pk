@@ -62,7 +62,7 @@ check(expand_macro('Lambda{Tuple{Twice{x}}, Twice{x}}, 0),
     'Lambda{Tuple{Twice{x}}, (x + x)})
 check(expand_macro('Def{Twice, Twice{1}}, 0), 'Def{Twice, (1 + 1)})
 check(expand_macro('Set{Twice, Twice{1}}, 0), 'Set{Twice, (1 + 1)})
-check(expand_macro('DefFun{Twice, 1}, 0), 'DefFun{Twice, 1})
+check(expand_macro('Defun{Twice, 1}, 0), 'Defun{Twice, 1})
 
 macro Twice{x} := `(!x + !x + !x)
 check(Twice{10}, 30)

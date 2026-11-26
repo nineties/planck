@@ -421,17 +421,17 @@ Apply{check,
     Tuple{Quote{Tuple{Apply{fz_f, Tuple{0}}, Apply{fz_f, Tuple{3}}}},
         Tuple{0, 6}}}
 
-" DefFun{x, f} makes x first when x is not a variable of the same place, and "
+" Defun{x, f} makes x first when x is not a variable of the same place, and "
 "   adds f to x when it is "
-DefFun{dc_x, Lambda{Tuple{0}, 1}}
-DefFun{dc_x, Lambda{Tuple{n}, 2}}
+Defun{dc_x, Lambda{Tuple{0}, 1}}
+Defun{dc_x, Lambda{Tuple{n}, 2}}
 Apply{check, Tuple{Quote{Tuple{Apply{dc_x, Tuple{0}}, Apply{dc_x, Tuple{3}}}},
     Tuple{1, 2}}}
 " in a function: a parameter or a variable of the function, not a variable "
 "   outside "
 Def{dc_f,
     Lambda{Tuple{a},
-        Do{DefFun{dc_x, Lambda{Tuple{0}, 3}},
+        Do{Defun{dc_x, Lambda{Tuple{0}, 3}},
             Apply{dc_x, Tuple{0}}}}}
 Apply{check, Tuple{Quote{Apply{dc_f, Tuple{1}}}, 3}}
 Apply{check, Tuple{Quote{Apply{dc_x, Tuple{0}}}, 1}}
