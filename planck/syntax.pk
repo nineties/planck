@@ -360,8 +360,7 @@ Def{peg_first, Lambda{Tuple{t}, Apply{arg, Tuple{t, 0}}}}
 
 " the tree t without the At of the calls in it, except in the parts !e: an "
 "   f(a, ...) in a quote is a tree to be matched or built, not a call "
-Def{peg_unat, none}
-Set{peg_unat, Lambda{Tuple{t},
+DefFun{peg_unat, Lambda{Tuple{t},
     If{Apply{not_equal, Tuple{Apply{type, Tuple{t}}, Expr}}, t,
     If{
         If{Apply{equal, Tuple{Apply{head, Tuple{t}}, Quote{At}}},
@@ -427,8 +426,7 @@ Def{
         }
     }}
 
-Def{peg_scan, none}
-Set{peg_scan,
+DefFun{peg_scan,
     Lambda{
         Tuple{e, tag},
         Do{
@@ -634,8 +632,7 @@ Def{
 " f | g: g goes in the place of the last _nomatch of the functions with a "
 "   guard in f "
 
-Def{peg_fuse, none}
-Set{peg_fuse,
+DefFun{peg_fuse,
     Fusion{
         Lambda{
             Tuple{Quote{_nomatch}, g},
@@ -695,8 +692,7 @@ Set{peg_fuse,
 
 Def{peg_skip, Apply{sym_intern, Tuple{"%skip"}}}
 
-Def{peg_guarded, none}
-Set{peg_guarded,
+DefFun{peg_guarded,
     Fusion{
         Lambda{Tuple{Fusion{_, g}}, Apply{peg_guarded, Tuple{g}}},
         Fusion{
@@ -756,8 +752,7 @@ Def{
 "   their bodies, "
 " so that a return in an arm belongs to the function around the match "
 
-Def{peg_arms, none}
-Set{peg_arms,
+DefFun{peg_arms,
     Fusion{
         Lambda{
             Tuple{Fusion{f, g}},
@@ -871,8 +866,7 @@ Def{
         }
     }}
 
-Def{peg_token_istr_hole, none}
-Set{peg_token_istr_hole,
+DefFun{peg_token_istr_hole,
     Lambda{
         Tuple{p},
         If{
