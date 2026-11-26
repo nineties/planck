@@ -10,6 +10,15 @@ on:
         description: Number of runs of the measured version
         required: false
         default: '5'
+      planck0:
+        description: Release tag of planck0 to measure with (default is the latest release)
+        required: false
+        default: ''
+      record:
+        description: Open a pull request that records the result
+        required: false
+        default: true
+        type: boolean
 permissions:
   contents: write
   pull-requests: write
@@ -60,12 +69,13 @@ jobs:
       - name: Download the latest planck0
         run: |
           rm -f planck0 planck0.sha256 planck0.version
-          gh release download --repo nineties/hex-to-compiler --pattern "planck0*"
+          gh release download $PLANCK0_TAG --repo nineties/hex-to-compiler --pattern "planck0*"
           sha256sum -c planck0.sha256
           chmod +x planck0
-          gh release view --repo nineties/hex-to-compiler --json tagName --jq .tagName > planck0.version
+          gh release view $PLANCK0_TAG --repo nineties/hex-to-compiler --json tagName --jq .tagName > planck0.version
         env:
           GH_TOKEN: ${{ github.token }}
+          PLANCK0_TAG: ${{ inputs.planck0 }}
       - uses: actions/checkout@v4
         with:
           ref: main
@@ -88,6 +98,7 @@ jobs:
           path: out
           if-no-files-found: ignore
       - name: Open a pull request that records the result
+        if: ${{ inputs.record }}
         env:
           GH_TOKEN: ${{ github.token }}
           REF: ${{ steps.refs.outputs.ref }}
