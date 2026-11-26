@@ -66,11 +66,10 @@ Apply{Lambda{Tuple{}, Do{
     Set{stack_mark, Lambda{Tuple{}, n}},
     Set{stack_push, Lambda{Tuple{x}, Do{
         If{Apply{int_lt, Tuple{n, Apply{array_len, Tuple{buf}}}}, none, Do{
-            Apply{os_put, Tuple{Apply{str_cat, Tuple{
+            Apply{os_put, Tuple{Apply{str_join, Tuple{Tuple{
                 "error: the shared array of M-expression arguments overflowed at ",
-                Apply{str_cat, Tuple{Apply{int_to_str,
-                    Tuple{Apply{array_len, Tuple{buf}}, 10}},
-                    " elements\n"}}}}}},
+                Apply{int_to_str, Tuple{Apply{array_len, Tuple{buf}}, 10}},
+                " elements\n"}}}}},
             Apply{os_exit, Tuple{1}}}},
         Apply{array_set, Tuple{buf, n, x}},
         Set{n, Apply{int_add, Tuple{n, 1}}},
@@ -649,22 +648,17 @@ Def{peg_error_text, Lambda{Tuple{e}, Do{
         If{Apply{equal, Tuple{loc, none}}, Apply{arity, Tuple{e}},
             Apply{int_sub, Tuple{Apply{arity, Tuple{e}}, 1}}}},
     Def{m, If{Apply{int_gt, Tuple{n, 1}},
-        Apply{str_cat,
-            Tuple{Apply{str_cat, Tuple{Apply{arg, Tuple{e, 0}}, ": \""}},
-                Apply{str_cat, Tuple{Apply{arg, Tuple{e, 1}}, "\""}}}},
+        Apply{str_join,
+            Tuple{Tuple{Apply{arg, Tuple{e, 0}}, ": \"",
+                Apply{arg, Tuple{e, 1}}, "\""}}},
         Apply{arg, Tuple{e, 0}}}},
     If{Apply{equal, Tuple{loc, none}},
         Apply{str_cat, Tuple{"syntax error: ", m}},
-        Apply{str_cat, Tuple{
-            Apply{str_cat,
-                Tuple{Apply{str_cat, Tuple{Apply{arg, Tuple{loc, 0}}, ":"}},
-                    Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 1}}, 10}}}},
-            Apply{str_cat,
-                Tuple{":",
-                    Apply{str_cat,
-                        Tuple{Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 2}}, 10}},
-                            Apply{str_cat,
-                                Tuple{": syntax error: ", m}}}}}}}}}}}}
+        Apply{str_join, Tuple{Tuple{
+            Apply{arg, Tuple{loc, 0}}, ":",
+            Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 1}}, 10}}, ":",
+            Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 2}}, 10}},
+            ": syntax error: ", m}}}}}}}
 
 " peg_parse_from(rule, s, pos, loc) parses s by the rule from the byte "
 "   position pos. loc is the position of the start of s (not of pos), or none "
