@@ -21,8 +21,7 @@ Def{_fields, none}
 "   is its decimal digits, a symbol is its name, an expression is its head and "
 "   its arguments in braces. An array and a function are <array> and "
 "   <function>. "
-Def{text, none}
-Set{text, Apply{Lambda{Tuple{}, Do{
+DefFun{text, Apply{Lambda{Tuple{}, Do{
     DefFun{_args_text,
         Lambda{Tuple{e, i},
             If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
@@ -157,7 +156,6 @@ Set{_fields,
 " === Results of files === "
 " unwrap(r) is x for Ok{x}, and performs Error{none, message} for "
 "   Err{IoError{stage, path}}. "
-Def{unwrap, none}
 DefFun{unwrap,
     Lambda{Tuple{Err{e}},
     Perform{
