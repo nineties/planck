@@ -71,38 +71,27 @@ jobs:
           ref: main
           path: main
       - name: Measure
-        env:
-          REF: ${{ steps.refs.outputs.ref }}
-          COMMIT: ${{ steps.refs.outputs.commit }}
-          ROUNDS: ${{ steps.refs.outputs.rounds }}
         run: |
           rm -rf out
           mkdir out
-          results=$PWD/main/bench/results.pk
-          results_md=$PWD/main/bench/results.md
-          cd cur
-          ../planck0 bench/measure.pk "planck0_bin=$PWD/../planck0" "cur=$PWD" "out=$PWD/../out" "ref=$REF" "commit=$COMMIT" "planck0=$(cat ../planck0.version)" "rounds=$ROUNDS" "summary=$GITHUB_STEP_SUMMARY" "results=$results" "results_md=$results_md"
+          W=$PWD
+          for round in 1 2 3; do
+            for c in 3a9e872 d51db6d 44a829c ed33c36 ca8e70f 0f8a49a; do
+              d=$PWD/wt-$c
+              [ -d "$d" ] || git -C repo worktree add --detach "$d" $c
+              (cd "$d" && "$W/planck0" "$d/bench/run.pk" "$W/out/samples-$c.pk" "$(date +%s%N)") || echo "$c failed" >> out/failures.txt
+            done
+          done
+          for c in 3a9e872 d51db6d 44a829c ed33c36 ca8e70f 0f8a49a; do
+            echo "== $c"
+            grep -h -E '"(gc_alloc|startup)"' "out/samples-$c.pk"
+          done | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: samples
           path: out
           if-no-files-found: ignore
-      - name: Open a pull request that records the result
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REF: ${{ steps.refs.outputs.ref }}
-        run: |
-          cd main
-          branch=bench-result-$(echo "$REF" | tr -c 'A-Za-z0-9.\n' '-')-$GITHUB_RUN_ID
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -c "$branch"
-          git add bench/results.pk bench/results.md
-          git commit -m "bench: record the result of $REF"
-          git push origin "$branch"
-          url=$(gh pr create --base main --head "$branch" --title "bench: record the result of $REF" --body "Result of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
-          gh pr merge "$url" --auto --merge
-          gh workflow run runtests.yaml --ref "$branch"
   stop-vm:
     needs: [start-vm, bench]
     if: always()
