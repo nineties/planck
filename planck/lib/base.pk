@@ -1,7 +1,0 @@
-# Copyright (C) 2026 nineties
-
-module base {
-    export assert(c, msg) := if (not c) panic(msg)
-}
-
-assert := base.assert
