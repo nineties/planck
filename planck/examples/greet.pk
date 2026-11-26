@@ -11,8 +11,8 @@ spec :=
 
 greet(options, name) := {
     text :=
-        str_cat(str_cat("Hello, ", name), if (table.has(options, "shout")) "!!"
-        else ".")
+        str_join(Tuple{"Hello, ", name,
+            if (table.has(options, "shout")) "!!" else "."})
     i := 0
     while (i < string.string_to_int(table.get(options, "times", "1"))) {
         say(text)

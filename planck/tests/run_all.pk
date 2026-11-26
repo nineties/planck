@@ -29,20 +29,11 @@ all_is_test(name) := {
 all_program(name) := {
     path := f"{all_dir}/{name}"
     if (name == "builtins.pk") {
-        program := array_new(3)
-        program[0] = path
-        program[1] = "one"
-        program[2] = "two words"
-        program
+        Tuple{path, "one", "two words"}
     } else if (name == "run_errors.pk") {
-        program := array_new(2)
-        program[0] = path
-        program[1] = all_planck0
-        program
+        Tuple{path, all_planck0}
     } else {
-        program := array_new(1)
-        program[0] = path
-        program
+        Tuple{path}
     }
 }
 

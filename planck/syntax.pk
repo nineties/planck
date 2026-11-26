@@ -1069,11 +1069,10 @@ Def{
                     Do{
                         Apply{print,
                             Tuple{
-                                Apply{str_cat,
-                                    Tuple{"no field ",
-                                        Apply{str_cat,
-                                            Tuple{Apply{sym_name, Tuple{name}},
-                                                " in Module{}"}}}}}},
+                                Apply{str_join,
+                                    Tuple{Tuple{"no field ",
+                                        Apply{sym_name, Tuple{name}},
+                                        " in Module{}"}}}}},
                         Apply{os_exit, Tuple{1}}
                     },
                     none

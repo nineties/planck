@@ -33,11 +33,8 @@ run_checked(program, args, dir) := {
 }
 
 measure_once(dir, samples) := {
-    args := array_new(3)
-    args[0] = f"{measure_cur}/bench/run.pk"
-    args[1] = samples
-    args[2] = f"{os_time_ns()}"
-    run_checked(measure_planck0, args, dir)
+    run_checked(measure_planck0,
+        Tuple{f"{measure_cur}/bench/run.pk", samples, f"{os_time_ns()}"}, dir)
 }
 
 rounds := string.string_to_int(option("rounds"))
@@ -47,9 +44,7 @@ while (r < rounds) {
     r = r + 1
 }
 
-cat_args := array_new(1)
-cat_args[0] = "/proc/cpuinfo"
-cpuinfo := string.split(run_checked("/bin/cat", cat_args, "")[1], "\n")
+cpuinfo := string.split(run_checked("/bin/cat", Tuple{"/proc/cpuinfo"}, "")[1], "\n")
 cpu_name := ""
 cpu_count := 0
 for (line in cpuinfo) {
@@ -60,9 +55,7 @@ for (line in cpuinfo) {
 }
 
 memory_kib := 0
-meminfo_args := array_new(1)
-meminfo_args[0] = "/proc/meminfo"
-for (line in string.split(run_checked("/bin/cat", meminfo_args, "")[1], "\n")) {
+for (line in string.split(run_checked("/bin/cat", Tuple{"/proc/meminfo"}, "")[1], "\n")) {
     if (string.starts_with(line, "MemTotal:")) {
         memory_kib = string.string_to_int(
             list.nth(
@@ -81,10 +74,7 @@ for (line in string.split(unwrap(os_read_file("/etc/os-release")), "\n")) {
     }
 }
 
-date_args := array_new(2)
-date_args[0] = "-u"
-date_args[1] = "+%Y-%m-%dT%H:%M:%SZ"
-date_text := run_checked("/bin/date", date_args, "")[1]
+date_text := run_checked("/bin/date", Tuple{"-u", "+%Y-%m-%dT%H:%M:%SZ"}, "")[1]
 measure_date := str_sub(date_text, 0, str_len(date_text) - 1)
 
 measure_meta := f"ref={option("ref")}\ncommit={option("commit")}\nplanck0={option("planck0")}\nnproc={cpu_count}\nos={os_name}\ncpu={cpu_name}\ndate={measure_date}\nrounds={rounds}\n"
@@ -93,18 +83,12 @@ os_write_file(measure_meta_path, measure_meta)
 
 this_run := f"{measure_out}/this-run.pk"
 this_run_md := f"{measure_out}/this-run.md"
-record_args := array_new(4)
-record_args[0] = f"{measure_cur}/bench/record.pk"
-record_args[1] = this_run
-record_args[2] = measure_samples_cur
-record_args[3] = measure_meta_path
-run_checked(measure_planck0, record_args, measure_cur)
+run_checked(measure_planck0,
+    Tuple{f"{measure_cur}/bench/record.pk", this_run, measure_samples_cur,
+        measure_meta_path}, measure_cur)
 
-report_args := array_new(3)
-report_args[0] = f"{measure_cur}/bench/report.pk"
-report_args[1] = this_run
-report_args[2] = this_run_md
-run_checked(measure_planck0, report_args, measure_cur)
+run_checked(measure_planck0,
+    Tuple{f"{measure_cur}/bench/report.pk", this_run, this_run_md}, measure_cur)
 
 append_text(path, text) := {
     old := match os_read_file(path) {
@@ -129,9 +113,7 @@ if (option("results") != "") {
         if (string.starts_with(results_old, "machine(")) list.drop(run_lines, 1)
         else run_lines
     append_text(option("results"), string.join("\n", recorded))
-    report_all := array_new(3)
-    report_all[0] = f"{measure_cur}/bench/report.pk"
-    report_all[1] = option("results")
-    report_all[2] = option("results_md")
-    run_checked(measure_planck0, report_all, measure_cur)
+    run_checked(measure_planck0,
+        Tuple{f"{measure_cur}/bench/report.pk", option("results"),
+            option("results_md")}, measure_cur)
 }
