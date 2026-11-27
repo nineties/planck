@@ -47,7 +47,7 @@ Defun{text, Apply{Lambda{Tuple{}, Do{
         Lambda{Tuple{_TypeOf{x, Type}},
             Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}}},
     Fusion{Lambda{Tuple{_TypeOf{x, Function}}, "<function>"},
-    Fusion{Lambda{Tuple{_TypeOf{x, PArray}}, "<function>"},
+    Fusion{Lambda{Tuple{_TypeOf{x, PArray}}, "<plain array>"},
     Lambda{Tuple{x},
         Apply{str_join,
             Tuple{Tuple{

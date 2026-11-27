@@ -54,7 +54,8 @@ module pretty {
         }
         else if (t == Array) "<array>"
         else if (t == Type) sym_name(typename(x))
-        else if (t == Function or t == PArray) "<function>"
+        else if (t == PArray) "<plain array>"
+        else if (t == Function) "<function>"
         else f"{sym_name(typename(t))}{{{join(", ", map(show, args_of(_fields(x))))}}}"
     }
     export show := show
