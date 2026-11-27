@@ -635,10 +635,10 @@ check(collect(Tuple{1, 2, 3}), [1, 2, 3])
 check(collect(Tuple{}), [])
 check(collect(Pair{1, 2}), [1, 2])
 check(collect(array_new(0)), [])
-pv := parray_new_u8(3)
+pv := packedarray_new_u8(3)
 pv[1] = 200
 check(collect(pv), [0, 200, 0])
-check(collect(parray_new_u16(0)), [])
+check(collect(packedarray_new_u16(0)), [])
 tv := table.new()
 tv["a"] = 1
 tv["b"] = 2
