@@ -22,17 +22,17 @@ Def{typename, type_name}
 "   <function>. "
 Defun{text, Apply{Lambda{Tuple{}, Do{
     Defun{_args_text,
-        Lambda{Tuple{e, i},
-            If{Apply{int_ge, Tuple{i, Apply{arity, Tuple{e}}}}, "",
-        Apply{str_cat, Tuple{Apply{text, Tuple{Apply{arg, Tuple{e, i}}}},
-            If{
-                Apply{int_lt,
-                    Tuple{Apply{int_add, Tuple{i, 1}}, Apply{arity, Tuple{e}}}},
-                Apply{str_cat,
-                    Tuple{", ",
-                        Apply{_args_text,
-                            Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
-                ""}}}}}},
+        Lambda{Tuple{e}, Do{
+            Def{s, ""},
+            Def{i, 0},
+            While{Apply{int_lt, Tuple{i, Apply{arity, Tuple{e}}}}, Do{
+                If{Apply{int_lt, Tuple{0, i}},
+                    Set{s, Apply{str_cat, Tuple{s, ", "}}}, none},
+                Set{s,
+                    Apply{str_cat,
+                        Tuple{s, Apply{text, Tuple{Apply{arg, Tuple{e, i}}}}}}},
+                Set{i, Apply{int_add, Tuple{i, 1}}}}},
+            s}}},
     Fusion{Lambda{Tuple{TypeOf{x, String}}, x},
     Fusion{Lambda{Tuple{TypeOf{x, Int}}, Apply{int_to_str, Tuple{x, 10}}},
     Fusion{Lambda{Tuple{TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
@@ -40,7 +40,7 @@ Defun{text, Apply{Lambda{Tuple{}, Do{
         Lambda{Tuple{TypeOf{x, Expr}},
             Apply{str_join,
                 Tuple{Tuple{Apply{sym_name, Tuple{Apply{head, Tuple{x}}}}, "{",
-                    Apply{_args_text, Tuple{x, 0}}, "}"}}}},
+                    Apply{_args_text, Tuple{x}}, "}"}}}},
     Fusion{Lambda{Tuple{TypeOf{x, Array}}, "<array>"},
     Fusion{
         Lambda{Tuple{TypeOf{x, Type}},
