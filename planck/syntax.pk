@@ -950,8 +950,7 @@ Apply{_define_rule, Tuple{Quote{istr_close}, peg_token_istr_close}}
 " the field names of each type that record declares: type -> Tuple of the "
 "   names "
 Def{record_fields, Apply{table_new, Tuple{}}}
-Def{record_unwraps, Apply{table_new, Tuple{}}}
-Def{_record_data, Lambda{Tuple{d}, Apply{Apply{table_get, Tuple{record_unwraps, Apply{type, Tuple{d}}, none}}, Tuple{d}}}}
+Def{_record_data, Lambda{Tuple{d}, none}}
 
 " _record(name, fields) is Tuple{type, make} of a new type: type_new, and "
 "   the field names are kept for t.f. The data holds Tuple{the fields}. "
@@ -964,7 +963,17 @@ Def{
             Def{t, Apply{arg, Tuple{r, 0}}},
             Def{wrap_fields, Apply{arg, Tuple{r, 1}}},
             Apply{table_set, Tuple{record_fields, t, fields}},
-            Apply{table_set, Tuple{record_unwraps, t, Apply{arg, Tuple{r, 2}}}},
+            Def{unwrap_fields, Apply{arg, Tuple{r, 2}}},
+            Apply{eval,
+                Tuple{
+                    QuasiQuote{
+                        Set{
+                            _record_data,
+                            Fusion{
+                                Lambda{
+                                    Tuple{_TypeOf{d, Quote{UnQuote{t}}}},
+                                    Apply{Quote{UnQuote{unwrap_fields}}, Tuple{d}}},
+                                _record_data}}}}},
             Tuple{t,
                 Apply{eval,
                     Tuple{
