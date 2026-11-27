@@ -49,10 +49,7 @@ Defun{text, Apply{Lambda{Tuple{}, Do{
     Fusion{Lambda{Tuple{_TypeOf{x, Function}}, "<function>"},
     Fusion{Lambda{Tuple{_TypeOf{x, PArray}}, "<plain array>"},
     Lambda{Tuple{x},
-        Apply{str_join,
-            Tuple{Tuple{
-                Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{type, Tuple{x}}}}}},
-                "{", Apply{_args_text, Tuple{Apply{_fields, Tuple{x}}, 0}}, "}"}}}}}}}}}}}}}}, Tuple{}}}
+        Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{type, Tuple{x}}}}}}}}}}}}}}}}}, Tuple{}}}
 " print(x) writes text(x) and a new line. Until lib/pretty.pk is loaded, which "
 "   is at the end of this file, this is the print. lib/pretty.pk then sets "
 "   print to write the value as pretty.text(x, 60) does, and takes the "
