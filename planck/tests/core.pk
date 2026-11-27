@@ -165,7 +165,7 @@ Def{describe, Fusion{Fusion{Fusion{Fusion{Fusion{
     Lambda{Tuple{"hi"}, "greeting"}},
     Lambda{Tuple{Quote{none}}, "none"}},
     Lambda{Tuple{Point{x, _}}, x}},
-    Lambda{Tuple{_TypeOf{_, Int}}, "int"}},
+    Lambda{Tuple{TypeOf{_, Int}}, "int"}},
     Lambda{Tuple{_}, "other"}}}
 Apply{check, Tuple{Quote{Apply{describe, Tuple{0}}}, "zero"}}
 Apply{check, Tuple{Quote{Apply{describe, Tuple{"hi"}}}, "greeting"}}
@@ -183,7 +183,7 @@ Apply{check,
 Apply{check,
     Tuple{
         Quote{
-            Apply{Lambda{Tuple{_TypeOf{s, String}}, s}, Tuple{"str"}}}, "str"}}
+            Apply{Lambda{Tuple{TypeOf{s, String}}, s}, Tuple{"str"}}}, "str"}}
 
 " fusion selects by arity too "
 Def{arity_of, Fusion{Fusion{
@@ -521,25 +521,25 @@ Apply{check, Tuple{Quote{Apply{table_get, Tuple{tab, 7, 0}}}, 3}}
 
 " === End of Tests === "
 
-" a rest pattern _Rest{x} as the last pattern binds the remaining arguments as "
+" a rest pattern Rest{x} as the last pattern binds the remaining arguments as "
 "   a Tuple "
-Def{rest_f, Lambda{Tuple{a, _Rest{r}}, r}}
+Def{rest_f, Lambda{Tuple{a, Rest{r}}, r}}
 Apply{check, Tuple{Quote{Apply{rest_f, Tuple{1}}}, Quote{Tuple{}}}}
 Apply{check, Tuple{Quote{Apply{rest_f, Tuple{1, 2, 3}}}, Quote{Tuple{2, 3}}}}
 Def{rest_g, Fusion{Fusion{
     Lambda{Tuple{}, "none"},
     Lambda{Tuple{a}, "one"}},
-    Lambda{Tuple{a, b, _Rest{r}}, "two or more"}}}
+    Lambda{Tuple{a, b, Rest{r}}, "two or more"}}}
 Apply{check, Tuple{Quote{Apply{rest_g, Tuple{}}}, "none"}}
 Apply{check, Tuple{Quote{Apply{rest_g, Tuple{1}}}, "one"}}
 Apply{check, Tuple{Quote{Apply{rest_g, Tuple{1, 2}}}, "two or more"}}
 Apply{check, Tuple{Quote{Apply{rest_g, Tuple{1, 2, 3, 4}}}, "two or more"}}
-Def{rest_h, Lambda{Tuple{Pair{a, _Rest{r}}}, r}}
+Def{rest_h, Lambda{Tuple{Pair{a, Rest{r}}}, r}}
 Apply{check,
     Tuple{Quote{Apply{rest_h, Tuple{Pair{1, 2, 3}}}}, Quote{Tuple{2, 3}}}}
 Apply{check, Tuple{Quote{Apply{rest_h, Tuple{Pair{1}}}}, Quote{Tuple{}}}}
 Def{rest_i,
-    Fusion{Lambda{Tuple{Pair{a, b, _Rest{r}}}, "long"},
+    Fusion{Lambda{Tuple{Pair{a, b, Rest{r}}}, "long"},
         Lambda{Tuple{_}, "short"}}}
 Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Pair{1}}}}, "short"}}
 Apply{check, Tuple{Quote{Apply{rest_i, Tuple{Pair{1, 2}}}}, "long"}}

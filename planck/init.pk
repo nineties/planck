@@ -33,20 +33,20 @@ Defun{text, Apply{Lambda{Tuple{}, Do{
                         Apply{_args_text,
                             Tuple{e, Apply{int_add, Tuple{i, 1}}}}}},
                 ""}}}}}},
-    Fusion{Lambda{Tuple{_TypeOf{x, String}}, x},
-    Fusion{Lambda{Tuple{_TypeOf{x, Int}}, Apply{int_to_str, Tuple{x, 10}}},
-    Fusion{Lambda{Tuple{_TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
+    Fusion{Lambda{Tuple{TypeOf{x, String}}, x},
+    Fusion{Lambda{Tuple{TypeOf{x, Int}}, Apply{int_to_str, Tuple{x, 10}}},
+    Fusion{Lambda{Tuple{TypeOf{x, Symbol}}, Apply{sym_name, Tuple{x}}},
     Fusion{
-        Lambda{Tuple{_TypeOf{x, Expr}},
+        Lambda{Tuple{TypeOf{x, Expr}},
             Apply{str_join,
                 Tuple{Tuple{Apply{sym_name, Tuple{Apply{head, Tuple{x}}}}, "{",
                     Apply{_args_text, Tuple{x, 0}}, "}"}}}},
-    Fusion{Lambda{Tuple{_TypeOf{x, Array}}, "<array>"},
+    Fusion{Lambda{Tuple{TypeOf{x, Array}}, "<array>"},
     Fusion{
-        Lambda{Tuple{_TypeOf{x, Type}},
+        Lambda{Tuple{TypeOf{x, Type}},
             Apply{sym_name, Tuple{Apply{typename, Tuple{x}}}}},
-    Fusion{Lambda{Tuple{_TypeOf{x, Function}}, "<function>"},
-    Fusion{Lambda{Tuple{_TypeOf{x, PArray}}, "<plain array>"},
+    Fusion{Lambda{Tuple{TypeOf{x, Function}}, "<function>"},
+    Fusion{Lambda{Tuple{TypeOf{x, PArray}}, "<plain array>"},
     Lambda{Tuple{x},
         Apply{sym_name, Tuple{Apply{typename, Tuple{Apply{type, Tuple{x}}}}}}}}}}}}}}}}}, Tuple{}}}
 " print(x) writes text(x) and a new line. Until lib/pretty.pk is loaded, which "
@@ -55,7 +55,7 @@ Defun{text, Apply{Lambda{Tuple{}, Do{
 "   argument pretty, and sets repr. The argument end = s writes s in place of "
 "   the new line (here, the first argument with a name is taken as end). "
 Def{print,
-    Lambda{Tuple{x, _Rest{_kwrest}},
+    Lambda{Tuple{x, Rest{_kwrest}},
         Do{Apply{os_put, Tuple{Apply{text, Tuple{x}}}},
             If{Apply{int_lt, Tuple{0, Apply{arity, Tuple{_kwrest}}}},
                 Apply{os_put,
@@ -100,7 +100,7 @@ Apply{Lambda{Tuple{}, Do{
         Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
         Apply{array_set, Tuple{t, 1, 0}},
         Apply{_wrap_table, Tuple{Tuple{t}}}}}},
-    Set{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
+    Set{table_get, Lambda{Tuple{TypeOf{tb, Table}, k, default}, Do{
         Def{t, Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}},
         Def{e, Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}},
         If{Apply{equal, Tuple{e, none}}, default,
@@ -124,7 +124,7 @@ Apply{Lambda{Tuple{}, Do{
                     Set{e, next}}},
                 Set{i, Apply{int_add, Tuple{i, 1}}}}},
             Apply{array_set, Tuple{t, 0, nb}}}}},
-        Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
+        Lambda{Tuple{TypeOf{tb, Table}, k, v}, Do{
             Def{t, Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}},
             Def{h, Apply{hash, Tuple{k}}},
             Def{e, Apply{table_find, Tuple{t, k, h}}},
@@ -143,12 +143,12 @@ Apply{Lambda{Tuple{}, Do{
                     Apply{table_grow, Tuple{t}}, none}},
                 Apply{array_set, Tuple{e, 1, v}}},
             none}}}}, Tuple{}}},
-    Set{table_len, Lambda{Tuple{_TypeOf{tb, Table}}, Do{
+    Set{table_len, Lambda{Tuple{TypeOf{tb, Table}}, Do{
         Apply{array_get, Tuple{Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}, 1}}}}},
-    Set{table_has, Lambda{Tuple{_TypeOf{tb, Table}, k}, Do{
+    Set{table_has, Lambda{Tuple{TypeOf{tb, Table}, k}, Do{
         Def{t, Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}},
         Apply{not_equal, Tuple{Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}, none}}}}},
-    Set{table_iter, Lambda{Tuple{_TypeOf{tb, Table}}, Do{
+    Set{table_iter, Lambda{Tuple{TypeOf{tb, Table}}, Do{
         Def{b, Apply{array_get, Tuple{Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}, 0}}},
         Def{n, Apply{array_len, Tuple{b}}},
         Def{i, 0},
@@ -197,7 +197,7 @@ Defun{_rewrite_global, Lambda{Tuple{Defun{n, f}},
         Do{Apply{table_set, Tuple{_file_defs, n, true}},
             QuasiQuote{Do{Def{UnQuote{n}, none},
                 Defun{UnQuote{n}, UnQuote{f}}}}}}}}
-Defun{_rewrite_global, Lambda{Tuple{Do{_Rest{es}}},
+Defun{_rewrite_global, Lambda{Tuple{Do{Rest{es}}},
     Do{Def{n, Apply{arity, Tuple{es}}},
         Def{xs, Apply{array_new, Tuple{n}}},
         Def{i, 0},

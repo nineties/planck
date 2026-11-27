@@ -1,1 +1,1 @@
-matching failed: <lambda:(_TypeOf{_, nomatch})> <-> (-1)
+matching failed: <lambda:(TypeOf{_, nomatch})> <-> (-1)
