@@ -111,7 +111,7 @@ check(tree("x -> y -> x"), 'Lambda{Tuple{x}, Lambda{Tuple{y}, x}})
 check(tree("(0) -> 1 | (n) -> n"),
     'Fusion{Lambda{Tuple{0}, 1}, Lambda{Tuple{n}, n}})
 check(tree("(F{a}, 'none) -> a"), 'Lambda{Tuple{F{a}, Quote{none}}, a})
-check(tree("(x @ Int) -> x"), 'Lambda{Tuple{_TypeOf{x, Int}}, x})
+check(tree("(x @ Int) -> x"), 'Lambda{Tuple{TypeOf{x, Int}}, x})
 check(tree("x := 1"), 'Def{x, 1})
 check(tree("f(x) := x"),
     'Defun{f, Lambda{Tuple{x}, x}})
@@ -481,7 +481,7 @@ check(head(tree("record Tok")), 'SyntaxError)
 check(head(tree("record Tok(1) = tok")), 'SyntaxError)
 check(head(tree("record Tok(kind)")), 'SyntaxError)
 check(head(tree("record Tok(kind) = 1")), 'SyntaxError)
-check(tree("x @ a.B"), '_TypeOf{x, Apply{_record_get, Tuple{a, Quote{B}}}})
+check(tree("x @ a.B"), 'TypeOf{x, Apply{_record_get, Tuple{a, Quote{B}}}})
 
 record Token(kind, value, pos) = token
 record Node(op, left, right) = node
@@ -1182,7 +1182,7 @@ check(expr{| 'a |}, 'Quote{a})
 
 check(tree("a@Int + b@Int -> a + b"),
     'Lambda{
-        Tuple{Apply{Quote{int_add}, Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}},
+        Tuple{Apply{Quote{int_add}, Tuple{TypeOf{a, Int}, TypeOf{b, Int}}}},
         Apply{int_add, Tuple{a, b}}})
 check(tree("a * b + c -> a"),
     'Lambda{
@@ -1241,7 +1241,7 @@ check(tree("match e { a + 0 -> a | _ -> e }"),
             Lambda{Tuple{_}, e}}, Tuple{e}})
 check(tree("Apply{f, Tuple{x}} -> f"), 'Lambda{Tuple{Apply{f, Tuple{x}}}, f})
 check(tree("Apply{'int_add, Tuple{a @ Int, b}} -> a"),
-    'Lambda{Tuple{Apply{Quote{int_add}, Tuple{_TypeOf{a, Int}, b}}}, a})
+    'Lambda{Tuple{Apply{Quote{int_add}, Tuple{TypeOf{a, Int}, b}}}, a})
 check(tree("x - 1 -> x"), 'Lambda{Tuple{Apply{Quote{int_sub}, Tuple{x, 1}}}, x})
 check(tree("x->x - 1"), 'Lambda{Tuple{x}, Apply{int_sub, Tuple{x, 1}}})
 
@@ -1410,7 +1410,7 @@ check(tree("t[a @ Int + b @ Int -> a + b | -x -> x]"),
                 Lambda{
                     Tuple{
                         Apply{Quote{int_add},
-                            Tuple{_TypeOf{a, Int}, _TypeOf{b, Int}}}},
+                            Tuple{TypeOf{a, Int}, TypeOf{b, Int}}}},
                     Apply{int_add, Tuple{a, b}}},
                 Lambda{Tuple{Apply{Quote{int_sub}, Tuple{0, x}}}, x}}}})
 rt2 := 'F{P{1, 1}, P{1, 2}}
@@ -1429,13 +1429,13 @@ check(('(g(1, 2)))[(f)(a, b) -> f], 'g)
 check(('(k(7)))[(f)(a) -> a], 7)
 check(('(k(7, 8)))[(f)(a) -> a | (f)(a, b) -> b], 8)
 
-check(tree("f(a, rest...)"), 'Apply{f, Tuple{a, _Rest{rest}}})
-check(tree("(a, rest...) -> a"), 'Lambda{Tuple{a, _Rest{rest}}, a})
-check(tree("(rest...) -> rest"), 'Lambda{Tuple{_Rest{rest}}, rest})
-check(tree("F{a, rest...} -> a"), 'Lambda{Tuple{F{a, _Rest{rest}}}, a})
+check(tree("f(a, rest...)"), 'Apply{f, Tuple{a, Rest{rest}}})
+check(tree("(a, rest...) -> a"), 'Lambda{Tuple{a, Rest{rest}}, a})
+check(tree("(rest...) -> rest"), 'Lambda{Tuple{Rest{rest}}, rest})
+check(tree("F{a, rest...} -> a"), 'Lambda{Tuple{F{a, Rest{rest}}}, a})
 check(tree("f(a, rest...) -> a"),
-    'Lambda{Tuple{Apply{Quote{f}, Tuple{a, _Rest{rest}}}}, a})
-check(tree("_..."), '_Rest{_})
+    'Lambda{Tuple{Apply{Quote{f}, Tuple{a, Rest{rest}}}}, a})
+check(tree("_..."), 'Rest{_})
 drop_first(t) := {
     r := array_new(arity(t) - 1)
     i := 1

@@ -389,7 +389,7 @@ Def{peg_to_list, Lambda{Tuple{t}, Do{
 
 Def{peg_no_type, Quote{nomatch}}
 
-Def{_nomatch, Lambda{Tuple{_TypeOf{_, peg_no_type}}, none}}
+Def{_nomatch, Lambda{Tuple{TypeOf{_, peg_no_type}}, none}}
 
 Def{peg_g, Apply{sym_intern, Tuple{"%g"}}}
 
@@ -588,7 +588,7 @@ Def{
                                 Tuple{Apply{arity, Tuple{ps}}, 1}}}}},
                 If{
                     Apply{equal, Tuple{Apply{type, Tuple{l}}, Expr}},
-                    Apply{equal, Tuple{Apply{head, Tuple{l}}, Quote{_Rest}}},
+                    Apply{equal, Tuple{Apply{head, Tuple{l}}, Quote{Rest}}},
                     false
                 }
             },
@@ -598,12 +598,12 @@ Def{
 
 " A function with a guard calls the functions after it with all of its "
 "   arguments again, so it has no rest parameter: "
-" the tree _Rest{ps} that it gives is an error when it is compiled. "
+" the tree Rest{ps} that it gives is an error when it is compiled. "
 Def{
     peg_guard,
     Lambda{
         Tuple{ps, c, e},
-        If{Apply{peg_has_rest, Tuple{ps}}, QuasiQuote{_Rest{UnQuote{ps}}},
+        If{Apply{peg_has_rest, Tuple{ps}}, QuasiQuote{Rest{UnQuote{ps}}},
         Do{
             Def{vs, Apply{peg_vars, Tuple{Apply{arity, Tuple{ps}}}}},
             Def{f,
@@ -835,9 +835,9 @@ Def{
         Tuple{x},
         Apply{
             Fusion{
-                Lambda{Tuple{_TypeOf{s, String}}, s},
+                Lambda{Tuple{TypeOf{s, String}}, s},
                 Fusion{
-                    Lambda{Tuple{_TypeOf{n, Int}}, Apply{int_to_str, Tuple{n, 10}}},
+                    Lambda{Tuple{TypeOf{n, Int}}, Apply{int_to_str, Tuple{n, 10}}},
                     Lambda{Tuple{_}, Apply{show, Tuple{x}}}
                 }
             },
@@ -971,7 +971,7 @@ Def{
                             _record_data,
                             Fusion{
                                 Lambda{
-                                    Tuple{_TypeOf{d, Quote{UnQuote{t}}}},
+                                    Tuple{TypeOf{d, Quote{UnQuote{t}}}},
                                     Apply{Quote{UnQuote{unwrap_fields}}, Tuple{d}}},
                                 _record_data}}}}},
             Tuple{t,
@@ -1058,7 +1058,7 @@ Def{
     _record_get,
     Fusion{
         Lambda{
-            Tuple{_TypeOf{m, Module}, name},
+            Tuple{TypeOf{m, Module}, name},
             Do{
                 Def{tb, Apply{arg, Tuple{Apply{_record_data, Tuple{m}}, 0}}},
                 If{
@@ -1328,36 +1328,36 @@ Def{
 Def{
     _index_get,
     Fusion{
-        Lambda{Tuple{_TypeOf{a, Array}, _TypeOf{i, Int}},
+        Lambda{Tuple{TypeOf{a, Array}, TypeOf{i, Int}},
             Apply{array_get, Tuple{a, i}}},
         Fusion{
             Lambda{
-                Tuple{_TypeOf{s, String}, _TypeOf{i, Int}},
+                Tuple{TypeOf{s, String}, TypeOf{i, Int}},
                 Do{
                     Apply{_index_check, Tuple{s, i, Apply{str_len, Tuple{s}}}},
                     Apply{str_sub, Tuple{s, i, Apply{int_add, Tuple{i, 1}}}}
                 }
             },
             Fusion{
-                Lambda{Tuple{_TypeOf{t, Table}, k},
+                Lambda{Tuple{TypeOf{t, Table}, k},
                     Apply{table_get, Tuple{t, k, none}}},
                 Fusion{
-                    Lambda{Tuple{x, _TypeOf{f, Function}},
+                    Lambda{Tuple{x, TypeOf{f, Function}},
                         Apply{subst, Tuple{x, f}}},
                     Fusion{
                         Lambda{
-                            Tuple{Cons{x, xs}, _TypeOf{i, Int}},
+                            Tuple{Cons{x, xs}, TypeOf{i, Int}},
                             Apply{_list_get, Tuple{Cons{x, xs}, i}}
                         },
                         Fusion{
                             Lambda{
-                                Tuple{Nil{}, _TypeOf{i, Int}},
+                                Tuple{Nil{}, TypeOf{i, Int}},
                                 Apply{_index_error, Tuple{Nil{}, i}}
                             },
                             Fusion{
                                     Lambda{
-                                        Tuple{_TypeOf{t, Expr},
-                                            _TypeOf{i, Int}},
+                                        Tuple{TypeOf{t, Expr},
+                                            TypeOf{i, Int}},
                                         Do{
                                             Apply{_index_check,
                                                 Tuple{t, i,
@@ -1392,7 +1392,7 @@ Set{
     _index_get,
     Fusion{
         Lambda{
-            Tuple{_TypeOf{a, PArray}, _TypeOf{i, Int}},
+            Tuple{TypeOf{a, PArray}, TypeOf{i, Int}},
             Apply{parray_get, Tuple{a, i}}
         },
         _index_get
@@ -1418,14 +1418,14 @@ Def{
 Def{
     _index_set,
     Fusion{
-        Lambda{Tuple{_TypeOf{a, Array}, _TypeOf{i, Int}, v},
+        Lambda{Tuple{TypeOf{a, Array}, TypeOf{i, Int}, v},
             Apply{array_set, Tuple{a, i, v}}},
         Fusion{
-            Lambda{Tuple{_TypeOf{t, Table}, k, v},
+            Lambda{Tuple{TypeOf{t, Table}, k, v},
                 Apply{table_set, Tuple{t, k, v}}},
             Fusion{
                 Lambda{
-                    Tuple{_TypeOf{s, String}, i, v},
+                    Tuple{TypeOf{s, String}, i, v},
                     Apply{_index_set_immutable, Tuple{"a string", s, i}}
                 },
                 Fusion{
@@ -1442,7 +1442,7 @@ Def{
                         },
                         Fusion{
                             Lambda{
-                                Tuple{_TypeOf{t, Expr}, i, v},
+                                Tuple{TypeOf{t, Expr}, i, v},
                                 Apply{
                                     _index_set_immutable,
                                     Tuple{
@@ -1481,7 +1481,7 @@ Set{
     _index_set,
     Fusion{
         Lambda{
-            Tuple{_TypeOf{a, PArray}, _TypeOf{i, Int}, v},
+            Tuple{TypeOf{a, PArray}, TypeOf{i, Int}, v},
             Apply{parray_set, Tuple{a, i, v}}
         },
         _index_set
@@ -1807,7 +1807,7 @@ Def{
                             Apply{array_set,
                                 Tuple{plain, i, Apply{arg, Tuple{ps, i}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
-                    Apply{array_set, Tuple{plain, k, Quote{_Rest{_kwrest}}}},
+                    Apply{array_set, Tuple{plain, k, Quote{Rest{_kwrest}}}},
                     Def{names, Apply{array_new, Tuple{Apply{int_sub, Tuple{n, k}}}}},
                     Def{items, Apply{array_new, Tuple{Apply{int_sub, Tuple{n, k}}}}},
                     While{
@@ -1904,10 +1904,10 @@ call_args ::= a:call_list "," k:kw_list { peg_tuple_cat(a, k) }
             | delimited(call_pos, ",")
 
 postfix ::= l:here f:postfix nospace("(") &(call_args ")") args:delimited(call_arg, ",") ")" { peg_at(l, `Apply{!f, !args}) }
-          | x:postfix "@" t:type_ref { `_TypeOf{!x, !t} }
+          | x:postfix "@" t:type_ref { `TypeOf{!x, !t} }
           | t:postfix nospace(".") f:ident { `Apply{_record_get, Tuple{!t, Quote{!f}}} }
           | a:postfix nospace("[") i:index "]" !assign_op { `Apply{_index_get, Tuple{!a, !i}} }
-          | x:ident "..." { `_Rest{!x} }
+          | x:ident "..." { `Rest{!x} }
           | primary
 
 mul_expr ::= a:mul_expr "*" b:unary { `int_mul(!a, !b) }
@@ -1954,7 +1954,7 @@ or_expr ::= a:and_expr 'or b:or_expr { `If{!a, true, !b} }
 "   variables. "
 " (f)(p, ...) is Apply{f, Tuple{p, ...}} with the variable f: a call of any "
 "   function. "
-" p @ type is _TypeOf{p, type}, and the arguments of Head{p, ...} are "
+" p @ type is TypeOf{p, type}, and the arguments of Head{p, ...} are "
 "   patterns. "
 " p or q matches what p or q matches (peg_pats). A name written twice matches "
 "   two values that are ==. "
@@ -1969,8 +1969,8 @@ pat_primary ::= f:ident nospace("(") args:delimited(pattern, ",") ")" { `Apply{Q
               | "(" ps:delimited1(pattern, ",") ")" { peg_group(ps) }
               | "[" ps:delimited(pattern, ",") "]" { peg_to_list(ps) }
 
-pat_postfix ::= x:pat_postfix "@" t:type_ref { `_TypeOf{!x, !t} }
-              | x:ident "..." { `_Rest{!x} }
+pat_postfix ::= x:pat_postfix "@" t:type_ref { `TypeOf{!x, !t} }
+              | x:ident "..." { `Rest{!x} }
               | pat_primary
 
 " 'e is the value of the expression e "
@@ -2475,7 +2475,7 @@ peg_pat_names(p) := {
             return none
         }
         if (type(p) != Expr or head(p) == 'Quote) return none
-        n := if (head(p) == '_TypeOf) 1 else arity(p)
+        n := if (head(p) == 'TypeOf) 1 else arity(p)
         i := 0
         while (i < n) {
             collect(arg(p, i))
@@ -2542,7 +2542,7 @@ peg_pat_literals(p) := {
     if (type(p) == Symbol) return if (p == 'true or p == 'false or
         p == 'none) expr('Quote, Tuple{p}) else p
     if (type(p) != Expr or head(p) == 'Quote) return p
-    n := if (head(p) == '_TypeOf) 1 else arity(p)
+    n := if (head(p) == 'TypeOf) 1 else arity(p)
     args := array_new(arity(p))
     i := 0
     while (i < arity(p)) {
@@ -2652,7 +2652,7 @@ peg_pat_walk(p, st) := {
         }
         return t
     }
-    n := if (head(p) == '_TypeOf) 1 else arity(p)
+    n := if (head(p) == 'TypeOf) 1 else arity(p)
     args := array_new(arity(p))
     i := 0
     while (i < arity(p)) {
