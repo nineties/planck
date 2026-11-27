@@ -78,7 +78,7 @@ _import_module(file, m) := {
 "   import runs by eval "
 _import_defs(m @ Module, hidden) := {
     ds := stack_mark()
-    for (Tuple{k, v} in arg(_fields(m), 0)) {
+    for (Tuple{k, v} in arg(_record_data(m), 0)) {
         skip := false
         for (h in hidden) if (h == k) skip = true
         if (not skip) stack_push(`Def{!k, Quote{!v}})

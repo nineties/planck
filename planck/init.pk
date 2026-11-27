@@ -14,7 +14,6 @@ Def{arity, mexpr_arity}
 Def{arg, mexpr_arg}
 Def{expr, mexpr_new}
 Def{typename, type_name}
-Def{_fields, none}
 
 " === Basic Functions === "
 " text(x) is the text of x on one line. A string is its characters, an integer "
@@ -71,8 +70,10 @@ Def{print,
 " The number of buckets doubles when there are more entries than buckets. "
 Def{Table, none}
 
-Def{_unwraps, none}
 Def{table_new, none}
+Def{table_len, none}
+Def{table_has, none}
+Def{table_iter, none}
 Def{table_get, none}
 Def{table_set, none}
 
@@ -142,12 +143,24 @@ Apply{Lambda{Tuple{}, Do{
                     Apply{table_grow, Tuple{t}}, none}},
                 Apply{array_set, Tuple{e, 1, v}}},
             none}}}}, Tuple{}}},
-    Set{_unwraps, Apply{table_new, Tuple{}}},
-    Apply{table_set, Tuple{_unwraps, Table, _unwrap_table}}}}, Tuple{}}
-Set{_fields,
-    Lambda{Tuple{d},
-        Apply{Apply{table_get, Tuple{_unwraps, Apply{type, Tuple{d}}, none}},
-            Tuple{d}}}}
+    Set{table_len, Lambda{Tuple{_TypeOf{tb, Table}}, Do{
+        Apply{array_get, Tuple{Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}, 1}}}}},
+    Set{table_has, Lambda{Tuple{_TypeOf{tb, Table}, k}, Do{
+        Def{t, Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}},
+        Apply{not_equal, Tuple{Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}, none}}}}},
+    Set{table_iter, Lambda{Tuple{_TypeOf{tb, Table}}, Do{
+        Def{b, Apply{array_get, Tuple{Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}, 0}}},
+        Def{n, Apply{array_len, Tuple{b}}},
+        Def{i, 0},
+        Def{e, none},
+        Lambda{Tuple{end}, Do{
+            While{If{Apply{equal, Tuple{e, none}}, Apply{int_lt, Tuple{i, n}}, false},
+                Do{Set{e, Apply{array_get, Tuple{b, i}}},
+                    Set{i, Apply{int_add, Tuple{i, 1}}}}},
+            If{Apply{equal, Tuple{e, none}}, end, Do{
+                Def{r, Tuple{Apply{array_get, Tuple{e, 0}}, Apply{array_get, Tuple{e, 1}}}},
+                Set{e, Apply{array_get, Tuple{e, 2}}},
+                r}}}}}}}}}, Tuple{}}
 
 " === Results of files === "
 " unwrap(r) is x for Ok{x}, and performs Error{none, message} for "

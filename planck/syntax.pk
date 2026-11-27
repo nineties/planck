@@ -950,6 +950,8 @@ Apply{_define_rule, Tuple{Quote{istr_close}, peg_token_istr_close}}
 " the field names of each type that record declares: type -> Tuple of the "
 "   names "
 Def{record_fields, Apply{table_new, Tuple{}}}
+Def{record_unwraps, Apply{table_new, Tuple{}}}
+Def{_record_data, Lambda{Tuple{d}, Apply{Apply{table_get, Tuple{record_unwraps, Apply{type, Tuple{d}}, none}}, Tuple{d}}}}
 
 " _record(name, fields) is Tuple{type, make} of a new type: type_new, and "
 "   the field names are kept for t.f. The data holds Tuple{the fields}. "
@@ -962,7 +964,7 @@ Def{
             Def{t, Apply{arg, Tuple{r, 0}}},
             Def{wrap_fields, Apply{arg, Tuple{r, 1}}},
             Apply{table_set, Tuple{record_fields, t, fields}},
-            Apply{table_set, Tuple{_unwraps, t, Apply{arg, Tuple{r, 2}}}},
+            Apply{table_set, Tuple{record_unwraps, t, Apply{arg, Tuple{r, 2}}}},
             Tuple{t,
                 Apply{eval,
                     Tuple{
@@ -1049,17 +1051,9 @@ Def{
         Lambda{
             Tuple{_TypeOf{m, Module}, name},
             Do{
-                Def{a,
-                    Apply{arg,
-                        Tuple{
-                            Apply{_fields,
-                                Tuple{Apply{arg, Tuple{Apply{_fields, Tuple{m}}, 0}}}},
-                            0}}},
-                Def{e,
-                    Apply{table_find,
-                        Tuple{a, name, Apply{hash, Tuple{name}}}}},
+                Def{tb, Apply{arg, Tuple{Apply{_record_data, Tuple{m}}, 0}}},
                 If{
-                    Apply{equal, Tuple{e, none}},
+                    Apply{equal, Tuple{Apply{table_has, Tuple{tb, name}}, false}},
                     Do{
                         Apply{print,
                             Tuple{
@@ -1071,7 +1065,7 @@ Def{
                     },
                     none
                 },
-                Apply{array_get, Tuple{e, 1}}
+                Apply{table_get, Tuple{tb, name, none}}
             }
         },
         Lambda{
@@ -1092,7 +1086,7 @@ Def{
                     },
                     none
                 },
-                Apply{arg, Tuple{Apply{_fields, Tuple{t}}, i}}
+                Apply{arg, Tuple{Apply{_record_data, Tuple{t}}, i}}
             }
         }}}
 
@@ -2369,7 +2363,7 @@ _record_with(t, make) := {
         i := 0
         while (i < arity(fs)) {
             array_set(args, i,
-                expr('Quote, Tuple{if (arg(fs, i) == name) v else arg(_fields(d), i)}))
+                expr('Quote, Tuple{if (arg(fs, i) == name) v else arg(_record_data(d), i)}))
             i = i + 1
         }
         eval(expr('Apply, Tuple{expr('Quote, Tuple{make}), expr('Tuple, args)}))
@@ -2922,23 +2916,7 @@ _iter(e @ Expr) := {
 
 " a table: Tuple{key, value} of each entry, in the order of table.items. The "
 "   table must not change while it is walked. "
-_iter(tb @ Table) := {
-    b := array_get(arg(_fields(tb), 0), 0)
-    n := array_len(b)
-    i := 0
-    e := none
-    (end) -> {
-        while (e == none and i < n) {
-            e = array_get(b, i)
-            i += 1
-        }
-        if (e == none) end else {
-            r := Tuple{array_get(e, 0), array_get(e, 1)}
-            e = array_get(e, 2)
-            r
-        }
-    }
-}
+_iter(tb @ Table) := table_iter(tb)
 
 peg_for(xs, f) := {
     end := () -> none
