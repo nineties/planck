@@ -77,24 +77,23 @@ Def{table_iter, none}
 Def{table_get, none}
 Def{table_set, none}
 
-Def{table_find, Lambda{Tuple{t, k, h}, Do{
-    Def{b, Apply{array_get, Tuple{t, 0}}},
-    Def{e,
-        Apply{array_get,
-            Tuple{b, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}}}},
-    While{If{Apply{not_equal, Tuple{e, none}},
-            If{Apply{equal, Tuple{Apply{array_get, Tuple{e, 3}}, h}},
-                Apply{not_equal, Tuple{Apply{array_get, Tuple{e, 0}}, k}},
-                true},
-            false},
-        Set{e, Apply{array_get, Tuple{e, 2}}}},
-    e}}}
-
 Apply{Lambda{Tuple{}, Do{
     Def{_table_type, Apply{type_new, Tuple{Quote{Table}}}},
     Set{Table, Apply{arg, Tuple{_table_type, 0}}},
     Def{_wrap_table, Apply{arg, Tuple{_table_type, 1}}},
     Def{_unwrap_table, Apply{arg, Tuple{_table_type, 2}}},
+    Def{table_find, Lambda{Tuple{t, k, h}, Do{
+        Def{b, Apply{array_get, Tuple{t, 0}}},
+        Def{e,
+            Apply{array_get,
+                Tuple{b, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}}}},
+        While{If{Apply{not_equal, Tuple{e, none}},
+                If{Apply{equal, Tuple{Apply{array_get, Tuple{e, 3}}, h}},
+                    Apply{not_equal, Tuple{Apply{array_get, Tuple{e, 0}}, k}},
+                    true},
+                false},
+            Set{e, Apply{array_get, Tuple{e, 2}}}},
+        e}}},
     Set{table_new, Lambda{Tuple{}, Do{
         Def{t, Apply{array_new, Tuple{2}}},
         Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
