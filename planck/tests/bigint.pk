@@ -604,7 +604,7 @@ check(eval(arg(parse("10000000000"), 0)), 10000000000)
 check(eval(arg(parse("-10000000000"), 0)), -10000000000)
 check(eval(arg(parse("0xffffffffff"), 0)), 1099511627775)
 check(eval(arg(parse("-1073741825"), 0)), -1073741825)
-words := parray_new_i32(4)
+words := packedarray_new_i32(4)
 words[0] = 1073741824
 words[1] = -1073741825
 words[2] = 2147483647

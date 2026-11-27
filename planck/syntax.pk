@@ -1387,13 +1387,13 @@ Def{
         }
     }}
 
-" a plain array (parray_new_u8, parray_new_u16, parray_new_i32) is indexed like an array "
+" a packed array (packedarray_new_u8, packedarray_new_u16, packedarray_new_i32) is indexed like an array "
 Set{
     _index_get,
     Fusion{
         Lambda{
-            Tuple{TypeOf{a, PArray}, TypeOf{i, Int}},
-            Apply{parray_get, Tuple{a, i}}
+            Tuple{TypeOf{a, PackedArray}, TypeOf{i, Int}},
+            Apply{packedarray_get, Tuple{a, i}}
         },
         _index_get
     }}
@@ -1481,8 +1481,8 @@ Set{
     _index_set,
     Fusion{
         Lambda{
-            Tuple{TypeOf{a, PArray}, TypeOf{i, Int}, v},
-            Apply{parray_set, Tuple{a, i, v}}
+            Tuple{TypeOf{a, PackedArray}, TypeOf{i, Int}, v},
+            Apply{packedarray_set, Tuple{a, i, v}}
         },
         _index_set
     }}
@@ -2897,7 +2897,7 @@ _iter(Range{a, b}) := {
     } else end
 }
 
-" an array, a plain array and an M-expression: the elements from 0 "
+" an array, a packed array and an M-expression: the elements from 0 "
 _iter(a @ Array) := {
     i := 0
     n := array_len(a)
@@ -2906,12 +2906,12 @@ _iter(a @ Array) := {
         array_get(a, i - 1)
     } else end
 }
-_iter(a @ PArray) := {
+_iter(a @ PackedArray) := {
     i := 0
-    n := parray_len(a)
+    n := packedarray_len(a)
     (end) -> if (i < n) {
         i += 1
-        parray_get(a, i - 1)
+        packedarray_get(a, i - 1)
     } else end
 }
 _iter(e @ Expr) := {

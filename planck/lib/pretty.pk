@@ -54,7 +54,7 @@ module pretty {
         }
         else if (t == Array) "<array>"
         else if (t == Type) sym_name(typename(x))
-        else if (t == PArray) "<plain array>"
+        else if (t == PackedArray) "<packed array>"
         else if (t == Function) "<function>"
         else sym_name(typename(t))
     }

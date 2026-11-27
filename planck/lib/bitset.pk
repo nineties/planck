@@ -3,7 +3,7 @@
 import_lib("list")
 
 module bitset {
-    export new(n) := parray_new_i32(n / 30 + 1)
+    export new(n) := packedarray_new_i32(n / 30 + 1)
 
     export add(s, i) := {
         w := i / 30
@@ -18,18 +18,18 @@ module bitset {
     export has(s, i) := bit_and(s[i / 30], bit_shl(1, i % 30)) != 0
 
     export copy(s) := {
-        r := parray_new_i32(parray_len(s))
-        parray_copy(r, 0, s, 0, parray_len(s))
+        r := packedarray_new_i32(packedarray_len(s))
+        packedarray_copy(r, 0, s, 0, packedarray_len(s))
         r
     }
 
     clear(s) := {
-        for (i in 0..parray_len(s) - 1) s[i] = 0
+        for (i in 0..packedarray_len(s) - 1) s[i] = 0
     }
 
     export union(dst, src) := {
         changed := false
-        for (i in 0..parray_len(dst) - 1) {
+        for (i in 0..packedarray_len(dst) - 1) {
             w := bit_or(dst[i], src[i])
             if (w != dst[i]) {
                 dst[i] = w
@@ -40,18 +40,18 @@ module bitset {
     }
 
     export minus(dst, src) := {
-        for (i in 0..parray_len(dst) - 1) {
+        for (i in 0..packedarray_len(dst) - 1) {
             dst[i] = bit_and(dst[i], bit_not(src[i]))
         }
     }
 
     export equal(a, b) := {
-        for (i in 0..parray_len(a) - 1) if (a[i] != b[i]) return false
+        for (i in 0..packedarray_len(a) - 1) if (a[i] != b[i]) return false
         true
     }
 
     export each(s, f) := {
-        for (i in 0..parray_len(s) - 1) {
+        for (i in 0..packedarray_len(s) - 1) {
             w := s[i]
             if (w != 0) {
                 for (k in 0..29) {

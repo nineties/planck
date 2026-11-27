@@ -54,7 +54,7 @@ module bytes {
 
     export to_u8(b) := {
         n := len(b)
-        a := parray_new_u8(n)
+        a := packedarray_new_u8(n)
         for (i in 0..n - 1) a[i] = vector.get(b, i)
         a
     }

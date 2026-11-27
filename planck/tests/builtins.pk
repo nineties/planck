@@ -17,40 +17,40 @@ check(type('a), Symbol)
 check(type(F{}), Expr)
 check(type(x -> x), Function)
 check(type(array_new(1)), Array)
-check(type(parray_new_u8(1)), PArray)
+check(type(packedarray_new_u8(1)), PackedArray)
 check(match 1 { x @ Int -> true | _ -> false }, true)
 check(match "a" { x @ Int -> true | _ -> false }, false)
 
-b := parray_new_u8(4)
-check(type(b), PArray)
-check(parray_kind(b), 'u8)
-check(parray_len(b), 4)
+b := packedarray_new_u8(4)
+check(type(b), PackedArray)
+check(packedarray_kind(b), 'u8)
+check(packedarray_len(b), 4)
 check(b[0], 0)
 b[1] = 255
 b[3] = 7
 check(b[1], 255)
 check(b[3], 7)
-check(parray_get(b, 3), 7)
-check(parray_set(b, 2, 9), none)
+check(packedarray_get(b, 3), 7)
+check(packedarray_set(b, 2, 9), none)
 check(b[2], 9)
 
-h := parray_new_u16(3)
-check(parray_kind(h), 'u16)
+h := packedarray_new_u16(3)
+check(packedarray_kind(h), 'u16)
 h[0] = 65535
 h[1] = 258
 check(h[0], 65535)
 check(h[1], 258)
 check(h[2], 0)
 
-w := parray_new_i32(3)
-check(parray_kind(w), 'i32)
+w := packedarray_new_i32(3)
+check(packedarray_kind(w), 'i32)
 w[0] = -5
 w[1] = 1073741823
 w[2] = -1073741824
 check(w[0], -5)
 check(w[1], 1073741823)
 check(w[2], -1073741824)
-check(parray_len(parray_new_i32(0)), 0)
+check(packedarray_len(packedarray_new_i32(0)), 0)
 
 sum := 0
 i := 0
@@ -60,27 +60,27 @@ while (i < 4) {
 }
 check(sum, 271)
 
-c := parray_new_u8(6)
-parray_copy(c, 1, b, 0, 4)
+c := packedarray_new_u8(6)
+packedarray_copy(c, 1, b, 0, 4)
 check(c[0], 0)
 check(c[1], 0)
 check(c[2], 255)
 check(c[3], 9)
 check(c[4], 7)
 check(c[5], 0)
-parray_copy(c, 0, c, 2, 3)
+packedarray_copy(c, 0, c, 2, 3)
 check(c[0], 255)
 check(c[1], 9)
 check(c[2], 7)
-parray_copy(c, 2, c, 0, 3)
+packedarray_copy(c, 2, c, 0, 3)
 check(c[2], 255)
 check(c[3], 9)
 check(c[4], 7)
 
 check(b == b, true)
-check(b == parray_new_u8(4), false)
+check(b == packedarray_new_u8(4), false)
 
-data := parray_new_u8(5)
+data := packedarray_new_u8(5)
 data[0] = 0
 data[1] = 65
 data[2] = 0
@@ -88,25 +88,25 @@ data[3] = 255
 data[4] = 10
 check(os_write_bytes("tmp-builtins.bin", data), Ok{none})
 back := unwrap(os_read_bytes("tmp-builtins.bin"))
-check(parray_len(back), 5)
+check(packedarray_len(back), 5)
 check(back[0], 0)
 check(back[1], 65)
 check(back[2], 0)
 check(back[3], 255)
 check(back[4], 10)
-data = parray_new_u8(3)
+data = packedarray_new_u8(3)
 data[0] = 97
 data[1] = 0
 data[2] = 122
 os_write_bytes("tmp-builtins.bin", data)
 back = unwrap(os_read_bytes("tmp-builtins.bin"))
-check(parray_len(back), 3)
+check(packedarray_len(back), 3)
 check(back[0], 97)
 check(back[1], 0)
 check(back[2], 122)
 
 os_write_file("tmp-builtins.bin", "")
-check(parray_len(unwrap(os_read_bytes("tmp-builtins.bin"))), 0)
+check(packedarray_len(unwrap(os_read_bytes("tmp-builtins.bin"))), 0)
 check(os_read_file("tmp-builtins.bin"), Ok{""})
 check(os_chmod("tmp-builtins.bin", 493), Ok{none})
 
