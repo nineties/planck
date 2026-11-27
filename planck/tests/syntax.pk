@@ -4,30 +4,30 @@ import test (*)
 
 tree(s) := arg(peg_parse('toplevel, s), 0)
 tree_at(s, loc) := arg(parse_at(s, loc), 0)
-at(l, c, e) := expr('At, Tuple{Loc{"f.pk", l, c}, e})
+at(l, c, e) := mexpr('At, Tuple{Loc{"f.pk", l, c}, e})
 rest(s) := arg(peg_parse('toplevel, s), 1)
 
 check(tree_at("f(x)", Loc{"f.pk", 1, 1}), at(1, 1, 'Apply{f, Tuple{x}}))
 check(tree_at("  f(x)", Loc{"f.pk", 3, 5}), at(3, 7, 'Apply{f, Tuple{x}}))
 check(tree_at("g(1,\n  f(2))", Loc{"f.pk", 7, 10}),
     at(7, 10,
-        expr('Apply,
-            Tuple{'g, expr('Tuple, Tuple{1, at(8, 3, 'Apply{f, Tuple{2}})})})))
+        mexpr('Apply,
+            Tuple{'g, mexpr('Tuple, Tuple{1, at(8, 3, 'Apply{f, Tuple{2}})})})))
 check(tree_at("f(x)(y)", Loc{"f.pk", 1, 1}),
-    at(1, 1, expr('Apply, Tuple{at(1, 1, 'Apply{f, Tuple{x}}), 'Tuple{y}})))
+    at(1, 1, mexpr('Apply, Tuple{at(1, 1, 'Apply{f, Tuple{x}}), 'Tuple{y}})))
 check(tree_at("a + b", Loc{"f.pk", 1, 1}), 'Apply{int_add, Tuple{a, b}})
 check(tree_at("a.b", Loc{"f.pk", 1, 1}),
     'Apply{_record_get, Tuple{a, Quote{b}}})
 check(tree_at("a[1]", Loc{"f.pk", 1, 1}), 'Apply{_index_get, Tuple{a, 1}})
 check(tree_at("'f(x)", Loc{"f.pk", 1, 1}), 'Quote{Apply{f, Tuple{x}}})
 check(tree_at("`f(x, !g(y))", Loc{"f.pk", 1, 1}),
-    expr('QuasiQuote,
+    mexpr('QuasiQuote,
         Tuple{
-            expr('Apply,
+            mexpr('Apply,
                 Tuple{'f,
-                    expr('Tuple,
+                    mexpr('Tuple,
                         Tuple{'x,
-                            expr('UnQuote,
+                            mexpr('UnQuote,
                                 Tuple{at(1, 8, 'Apply{g, Tuple{y}})})})})}))
 check(tree_at("(f(p)) -> p", Loc{"f.pk", 1, 1}),
     'Lambda{Tuple{Apply{Quote{f}, Tuple{p}}}, p})
@@ -1443,7 +1443,7 @@ drop_first(t) := {
         array_set(r, i - 1, arg(t, i))
         i = i + 1
     }
-    expr('Tuple, r)
+    mexpr('Tuple, r)
 }
 rest_sum(t) := if (arity(t) == 0) 0 else arg(t, 0) + rest_sum(drop_first(t))
 rest_total(xs...) := rest_sum(xs)

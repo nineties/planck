@@ -340,7 +340,7 @@ Def{peg_token_class, Lambda{Tuple{p}, Do{
             If{Apply{equal, Tuple{Apply{peg_charset, Tuple{spec}}, none}},
                 Apply{peg_fail, Tuple{p}}, Do{
                 Set{peg_pv,
-                    Apply{expr,
+                    Apply{mexpr,
                         Tuple{If{neg, Quote{NoneOf}, Quote{OneOf}},
                             Tuple{spec}}}},
                 Apply{peg_inc, Tuple{q}}}},
@@ -564,7 +564,7 @@ Def{
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
-            Apply{expr, Tuple{Quote{Tuple}, vs}}
+            Apply{mexpr, Tuple{Quote{Tuple}, vs}}
         }
     }}
 
@@ -1203,7 +1203,7 @@ Def{
     peg_block,
     Lambda{
         Tuple{es},
-        Apply{expr,
+        Apply{mexpr,
             Tuple{Quote{Do}, Apply{peg_map_args, Tuple{peg_first, es}}}}}}
 
 " === a[i], a[i] = v and t[p -> e | ...] === "
@@ -1281,7 +1281,7 @@ Def{
                                             Set{i, Apply{int_add, Tuple{i, 1}}}
                                         }
                                     },
-                                    Apply{expr, Tuple{Apply{head, Tuple{x}}, r}}
+                                    Apply{mexpr, Tuple{Apply{head, Tuple{x}}, r}}
                                 },
                                 x
                             }
@@ -1521,7 +1521,7 @@ Def{peg_token_embed, Lambda{Tuple{p}, Do{
                         Apply{peg_literal,
                             Tuple{"|}", Apply{peg_skip_ws, Tuple{q}}}}},
                     If{Apply{int_lt, Tuple{q, 0}}, -1, Do{
-                        Set{peg_pv, Apply{expr, Tuple{Quote{Quote}, Tuple{v}}}},
+                        Set{peg_pv, Apply{mexpr, Tuple{Quote{Quote}, Tuple{v}}}},
                         q}}}}}}},
             Apply{peg_fail, Tuple{p}}}},
         Apply{peg_fail, Tuple{p}}}}}}
@@ -1562,7 +1562,7 @@ Apply{_define_rule, Tuple{Quote{arrow_next}, peg_token_arrow_next}}
 Def{peg_choice, Lambda{Tuple{es},
     If{Apply{equal, Tuple{Apply{arity, Tuple{es}}, 1}},
         Apply{peg_first, Tuple{es}},
-        Apply{expr, Tuple{Quote{Choice}, es}}}}}
+        Apply{mexpr, Tuple{Quote{Choice}, es}}}}}
 
 " (e) is e, and (e, ...) is the tuple of them "
 Def{peg_group, Lambda{Tuple{es},
@@ -1585,7 +1585,7 @@ Def{peg_alt, Lambda{Tuple{items, act}, Do{
     Def{elems,
         Apply{peg_map_args,
             Tuple{Lambda{Tuple{t}, Apply{arg, Tuple{t, 1}}}, items}}},
-    Def{seq, Apply{expr, Tuple{Quote{Seq}, elems}}},
+    Def{seq, Apply{mexpr, Tuple{Quote{Seq}, elems}}},
     If{Apply{equal, Tuple{act, Tuple{}}},
         If{Apply{equal, Tuple{Apply{arity, Tuple{elems}}, 1}},
             Apply{peg_first, Tuple{elems}}, seq},
@@ -1664,13 +1664,13 @@ Apply{_define_rule, Tuple{Quote{expr}, Quote{Choice{syntax_decl, unary}}}}
 Apply{_define_rule, Tuple{Quote{unary}, Quote{Choice{
     postfix,
     Act{Seq{"'", unary},
-        Lambda{Tuple{Tuple{_, a}}, Apply{expr, Tuple{Quote{Quote}, Tuple{a}}}}},
+        Lambda{Tuple{Tuple{_, a}}, Apply{mexpr, Tuple{Quote{Quote}, Tuple{a}}}}},
     Act{Seq{"`", unary},
         Lambda{Tuple{Tuple{_, a}},
-            Apply{expr, Tuple{Quote{QuasiQuote}, Tuple{a}}}}},
+            Apply{mexpr, Tuple{Quote{QuasiQuote}, Tuple{a}}}}},
     Act{Seq{"!", unary},
         Lambda{Tuple{Tuple{_, a}},
-            Apply{expr, Tuple{Quote{UnQuote}, Tuple{a}}}}}}}}}
+            Apply{mexpr, Tuple{Quote{UnQuote}, Tuple{a}}}}}}}}}
 
 Apply{_define_rule, Tuple{Quote{postfix}, Quote{Choice{
     Act{Seq{postfix, Tight{"("}, Delimited{expr, ","}, ")"},
@@ -1681,7 +1681,7 @@ Apply{_define_rule, Tuple{Quote{postfix}, Quote{Choice{
 Apply{_define_rule, Tuple{Quote{primary}, Quote{Choice{
     block,
     Act{Seq{ident, Tight{"{"}, Delimited{expr, ","}, "}"},
-        Lambda{Tuple{Tuple{h, _, args, _}}, Apply{expr, Tuple{h, args}}}},
+        Lambda{Tuple{Tuple{h, _, args, _}}, Apply{mexpr, Tuple{h, args}}}},
     ident,
     integer,
     string}}}}
@@ -1761,9 +1761,9 @@ index ::= e:expr { _peg_rewrite(e) }
 unary ::= postfix
         | "-" a:unary { `int_sub(0, !a) }
         | "+" a:unary { a }
-        | "'" a:unary { expr('Quote, Tuple{peg_unat(a)}) }
-        | "`" a:unary { expr('QuasiQuote, Tuple{peg_unat(a)}) }
-        | "!" a:unary { expr('UnQuote, Tuple{a}) }
+        | "'" a:unary { mexpr('Quote, Tuple{peg_unat(a)}) }
+        | "`" a:unary { mexpr('QuasiQuote, Tuple{peg_unat(a)}) }
+        | "!" a:unary { mexpr('UnQuote, Tuple{a}) }
 
 " the type after @: a name, or a field of a module (a.B) "
 type_ref ::= m:type_ref nospace(".") f:ident { `Apply{_record_get, Tuple{!m, Quote{!f}}} }
@@ -1819,7 +1819,7 @@ Def{
                             Apply{array_set, Tuple{names, idx, name}},
                             Apply{array_set, Tuple{items, idx, QuasiQuote{Def{UnQuote{name}, Apply{_kwarg, Tuple{_kwrest, UnQuote{idx}, Quote{UnQuote{name}}, Lambda{Tuple{}, UnQuote{Apply{arg, Tuple{d, 1}}}}}}}}}},
                             Set{i, Apply{int_add, Tuple{i, 1}}}}},
-                    Def{nametuple, Apply{expr, Tuple{Quote{Tuple}, names}}},
+                    Def{nametuple, Apply{mexpr, Tuple{Quote{Tuple}, names}}},
                     Def{all, Apply{array_new, Tuple{Apply{int_add, Tuple{Apply{int_sub, Tuple{n, k}}, 2}}}}},
                     Apply{array_set,
                         Tuple{all, 0,
@@ -1838,8 +1838,8 @@ Def{
                     Apply{array_set,
                         Tuple{all, Apply{int_add, Tuple{Apply{int_sub, Tuple{n, k}}, 1}}, e}},
                     Tuple{
-                        Apply{expr, Tuple{Quote{Tuple}, plain}},
-                        Apply{expr, Tuple{Quote{Do}, all}}}}}}}}
+                        Apply{mexpr, Tuple{Quote{Tuple}, plain}},
+                        Apply{mexpr, Tuple{Quote{Do}, all}}}}}}}}
 
 " a lambda with the parameters of a definition, which may have defaults "
 Def{
@@ -1871,7 +1871,7 @@ Def{
                     Set{i, Apply{int_add, Tuple{i, 1}}}
                 }
             },
-            Apply{expr, Tuple{Quote{Tuple}, r}}
+            Apply{mexpr, Tuple{Quote{Tuple}, r}}
         }}}
 
 " peg_tuple_cat(a, b) is the Tuple of the elements of a and then those of b "
@@ -1885,7 +1885,7 @@ Def{
             Def{r, Apply{array_new, Tuple{Apply{int_add, Tuple{na, nb}}}}},
             Apply{array_copy, Tuple{r, 0, Apply{mexpr_args, Tuple{a}}, 0, na}},
             Apply{array_copy, Tuple{r, na, Apply{mexpr_args, Tuple{b}}, 0, nb}},
-            Apply{expr, Tuple{Apply{head, Tuple{a}}, r}}
+            Apply{mexpr, Tuple{Apply{head, Tuple{a}}, r}}
         }}}
 
 " An argument is an expression or name = expression (_Kw{'name, e}). The ones "
@@ -1960,7 +1960,7 @@ or_expr ::= a:and_expr 'or b:or_expr { `If{!a, true, !b} }
 "   two values that are ==. "
 
 pat_primary ::= f:ident nospace("(") args:delimited(pattern, ",") ")" { `Apply{Quote{!f}, !args} }
-              | h:ident nospace("{") args:delimited(pattern, ",") "}" { expr(h, args) }
+              | h:ident nospace("{") args:delimited(pattern, ",") "}" { mexpr(h, args) }
               | "(" f:ident ")" nospace("(") args:delimited(pattern, ",") ")" { `Apply{!f, !args} }
               | ident
               | integer
@@ -1976,7 +1976,7 @@ pat_postfix ::= x:pat_postfix "@" t:type_ref { `TypeOf{!x, !t} }
 " 'e is the value of the expression e "
 pat_unary ::= pat_postfix
             | "-" a:pat_unary { `Apply{'int_sub, Tuple{0, !a}} }
-            | "'" a:unary { expr('Quote, Tuple{a}) }
+            | "'" a:unary { mexpr('Quote, Tuple{a}) }
 
 pat_mul ::= a:pat_mul "*" b:pat_unary { `Apply{'int_mul, Tuple{!a, !b}} }
           | a:pat_mul "//" b:pat_unary { `Apply{'int_quo, Tuple{!a, !b}} }
@@ -2005,7 +2005,7 @@ pat_not ::= 'not a:pat_not { `Apply{'_not, Tuple{!a}} }
 pat_and ::= a:pat_not 'and b:pat_and { `If{!a, !b, 'false} }
           | pat_not
 
-pattern ::= a:pat_and 'or b:pattern { expr(peg_or, Tuple{a, b}) }
+pattern ::= a:pat_and 'or b:pattern { mexpr(peg_or, Tuple{a, b}) }
           | pat_and
 
 " === Functions, assignments and the other forms === "
@@ -2037,7 +2037,7 @@ destruct_names ::= "(" a:ident "," bs:delimited1(ident, ",") ")" { Tuple{a, bs} 
 " the left side of x := e and x = e: a name, or !x which is replaced by the "
 "   name inside a quasi-quote "
 target ::= ident
-         | "!" x:ident { expr('UnQuote, Tuple{x}) }
+         | "!" x:ident { mexpr('UnQuote, Tuple{x}) }
 
 " The parameters of a definition: the ones with a pattern, and then the ones "
 "   with a default value name = expression (_Default{name, e}). "
@@ -2089,7 +2089,7 @@ primary ::= if_expr
           | 'perform v:unary { `Perform{!v} }
           | block
           | embed
-          | h:ident nospace("{") args:delimited(expr, ",") "}" { expr(h, args) }
+          | h:ident nospace("{") args:delimited(expr, ",") "}" { mexpr(h, args) }
           | istr_open parts:(istr_text istr_hole expr "}")* last:istr_text istr_close { peg_interp(parts, last) }
           | ident
           | integer
@@ -2273,7 +2273,7 @@ fun expand_macro
             array_set(xs, i, if (i < from) a else expand_macro(a, level))
             i = i + 1
         }
-        expr(head(e), xs)
+        mexpr(head(e), xs)
     }
 
     " Macro{f}: the function of f is added to the macros, and none stays "
@@ -2372,10 +2372,10 @@ _record_with(t, make) := {
         i := 0
         while (i < arity(fs)) {
             array_set(args, i,
-                expr('Quote, Tuple{if (arg(fs, i) == name) v else arg(_record_data(d), i)}))
+                mexpr('Quote, Tuple{if (arg(fs, i) == name) v else arg(_record_data(d), i)}))
             i = i + 1
         }
-        eval(expr('Apply, Tuple{expr('Quote, Tuple{make}), expr('Tuple, args)}))
+        eval(mexpr('Apply, Tuple{mexpr('Quote, Tuple{make}), mexpr('Tuple, args)}))
     }
 }
 
@@ -2384,7 +2384,7 @@ peg_names(a, bs) := {
     names := array_new(arity(bs) + 1)
     array_set(names, 0, a)
     array_copy(names, 1, mexpr_args(bs), 0, arity(bs))
-    expr('Tuple, names)
+    mexpr('Tuple, names)
 }
 
 " a variable that no program names "
@@ -2424,7 +2424,7 @@ peg_destruct(kind, ns, e) := {
             else `Set{!arg(names, i), !v})
         i = i + 1
     }
-    expr('Do, items)
+    mexpr('Do, items)
 }
 
 " the element i of t, which must be a tuple of n elements "
@@ -2540,7 +2540,7 @@ peg_conj(ts) := {
 "   Quote{none} "
 peg_pat_literals(p) := {
     if (type(p) == Symbol) return if (p == 'true or p == 'false or
-        p == 'none) expr('Quote, Tuple{p}) else p
+        p == 'none) mexpr('Quote, Tuple{p}) else p
     if (type(p) != Expr or head(p) == 'Quote) return p
     n := if (head(p) == 'TypeOf) 1 else arity(p)
     args := array_new(arity(p))
@@ -2550,7 +2550,7 @@ peg_pat_literals(p) := {
             else arg(p, i))
         i = i + 1
     }
-    expr(head(p), args)
+    mexpr(head(p), args)
 }
 
 peg_pat_error(msg) := panic(f"error: {msg}")
@@ -2623,7 +2623,7 @@ peg_pat_walk(p, st) := {
             array_set(altarr, i, a)
             i = i + 1
         }
-        alts := expr('Tuple, altarr)
+        alts := mexpr('Tuple, altarr)
         i = 0
         while (i < arity(ns)) {
             n := arg(ns, i)
@@ -2660,7 +2660,7 @@ peg_pat_walk(p, st) := {
             else arg(p, i))
         i = i + 1
     }
-    expr(head(p), args)
+    mexpr(head(p), args)
 }
 
 " Tuple{ps2, test, wraps}: ps2 is ps without or and without a name written "
@@ -2699,7 +2699,7 @@ peg_pats(ps) := {
         }
         i = i + 2
     }
-    Tuple{ps2, peg_conj(expr('Tuple, tests)), expr('Tuple, wraps)}
+    Tuple{ps2, peg_conj(mexpr('Tuple, tests)), mexpr('Tuple, wraps)}
 }
 
 " the variables of an or are bound by matching its value again with each "
@@ -2840,7 +2840,7 @@ peg_def_run(a, rest) := {
         array_set(armarr, i + 1, arg(arg(rest, i), 1))
         i = i + 1
     }
-    arms := expr('Tuple, armarr)
+    arms := mexpr('Tuple, armarr)
     stmts := stack_mark()
     i = 0
     while (i < arity(arms)) {
