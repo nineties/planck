@@ -520,7 +520,7 @@ check(tk.kind, 'id)
 check(_record_get(tk, 'pos), 3)
 record R0() = r0
 check(_record_index(r0(), 'x), none)
-check(arity(_fields(r0())), 0)
+check(arity(_record_data(r0())), 0)
 check(tk == tk, true)
 check(token('id, "abc", 3) == tk, true)
 tk2 := tk with { kind = 'num, pos = 9 }
