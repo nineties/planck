@@ -101,7 +101,7 @@ Def{peg_map_args, Lambda{Tuple{f, m}, Do{
     While{Apply{int_lt, Tuple{i, n}}, Do{
         Apply{array_set, Tuple{r, i, Apply{f, Tuple{Apply{arg, Tuple{m, i}}}}}},
         Set{i, Apply{peg_inc, Tuple{i}}}}},
-    Apply{expr, Tuple{Apply{head, Tuple{m}}, r}}}}}
+    Apply{mexpr, Tuple{Apply{head, Tuple{m}}, r}}}}}
 
 Def{peg_fail, Lambda{Tuple{p}, Do{
     If{Apply{int_gt, Tuple{p, peg_far}}, Set{peg_far, p}, none},
@@ -476,7 +476,7 @@ Def{peg_prepare_set, Lambda{Tuple{e}, Do{
         Apply{os_put, Tuple{"invalid character set: "}},
         Apply{print, Tuple{Apply{arg, Tuple{e, 0}}}},
         Apply{os_exit, Tuple{1}}}, none},
-    Apply{expr, Tuple{Apply{head, Tuple{e}}, Tuple{t}}}}}}
+    Apply{mexpr, Tuple{Apply{head, Tuple{e}}, Tuple{t}}}}}}
 Set{peg_prepare, Lambda{Tuple{e},
     If{
         If{Apply{peg_is_head, Tuple{e, Quote{OneOf}}}, true,
@@ -574,7 +574,7 @@ Def{peg_loc_at, Lambda{Tuple{p0}, Do{
             Set{peg_lp, Apply{int_add, Tuple{peg_lp, 1}}}}},
         Apply{array_set, Tuple{row, lslot, peg_ll}},
         Apply{array_set, Tuple{row, cslot, peg_lc}}}, none},
-    Apply{expr,
+    Apply{mexpr,
         Tuple{Quote{Loc},
             Tuple{Apply{arg, Tuple{peg_loc0, 0}},
                 Apply{array_get, Tuple{row, lslot}},
@@ -583,7 +583,7 @@ Def{peg_loc_at, Lambda{Tuple{p0}, Do{
 " peg_at(l, e) is e wrapped in At{loc, e} with the position of the token at l, "
 "   when the text is parsed with a position (peg_loc0 is not none) "
 Def{peg_at, Lambda{Tuple{l, e}, If{Apply{not_equal, Tuple{peg_loc0, none}},
-    Apply{expr, Tuple{Quote{At}, Tuple{Apply{peg_loc_at, Tuple{l}}, e}}}, e}}}
+    Apply{mexpr, Tuple{Quote{At}, Tuple{Apply{peg_loc_at, Tuple{l}}, e}}}, e}}}
 
 " peg_count_loc(s, n, loc) is the position after the first n bytes of s, when "
 "   s starts at the position loc: Loc{file, line, column}. "
@@ -596,7 +596,7 @@ Def{peg_count_loc, Lambda{Tuple{s, n, loc}, Do{
             Do{Set{l, Apply{int_add, Tuple{l, 1}}}, Set{c, 1}},
             Set{c, Apply{int_add, Tuple{c, 1}}}},
         Set{i, Apply{int_add, Tuple{i, 1}}}}},
-    Apply{expr, Tuple{Quote{Loc}, Tuple{Apply{arg, Tuple{loc, 0}}, l, c}}}}}}
+    Apply{mexpr, Tuple{Quote{Loc}, Tuple{Apply{arg, Tuple{loc, 0}}, l, c}}}}}}
 
 " the byte position in peg_src where the parse stopped: the token at the "
 "   farthest failure, or the end of the text "
@@ -614,9 +614,9 @@ Def{peg_error_pos, Lambda{Tuple{}, Do{
 "   Loc{file, line, column} of the error. "
 Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
     Def{e, If{Apply{int_ge, Tuple{peg_far, peg_srclen}},
-        Apply{expr,
+        Apply{mexpr,
             Tuple{Quote{SyntaxError}, Tuple{"unexpected end of input"}}},
-        Apply{expr,
+        Apply{mexpr,
             Tuple{Quote{SyntaxError},
                 Tuple{"unexpected input",
                     Apply{peg_line_at, Tuple{peg_far}}}}}}},
@@ -631,7 +631,7 @@ Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
                 Tuple{a, n,
                     Apply{peg_count_loc,
                         Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}},
-            Apply{expr, Tuple{Apply{head, Tuple{e}}, a}}}}}}}
+            Apply{mexpr, Tuple{Apply{head, Tuple{e}}, a}}}}}}}
 
 " the position that SyntaxError e has as its last argument, or none "
 Def{peg_error_loc, Lambda{Tuple{e}, Do{
@@ -736,7 +736,7 @@ Set{peg_file_error_text, Lambda{Tuple{path, s0, pos}, Do{
             Tuple{
                 Apply{peg_parse_from,
                     Tuple{Quote{toplevel}, s0, pos,
-                        Apply{expr,
+                        Apply{mexpr,
                             Tuple{Quote{Loc}, Tuple{path, 1, 1}}}}}, 0}}},
     If{Apply{peg_is_head, Tuple{e, Quote{SyntaxError}}},
         Apply{peg_error_text, Tuple{e}}, none}}}}

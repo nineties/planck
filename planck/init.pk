@@ -12,7 +12,7 @@ Def{none, Quote{none}}
 Def{head, mexpr_head}
 Def{arity, mexpr_arity}
 Def{arg, mexpr_arg}
-Def{expr, mexpr_new}
+Def{mexpr, mexpr_new}
 Def{typename, type_name}
 
 " === Basic Functions === "
@@ -204,7 +204,7 @@ Defun{_rewrite_global, Lambda{Tuple{Do{Rest{es}}},
             Apply{array_set, Tuple{xs, i, Apply{_rewrite_globals,
                 Tuple{Apply{arg, Tuple{es, i}}}}}},
             Set{i, Apply{int_add, Tuple{i, 1}}}}},
-        Apply{expr, Tuple{Quote{Do}, xs}}}}}
+        Apply{mexpr, Tuple{Quote{Do}, xs}}}}}
 Defun{_rewrite_global, Lambda{Tuple{e}, e}}
 Set{_rewrite_globals, Lambda{Tuple{e},
     If{Apply{equal, Tuple{_file_defs, none}}, e,

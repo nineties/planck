@@ -201,7 +201,7 @@ Apply{check, Tuple{Quote{Apply{head, Tuple{Quote{F{1, 2}}}}}, Quote{F}}}
 Apply{check, Tuple{Quote{Apply{arity, Tuple{Quote{F{1, 2}}}}}, 2}}
 Apply{check, Tuple{Quote{Apply{arg, Tuple{Quote{F{1, 2}}, 1}}}, 2}}
 Apply{check,
-    Tuple{Quote{Apply{expr, Tuple{Quote{G}, Tuple{1, 2}}}}, Quote{G{1, 2}}}}
+    Tuple{Quote{Apply{mexpr, Tuple{Quote{G}, Tuple{1, 2}}}}, Quote{G{1, 2}}}}
 Apply{check, Tuple{Quote{Apply{type, Tuple{1}}}, Int}}
 Apply{check, Tuple{Quote{Apply{type, Tuple{"s"}}}, String}}
 Apply{check, Tuple{Quote{Apply{type, Tuple{Quote{a}}}}, Symbol}}
