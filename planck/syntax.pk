@@ -2923,7 +2923,7 @@ _iter(e @ Expr) := {
 " a table: Tuple{key, value} of each entry, in the order of table.items. The "
 "   table must not change while it is walked. "
 _iter(tb @ Table) := {
-    b := array_get(arg(_unwrap_table(tb), 0), 0)
+    b := array_get(arg(_fields(tb), 0), 0)
     n := array_len(b)
     i := 0
     e := none

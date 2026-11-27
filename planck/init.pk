@@ -74,19 +74,10 @@ Def{print,
 " The number of buckets doubles when there are more entries than buckets. "
 Def{Table, none}
 
-Def{_unwrap_table, none}
 Def{_unwraps, none}
-
-Def{table_new, Apply{Lambda{Tuple{}, Do{
-    Def{_table_type, Apply{type_new, Tuple{Quote{Table}}}},
-    Set{Table, Apply{arg, Tuple{_table_type, 0}}},
-    Def{_wrap_table, Apply{arg, Tuple{_table_type, 1}}},
-    Set{_unwrap_table, Apply{arg, Tuple{_table_type, 2}}},
-    Lambda{Tuple{}, Do{
-    Def{t, Apply{array_new, Tuple{2}}},
-    Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
-    Apply{array_set, Tuple{t, 1, 0}},
-    Apply{_wrap_table, Tuple{Tuple{t}}}}}}}, Tuple{}}}
+Def{table_new, none}
+Def{table_get, none}
+Def{table_set, none}
 
 Def{table_find, Lambda{Tuple{t, k, h}, Do{
     Def{b, Apply{array_get, Tuple{t, 0}}},
@@ -101,53 +92,61 @@ Def{table_find, Lambda{Tuple{t, k, h}, Do{
         Set{e, Apply{array_get, Tuple{e, 2}}}},
     e}}}
 
-Def{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
-    Def{t, Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}},
-    Def{e, Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}},
-    If{Apply{equal, Tuple{e, none}}, default,
-        Apply{array_get, Tuple{e, 1}}}}}}
-
-Def{table_set, Apply{Lambda{Tuple{}, Do{
-    Def{table_grow, Lambda{Tuple{t}, Do{
-        Def{old, Apply{array_get, Tuple{t, 0}}},
-        Def{m, Apply{int_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
-        Def{nb, Apply{array_new, Tuple{m}}},
-        Def{i, 0},
-        Def{e, none},
-        Def{next, none},
-        Def{j, 0},
-        While{Apply{int_lt, Tuple{i, Apply{array_len, Tuple{old}}}}, Do{
-            Set{e, Apply{array_get, Tuple{old, i}}},
-            While{Apply{not_equal, Tuple{e, none}}, Do{
-                Set{next, Apply{array_get, Tuple{e, 2}}},
-                Set{j, Apply{int_mod, Tuple{Apply{array_get, Tuple{e, 3}}, m}}},
-                Apply{array_set, Tuple{e, 2, Apply{array_get, Tuple{nb, j}}}},
-                Apply{array_set, Tuple{nb, j, e}},
-                Set{e, next}}},
-            Set{i, Apply{int_add, Tuple{i, 1}}}}},
-        Apply{array_set, Tuple{t, 0, nb}}}}},
-    Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
+Apply{Lambda{Tuple{}, Do{
+    Def{_table_type, Apply{type_new, Tuple{Quote{Table}}}},
+    Set{Table, Apply{arg, Tuple{_table_type, 0}}},
+    Def{_wrap_table, Apply{arg, Tuple{_table_type, 1}}},
+    Def{_unwrap_table, Apply{arg, Tuple{_table_type, 2}}},
+    Set{table_new, Lambda{Tuple{}, Do{
+        Def{t, Apply{array_new, Tuple{2}}},
+        Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
+        Apply{array_set, Tuple{t, 1, 0}},
+        Apply{_wrap_table, Tuple{Tuple{t}}}}}},
+    Set{table_get, Lambda{Tuple{_TypeOf{tb, Table}, k, default}, Do{
         Def{t, Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}},
-        Def{h, Apply{hash, Tuple{k}}},
-        Def{e, Apply{table_find, Tuple{t, k, h}}},
-        If{Apply{equal, Tuple{e, none}}, Do{
-            Def{b, Apply{array_get, Tuple{t, 0}}},
-            Def{i, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
-            Def{n, Apply{array_new, Tuple{4}}},
-            Apply{array_set, Tuple{n, 0, k}},
-            Apply{array_set, Tuple{n, 1, v}},
-            Apply{array_set, Tuple{n, 2, Apply{array_get, Tuple{b, i}}}},
-            Apply{array_set, Tuple{n, 3, h}},
-            Apply{array_set, Tuple{b, i, n}},
-            Def{c, Apply{int_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
-            Apply{array_set, Tuple{t, 1, c}},
-            If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}},
-                Apply{table_grow, Tuple{t}}, none}},
-            Apply{array_set, Tuple{e, 1, v}}},
-        none}}}}, Tuple{}}}
-
-Set{_unwraps, Apply{table_new, Tuple{}}}
-Apply{table_set, Tuple{_unwraps, Table, _unwrap_table}}
+        Def{e, Apply{table_find, Tuple{t, k, Apply{hash, Tuple{k}}}}},
+        If{Apply{equal, Tuple{e, none}}, default,
+            Apply{array_get, Tuple{e, 1}}}}}},
+    Set{table_set, Apply{Lambda{Tuple{}, Do{
+        Def{table_grow, Lambda{Tuple{t}, Do{
+            Def{old, Apply{array_get, Tuple{t, 0}}},
+            Def{m, Apply{int_mul, Tuple{Apply{array_len, Tuple{old}}, 2}}},
+            Def{nb, Apply{array_new, Tuple{m}}},
+            Def{i, 0},
+            Def{e, none},
+            Def{next, none},
+            Def{j, 0},
+            While{Apply{int_lt, Tuple{i, Apply{array_len, Tuple{old}}}}, Do{
+                Set{e, Apply{array_get, Tuple{old, i}}},
+                While{Apply{not_equal, Tuple{e, none}}, Do{
+                    Set{next, Apply{array_get, Tuple{e, 2}}},
+                    Set{j, Apply{int_mod, Tuple{Apply{array_get, Tuple{e, 3}}, m}}},
+                    Apply{array_set, Tuple{e, 2, Apply{array_get, Tuple{nb, j}}}},
+                    Apply{array_set, Tuple{nb, j, e}},
+                    Set{e, next}}},
+                Set{i, Apply{int_add, Tuple{i, 1}}}}},
+            Apply{array_set, Tuple{t, 0, nb}}}}},
+        Lambda{Tuple{_TypeOf{tb, Table}, k, v}, Do{
+            Def{t, Apply{arg, Tuple{Apply{_unwrap_table, Tuple{tb}}, 0}}},
+            Def{h, Apply{hash, Tuple{k}}},
+            Def{e, Apply{table_find, Tuple{t, k, h}}},
+            If{Apply{equal, Tuple{e, none}}, Do{
+                Def{b, Apply{array_get, Tuple{t, 0}}},
+                Def{i, Apply{int_mod, Tuple{h, Apply{array_len, Tuple{b}}}}},
+                Def{n, Apply{array_new, Tuple{4}}},
+                Apply{array_set, Tuple{n, 0, k}},
+                Apply{array_set, Tuple{n, 1, v}},
+                Apply{array_set, Tuple{n, 2, Apply{array_get, Tuple{b, i}}}},
+                Apply{array_set, Tuple{n, 3, h}},
+                Apply{array_set, Tuple{b, i, n}},
+                Def{c, Apply{int_add, Tuple{Apply{array_get, Tuple{t, 1}}, 1}}},
+                Apply{array_set, Tuple{t, 1, c}},
+                If{Apply{int_gt, Tuple{c, Apply{array_len, Tuple{b}}}},
+                    Apply{table_grow, Tuple{t}}, none}},
+                Apply{array_set, Tuple{e, 1, v}}},
+            none}}}}, Tuple{}}},
+    Set{_unwraps, Apply{table_new, Tuple{}}},
+    Apply{table_set, Tuple{_unwraps, Table, _unwrap_table}}}}, Tuple{}}
 Set{_fields,
     Lambda{Tuple{d},
         Apply{Apply{table_get, Tuple{_unwraps, Apply{type, Tuple{d}}, none}},
