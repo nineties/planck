@@ -2,8 +2,8 @@
 
 import test (*)
 
-tree(s) := arg(peg_parse('toplevel, s), 0)
-rest(s) := arg(peg_parse('toplevel, s), 1)
+tree(s) := arg(parser_parse(syntax_parser, 'toplevel, s), 0)
+rest(s) := arg(parser_parse(syntax_parser, 'toplevel, s), 1)
 
 check(tree("a + b"), 'Apply{int_add, Tuple{a, b}})
 check(tree("a.b"), 'Apply{_record_get, Tuple{a, Quote{b}}})
@@ -163,7 +163,7 @@ check(tree("(x :: Nil{}) -> x | (x :: xs) -> xs"),
 check(tree("f(x :: xs) := x"),
     'Defun{f, Lambda{Tuple{Cons{x, xs}}, x}})
 check(tree("xs ::= ident"),
-    'Apply{_define_rule, Tuple{Quote{xs}, Quote{ident}}})
+    'Apply{parser_define_rule, Tuple{syntax_parser, Quote{xs}, Quote{ident}}})
 
 check(tree("a\n-1"), 'a)
 check(rest("a\n-1"), "-1")
@@ -1037,91 +1037,91 @@ check(if (a!=b) 1 else 2, 1)
 check(f"{ok?}", "true")
 qn_num ::= integer
 qn_opt ::= x:qn_num? "." { x }
-check(arg(peg_parse('qn_opt, "7 ."), 0), 'Tuple{7})
-check(arg(peg_parse('qn_opt, "."), 0), 'Tuple{})
+check(arg(parser_parse(syntax_parser, 'qn_opt, "7 ."), 0), 'Tuple{7})
+check(arg(parser_parse(syntax_parser, 'qn_opt, "."), 0), 'Tuple{})
 
 num ::= integer
-check(arg(peg_parse('num, "12 rest"), 0), 12)
-check(arg(peg_parse('num, "12 rest"), 1), "rest")
+check(arg(parser_parse(syntax_parser, 'num, "12 rest"), 0), 12)
+check(arg(parser_parse(syntax_parser, 'num, "12 rest"), 1), "rest")
 
 diff ::= a:diff "-" b:num { a - b } | num
-check(arg(peg_parse('diff, "10 - 3 - 2"), 0), 5)
+check(arg(parser_parse(syntax_parser, 'diff, "10 - 3 - 2"), 0), 5)
 
 nums ::= "[" xs:num* "]" { xs }
-check(arg(peg_parse('nums, "[1 2 3]"), 0), 'Tuple{1, 2, 3})
-check(arg(peg_parse('nums, "[]"), 0), 'Tuple{})
+check(arg(parser_parse(syntax_parser, 'nums, "[1 2 3]"), 0), 'Tuple{1, 2, 3})
+check(arg(parser_parse(syntax_parser, 'nums, "[]"), 0), 'Tuple{})
 some ::= xs:num+ { xs }
-check(arg(peg_parse('some, "1 2"), 0), 'Tuple{1, 2})
-check(head(arg(peg_parse('some, "x"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'some, "1 2"), 0), 'Tuple{1, 2})
+check(head(arg(parser_parse(syntax_parser, 'some, "x"), 0)), 'SyntaxError)
 opt ::= a:num b:("," num)? { Tuple{a, b} }
-check(arg(peg_parse('opt, "1, 2"), 0), 'Tuple{1, Tuple{Tuple{",", 2}}})
-check(arg(peg_parse('opt, "1"), 0), 'Tuple{1, Tuple{}})
+check(arg(parser_parse(syntax_parser, 'opt, "1, 2"), 0), 'Tuple{1, Tuple{Tuple{",", 2}}})
+check(arg(parser_parse(syntax_parser, 'opt, "1"), 0), 'Tuple{1, Tuple{}})
 notx ::= !"x" a:ident { a }
-check(arg(peg_parse('notx, "y"), 0), 'y)
-check(head(arg(peg_parse('notx, "x"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'notx, "y"), 0), 'y)
+check(head(arg(parser_parse(syntax_parser, 'notx, "x"), 0)), 'SyntaxError)
 andx ::= &"x" a:ident { a }
-check(arg(peg_parse('andx, "x"), 0), 'x)
+check(arg(parser_parse(syntax_parser, 'andx, "x"), 0), 'x)
 kw ::= 'go a:num { a }
-check(arg(peg_parse('kw, "go 1"), 0), 1)
-check(head(arg(peg_parse('kw, "gopher 1"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'kw, "go 1"), 0), 1)
+check(head(arg(parser_parse(syntax_parser, 'kw, "gopher 1"), 0)), 'SyntaxError)
 pair ::= a:num "," b:num { Tuple{a, b} }
        | a:num { Tuple{a} }
-check(arg(peg_parse('pair, "1, 2"), 0), 'Tuple{1, 2})
-check(arg(peg_parse('pair, "1"), 0), 'Tuple{1})
+check(arg(parser_parse(syntax_parser, 'pair, "1, 2"), 0), 'Tuple{1, 2})
+check(arg(parser_parse(syntax_parser, 'pair, "1"), 0), 'Tuple{1})
 
 call ::= f:ident nospace("(") xs:delimited(num, ",") ")" { Tuple{f, xs} }
-check(arg(peg_parse('call, "f(1, 2)"), 0), 'Tuple{f, Tuple{1, 2}})
-check(arg(peg_parse('call, "f()"), 0), 'Tuple{f, Tuple{}})
-check(head(arg(peg_parse('call, "f (1)"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'call, "f(1, 2)"), 0), 'Tuple{f, Tuple{1, 2}})
+check(arg(parser_parse(syntax_parser, 'call, "f()"), 0), 'Tuple{f, Tuple{}})
+check(head(arg(parser_parse(syntax_parser, 'call, "f (1)"), 0)), 'SyntaxError)
 list1 ::= xs:delimited1(num, ("," | ";")) { xs }
-check(arg(peg_parse('list1, "1, 2; 3"), 0), 'Tuple{1, 2, 3})
-check(head(arg(peg_parse('list1, "x"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'list1, "1, 2; 3"), 0), 'Tuple{1, 2, 3})
+check(head(arg(parser_parse(syntax_parser, 'list1, "x"), 0)), 'SyntaxError)
 twin ::= a:num same b:num { Tuple{a, b} }
-check(arg(peg_parse('twin, "1 2"), 0), 'Tuple{1, 2})
-check(head(arg(peg_parse('twin, "1\n2"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'twin, "1 2"), 0), 'Tuple{1, 2})
+check(head(arg(parser_parse(syntax_parser, 'twin, "1\n2"), 0)), 'SyntaxError)
 nospace_num ::= num
 delimited_num ::= x:nospace_num { x }
-check(arg(peg_parse('delimited_num, "5"), 0), 5)
+check(arg(parser_parse(syntax_parser, 'delimited_num, "5"), 0), 5)
 
 color ::= 'red { 1 }
 color ::= 'blue { 2 } | ...
-check(arg(peg_parse('color, "red"), 0), 1)
-check(arg(peg_parse('color, "blue"), 0), 2)
+check(arg(parser_parse(syntax_parser, 'color, "red"), 0), 1)
+check(arg(parser_parse(syntax_parser, 'color, "blue"), 0), 2)
 
 cc_two ::= a:. b:. { Tuple{a, b} }
-check(arg(peg_parse('cc_two, "xy"), 0), 'Tuple{"x", "y"})
-check(arg(peg_parse('cc_two, "  x\n y rest"), 0), 'Tuple{"x", "y"})
-check(arg(peg_parse('cc_two, "xy rest"), 1), "rest")
-check(head(arg(peg_parse('cc_two, "x"), 0)), 'SyntaxError)
-check(head(arg(peg_parse('cc_two, "x   "), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'cc_two, "xy"), 0), 'Tuple{"x", "y"})
+check(arg(parser_parse(syntax_parser, 'cc_two, "  x\n y rest"), 0), 'Tuple{"x", "y"})
+check(arg(parser_parse(syntax_parser, 'cc_two, "xy rest"), 1), "rest")
+check(head(arg(parser_parse(syntax_parser, 'cc_two, "x"), 0)), 'SyntaxError)
+check(head(arg(parser_parse(syntax_parser, 'cc_two, "x   "), 0)), 'SyntaxError)
 cc_dots ::= a:. "..." { a }
-check(arg(peg_parse('cc_dots, "x ..."), 0), "x")
+check(arg(parser_parse(syntax_parser, 'cc_dots, "x ..."), 0), "x")
 cc_digits ::= ds:[0-9]+ { ds }
-check(arg(peg_parse('cc_digits, "123 rest"), 0), 'Tuple{"1", "2", "3"})
-check(arg(peg_parse('cc_digits, "123 rest"), 1), "rest")
-check(arg(peg_parse('cc_digits, "1 2"), 0), 'Tuple{"1", "2"})
-check(head(arg(peg_parse('cc_digits, "x1"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'cc_digits, "123 rest"), 0), 'Tuple{"1", "2", "3"})
+check(arg(parser_parse(syntax_parser, 'cc_digits, "123 rest"), 1), "rest")
+check(arg(parser_parse(syntax_parser, 'cc_digits, "1 2"), 0), 'Tuple{"1", "2"})
+check(head(arg(parser_parse(syntax_parser, 'cc_digits, "x1"), 0)), 'SyntaxError)
 cc_hex ::= ds:[A-Fa-f0-9_]* { ds }
-check(arg(peg_parse('cc_hex, "Fa_9g"), 0), 'Tuple{"F", "a", "_", "9"})
+check(arg(parser_parse(syntax_parser, 'cc_hex, "Fa_9g"), 0), 'Tuple{"F", "a", "_", "9"})
 cc_str ::= "\"" cs:[^"]* "\"" { cs }
-check(arg(peg_parse('cc_str, "\"ab\""), 0), 'Tuple{"a", "b"})
-check(arg(peg_parse('cc_str, "\"\""), 0), 'Tuple{})
+check(arg(parser_parse(syntax_parser, 'cc_str, "\"ab\""), 0), 'Tuple{"a", "b"})
+check(arg(parser_parse(syntax_parser, 'cc_str, "\"\""), 0), 'Tuple{})
 cc_not ::= a:[^a-c\n] { a }
-check(arg(peg_parse('cc_not, "d"), 0), "d")
-check(head(arg(peg_parse('cc_not, "b"), 0)), 'SyntaxError)
-check(arg(peg_parse('cc_not, "\n"), 0), 'Eof{})
+check(arg(parser_parse(syntax_parser, 'cc_not, "d"), 0), "d")
+check(head(arg(parser_parse(syntax_parser, 'cc_not, "b"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'cc_not, "\n"), 0), 'Eof{})
 cc_esc ::= a:[\]\-\\]+ { a }
-check(arg(peg_parse('cc_esc, "]-\\x"), 0), 'Tuple{"]", "-", "\\"})
+check(arg(parser_parse(syntax_parser, 'cc_esc, "]-\\x"), 0), 'Tuple{"]", "-", "\\"})
 cc_bell ::= a:[\a\0] { a }
-check(arg(peg_parse('cc_bell, "\a"), 0), "\a")
-check(head(arg(peg_parse('cc_bell, "x"), 0)), 'SyntaxError)
+check(arg(parser_parse(syntax_parser, 'cc_bell, "\a"), 0), "\a")
+check(head(arg(parser_parse(syntax_parser, 'cc_bell, "x"), 0)), 'SyntaxError)
 cc_sp ::= a:nospace("<") b:[\ x]+ { b }
-check(arg(peg_parse('cc_sp, "<x x"), 0), 'Tuple{"x", "x"})
+check(arg(parser_parse(syntax_parser, 'cc_sp, "<x x"), 0), 'Tuple{"x", "x"})
 cc_sym ::= a:[+-*]+ { a }
-check(arg(peg_parse('cc_sym, "+-*/"), 0), 'Tuple{"+", "-", "*"})
+check(arg(parser_parse(syntax_parser, 'cc_sym, "+-*/"), 0), 'Tuple{"+", "-", "*"})
 cc_id ::= a:[a-z] bs:[a-z0-9]* { Tuple{a, bs} } | "@" { 0 }
-check(arg(peg_parse('cc_id, "x12"), 0), 'Tuple{"x", Tuple{"1", "2"}})
-check(arg(peg_parse('cc_id, "@"), 0), 0)
+check(arg(parser_parse(syntax_parser, 'cc_id, "x12"), 0), 'Tuple{"x", Tuple{"1", "2"}})
+check(arg(parser_parse(syntax_parser, 'cc_id, "@"), 0), 0)
 check(head(tree("cc_bad ::= [c-a]")), 'SyntaxError)
 check(head(tree("cc_bad ::= [a-]")), 'SyntaxError)
 check(head(tree("cc_bad ::= []")), 'SyntaxError)
@@ -1593,7 +1593,7 @@ blk := {
 }
 check(blk, Tuple{"n", "p"})
 
-check(peg_parse('toplevel, "x := )"),
+check(parser_parse(syntax_parser, 'toplevel, "x := )"),
     Tuple{'SyntaxError{"unexpected input", ")", Loc{none, 1, 6}}, ""})
 check(tree("1 +"), 'SyntaxError{"unexpected end of input", Loc{none, 1, 4}})
 check(tree("\n  b := )\n"),

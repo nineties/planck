@@ -14,6 +14,8 @@
 
 Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 
+Def{syntax_parser, Apply{parser_new, Tuple{}}}
+
 " === Tokens === "
 
 Def{peg_reserved, Apply{table_new, Tuple{}}}
@@ -44,37 +46,38 @@ Apply{table_set, Tuple{peg_reserved, "import", true}}
 "   (x!=y is x != y). "
 " rule_name is the same without the ? and !, for the names in a grammar, where "
 "   x? is an optional x. "
-Def{peg_scan_ident, Lambda{Tuple{p, suffix}, Do{
-    Set{p, Apply{peg_skip_ws, Tuple{p}}},
+Def{peg_scan_ident, Lambda{Tuple{ps, p, suffix}, Do{
+    Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
     Def{q, Apply{peg_inc, Tuple{p}}},
     Def{name, ""},
-    If{Apply{peg_is_alpha, Tuple{Apply{peg_char_at, Tuple{p}}}}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}},
+    If{Apply{peg_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, p}}}}, Do{
+        While{Apply{peg_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
         If{suffix, Do{
-            Def{c, Apply{peg_char_at, Tuple{q}}},
+            Def{c, Apply{parser_char_at, Tuple{ps, q}}},
             If{If{Apply{equal, Tuple{c, 63}}, true,
                   If{Apply{equal, Tuple{c, 33}},
                       Apply{not_equal,
                           Tuple{
-                              Apply{peg_char_at,
-                                  Tuple{Apply{peg_inc, Tuple{q}}}}, 61}},
+                              Apply{parser_char_at,
+                                  Tuple{ps, Apply{peg_inc, Tuple{q}}}}, 61}},
                       false}},
                 Set{q, Apply{peg_inc, Tuple{q}}}, none}}, none},
-        Set{name, Apply{str_sub, Tuple{peg_src, p, q}}},
+        Set{name, Apply{parser_text, Tuple{ps, p, q}}},
         If{If{Apply{table_get, Tuple{peg_reserved, name, false}}, true,
               If{Apply{equal, Tuple{q, Apply{int_add, Tuple{p, 1}}}},
-                 If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{p}}, 102}},
+                 If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 102}},
                      Apply{equal,
-                         Tuple{Apply{peg_char_at, Tuple{q}}, 34}}, false},
+                         Tuple{Apply{parser_char_at, Tuple{ps, q}}, 34}}, false},
                  false}},
-            Apply{peg_fail, Tuple{p}},
-            Do{Set{peg_pv, Apply{sym_intern, Tuple{name}}}, q}}},
-        Apply{peg_fail, Tuple{p}}}}}}
+            Apply{parser_fail, Tuple{ps, p}},
+            Do{Apply{parser_set_value, Tuple{ps, Apply{sym_intern, Tuple{name}}}}, q}}},
+        Apply{parser_fail, Tuple{ps, p}}}}}}
 
-Def{peg_token_ident, Lambda{Tuple{p}, Apply{peg_scan_ident, Tuple{p, true}}}}
+Def{peg_token_ident,
+    Lambda{Tuple{ps, p}, Apply{peg_scan_ident, Tuple{ps, p, true}}}}
 Def{peg_token_rule_name,
-    Lambda{Tuple{p}, Apply{peg_scan_ident, Tuple{p, false}}}}
+    Lambda{Tuple{ps, p}, Apply{peg_scan_ident, Tuple{ps, p, false}}}}
 
 Def{peg_digit_value, Lambda{Tuple{c},
     If{Apply{peg_is_digit, Tuple{c}}, Apply{int_sub, Tuple{c, 48}},
@@ -88,8 +91,8 @@ Def{peg_digit_value, Lambda{Tuple{c},
 "   (as much as -2^30) so that it does not wrap around. "
 " A literal that does not fit in 31 bits is Apply{str_to_int, Tuple{text}}, "
 "   with the text as it is written. "
-Def{peg_token_int, Lambda{Tuple{p}, Do{
-    Set{p, Apply{peg_skip_ws, Tuple{p}}},
+Def{peg_token_int, Lambda{Tuple{ps, p}, Do{
+    Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
     Def{q, p},
     Def{sign, 1},
     Def{base, 10},
@@ -98,15 +101,15 @@ Def{peg_token_int, Lambda{Tuple{p}, Do{
     Def{low, -1073741823},
     Def{big, false},
     If{
-        If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{q}}, 45}},
+        If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 45}},
             Apply{peg_is_digit,
                 Tuple{
-                    Apply{peg_char_at,
-                        Tuple{Apply{peg_inc, Tuple{q}}}}}}, false},
+                    Apply{parser_char_at,
+                        Tuple{ps, Apply{peg_inc, Tuple{q}}}}}}, false},
         Do{Set{sign, -1}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
-    If{Apply{peg_is_digit, Tuple{Apply{peg_char_at, Tuple{q}}}}, Do{
-        If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{q}}, 48}}, Do{
-            Set{d, Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}}},
+    If{Apply{peg_is_digit, Tuple{Apply{parser_char_at, Tuple{ps, q}}}}, Do{
+        If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 48}}, Do{
+            Set{d, Apply{parser_char_at, Tuple{ps, Apply{peg_inc, Tuple{q}}}}},
             If{
                 If{Apply{equal, Tuple{d, 120}}, true,
                     Apply{equal, Tuple{d, 88}}}, Set{base, 16},
@@ -119,7 +122,7 @@ Def{peg_token_int, Lambda{Tuple{p}, Do{
             If{Apply{not_equal, Tuple{base, 10}},
                 Set{q, Apply{int_add, Tuple{q, 2}}}, none}}, none},
         If{Apply{equal, Tuple{sign, -1}}, Set{low, -1073741824}, none},
-        Set{d, Apply{peg_digit_value, Tuple{Apply{peg_char_at, Tuple{q}}}}},
+        Set{d, Apply{peg_digit_value, Tuple{Apply{parser_char_at, Tuple{ps, q}}}}},
         While{Apply{int_lt, Tuple{d, base}}, Do{
             If{
                 Apply{int_lt,
@@ -131,17 +134,15 @@ Def{peg_token_int, Lambda{Tuple{p}, Do{
                     Apply{int_sub, Tuple{Apply{int_mul, Tuple{v, base}}, d}}}},
             Set{q, Apply{peg_inc, Tuple{q}}},
             Set{d,
-                Apply{peg_digit_value, Tuple{Apply{peg_char_at, Tuple{q}}}}}}},
+                Apply{peg_digit_value, Tuple{Apply{parser_char_at, Tuple{ps, q}}}}}}},
         If{big,
-            Set{peg_pv,
-                QuasiQuote{
+            Apply{parser_set_value, Tuple{ps, QuasiQuote{
                     Apply{str_to_int,
-                        Tuple{UnQuote{Apply{str_sub, Tuple{peg_src, p, q}}}}}}},
-            Set{peg_pv,
-                If{Apply{equal, Tuple{sign, -1}}, v,
-                    Apply{int_sub, Tuple{0, v}}}}},
+                        Tuple{UnQuote{Apply{parser_text, Tuple{ps, p, q}}}}}}}},
+            Apply{parser_set_value, Tuple{ps, If{Apply{equal, Tuple{sign, -1}}, v,
+                    Apply{int_sub, Tuple{0, v}}}}}},
         q},
-        Apply{peg_fail, Tuple{p}}}}}}
+        Apply{parser_fail, Tuple{ps, p}}}}}}
 
 Def{peg_escapes, Apply{table_new, Tuple{}}}
 Apply{table_set, Tuple{peg_escapes, 48, "\0"}}
@@ -160,8 +161,8 @@ Apply{table_set, Tuple{peg_escapes, 92, "\\"}}
 Def{peg_token_string, none}
 Def{peg_token_istr_text, none}
 Apply{Lambda{Tuple{}, Do{
-    Def{join, Lambda{Tuple{m}, Do{
-        Def{e, Apply{stack_expr, Tuple{Quote{Tuple}, m}}},
+    Def{join, Lambda{Tuple{ps, m}, Do{
+        Def{e, Apply{parser_stack_expr, Tuple{ps, Quote{Tuple}, m}}},
         Def{n, Apply{arity, Tuple{e}}},
         Def{a, Apply{array_new, Tuple{Apply{int_add, Tuple{n, 1}}}}},
         Def{i, 0},
@@ -188,15 +189,15 @@ Apply{Lambda{Tuple{}, Do{
                 Set{j, Apply{int_add, Tuple{j, 1}}}}, none},
             Set{n, j}}},
         Apply{array_get, Tuple{a, 0}}}}},
-    Set{peg_token_string, Lambda{Tuple{p}, Do{
-        Set{p, Apply{peg_skip_ws, Tuple{p}}},
+    Set{peg_token_string, Lambda{Tuple{ps, p}, Do{
+        Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
         Def{q, Apply{peg_inc, Tuple{p}}},
         Def{start, q},
-        Def{m, Apply{stack_mark, Tuple{}}},
-        Def{c, Apply{peg_char_at, Tuple{q}}},
+        Def{m, Apply{parser_stack_mark, Tuple{ps}}},
+        Def{c, Apply{parser_char_at, Tuple{ps, q}}},
         Def{e, none},
-        If{Apply{not_equal, Tuple{Apply{peg_char_at, Tuple{p}}, 34}},
-            Apply{peg_fail, Tuple{p}}, Do{
+        If{Apply{not_equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 34}},
+            Apply{parser_fail, Tuple{ps, p}}, Do{
             While{
                 If{Apply{not_equal, Tuple{c, 34}},
                     If{Apply{not_equal, Tuple{c, 10}},
@@ -205,41 +206,41 @@ Apply{Lambda{Tuple{}, Do{
                     Set{e,
                         Apply{table_get,
                             Tuple{peg_escapes,
-                                Apply{peg_char_at,
-                                    Tuple{Apply{peg_inc, Tuple{q}}}},
+                                Apply{parser_char_at,
+                                    Tuple{ps, Apply{peg_inc, Tuple{q}}}},
                                 none}}},
                     If{Apply{equal, Tuple{e, none}},
-                        Do{Set{c, -1}, Set{q, Apply{peg_fail, Tuple{q}}}}, Do{
-                        Apply{stack_push,
-                            Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
-                        Apply{stack_push, Tuple{e}},
+                        Do{Set{c, -1}, Set{q, Apply{parser_fail, Tuple{ps, q}}}}, Do{
+                        Apply{parser_stack_push,
+                            Tuple{ps, Apply{parser_text, Tuple{ps, start, q}}}},
+                        Apply{parser_stack_push, Tuple{ps, e}},
                         Set{q, Apply{int_add, Tuple{q, 2}}},
                         Set{start, q}}}},
                     Set{q, Apply{peg_inc, Tuple{q}}}},
                 If{Apply{int_ge, Tuple{c, 0}},
-                    Set{c, Apply{peg_char_at, Tuple{q}}}, none}}},
+                    Set{c, Apply{parser_char_at, Tuple{ps, q}}}, none}}},
             If{Apply{equal, Tuple{c, 34}},
                 Do{
-                    Apply{stack_push,
-                        Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
-                    Set{peg_pv, Apply{join, Tuple{m}}},
+                    Apply{parser_stack_push,
+                        Tuple{ps, Apply{parser_text, Tuple{ps, start, q}}}},
+                    Apply{parser_set_value, Tuple{ps, Apply{join, Tuple{ps, m}}}},
                     Apply{peg_inc, Tuple{q}}},
-                Do{Apply{stack_pop, Tuple{m}}, Apply{peg_fail, Tuple{q}}}}}}}}},
-    Set{peg_token_istr_text, Lambda{Tuple{p}, Do{
+                Do{Apply{parser_stack_pop, Tuple{ps, m}}, Apply{parser_fail, Tuple{ps, q}}}}}}}}},
+    Set{peg_token_istr_text, Lambda{Tuple{ps, p}, Do{
         Def{q, p},
         Def{start, p},
-        Def{m, Apply{stack_mark, Tuple{}}},
+        Def{m, Apply{parser_stack_mark, Tuple{ps}}},
         Def{ok, true},
         Def{go, true},
-        Def{c, Apply{peg_char_at, Tuple{q}}},
+        Def{c, Apply{parser_char_at, Tuple{ps, q}}},
         Def{e, none},
         Def{flush, Lambda{Tuple{x}, Do{
-            Apply{stack_push,
-                Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
-            Apply{stack_push, Tuple{x}},
+            Apply{parser_stack_push,
+                Tuple{ps, Apply{parser_text, Tuple{ps, start, q}}}},
+            Apply{parser_stack_push, Tuple{ps, x}},
             Set{q, Apply{int_add, Tuple{q, 2}}},
             Set{start, q},
-            Set{c, Apply{peg_char_at, Tuple{q}}}}}},
+            Set{c, Apply{parser_char_at, Tuple{ps, q}}}}}},
         While{go, Do{
             If{
                 If{Apply{equal, Tuple{c, 34}}, true,
@@ -248,14 +249,14 @@ Apply{Lambda{Tuple{}, Do{
                 Set{go, false},
                 If{Apply{equal, Tuple{c, 123}},
                     If{Apply{equal,
-                            Tuple{Apply{peg_char_at,
-                                    Tuple{Apply{int_add, Tuple{q, 1}}}}, 123}},
+                            Tuple{Apply{parser_char_at,
+                                    Tuple{ps, Apply{int_add, Tuple{q, 1}}}}, 123}},
                         Apply{flush, Tuple{"{"}},
                         Set{go, false}},
                     If{Apply{equal, Tuple{c, 125}},
                         If{Apply{equal,
-                                Tuple{Apply{peg_char_at,
-                                        Tuple{Apply{int_add, Tuple{q, 1}}}},
+                                Tuple{Apply{parser_char_at,
+                                        Tuple{ps, Apply{int_add, Tuple{q, 1}}}},
                                     125}},
                             Apply{flush, Tuple{"}"}},
                             Do{Set{ok, false}, Set{go, false}}},
@@ -264,43 +265,42 @@ Apply{Lambda{Tuple{}, Do{
                                 Set{e,
                                     Apply{table_get,
                                         Tuple{peg_escapes,
-                                            Apply{peg_char_at,
-                                                Tuple{Apply{int_add,
+                                            Apply{parser_char_at,
+                                                Tuple{ps, Apply{int_add,
                                                         Tuple{q, 1}}}},
                                             none}}},
                                 If{Apply{equal, Tuple{e, none}},
                                     Do{Set{ok, false}, Set{go, false}},
                                     Apply{flush, Tuple{e}}}},
                             Do{Set{q, Apply{int_add, Tuple{q, 1}}},
-                                Set{c, Apply{peg_char_at, Tuple{q}}}}}}}}}},
+                                Set{c, Apply{parser_char_at, Tuple{ps, q}}}}}}}}}},
         If{ok,
             Do{
-                Apply{stack_push,
-                    Tuple{Apply{str_sub, Tuple{peg_src, start, q}}}},
-                Set{peg_pv, Apply{join, Tuple{m}}},
+                Apply{parser_stack_push,
+                    Tuple{ps, Apply{parser_text, Tuple{ps, start, q}}}},
+                Apply{parser_set_value, Tuple{ps, Apply{join, Tuple{ps, m}}}},
                 q},
-            Do{Apply{stack_pop, Tuple{m}}, Apply{peg_fail, Tuple{q}}}}}}},
+            Do{Apply{parser_stack_pop, Tuple{ps, m}}, Apply{parser_fail, Tuple{ps, q}}}}}}},
     none}}, Tuple{}}
 
 " 'word in a grammar: Key{\"word\"} "
-Def{peg_token_keyword, Lambda{Tuple{p}, Do{
-    Set{p, Apply{peg_skip_ws, Tuple{p}}},
+Def{peg_token_keyword, Lambda{Tuple{ps, p}, Do{
+    Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
     Def{q, Apply{peg_inc, Tuple{p}}},
     If{
-        If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{p}}, 39}},
-            Apply{peg_is_alpha, Tuple{Apply{peg_char_at, Tuple{q}}}},
+        If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 39}},
+            Apply{peg_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             false}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}},
+        While{Apply{peg_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
-        Set{peg_pv,
-            Key{Apply{str_sub, Tuple{peg_src, Apply{peg_inc, Tuple{p}}, q}}}},
+        Apply{parser_set_value, Tuple{ps, Key{Apply{parser_text, Tuple{ps, Apply{peg_inc, Tuple{p}}, q}}}}},
         q},
-        Apply{peg_fail, Tuple{p}}}}}}
+        Apply{parser_fail, Tuple{ps, p}}}}}}
 
 " character class: [set] or [^set]. The blanks at both ends of the set are not "
 "   in it. "
-Def{peg_token_class, Lambda{Tuple{p}, Do{
-    Set{p, Apply{peg_skip_ws, Tuple{p}}},
+Def{peg_token_class, Lambda{Tuple{ps, p}, Do{
+    Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
     Def{q, p},
     Def{neg, false},
     Def{start, 0},
@@ -308,24 +308,24 @@ Def{peg_token_class, Lambda{Tuple{p}, Do{
     Def{spec, ""},
     Def{c, 0},
     Def{go, true},
-    If{Apply{not_equal, Tuple{Apply{peg_char_at, Tuple{p}}, 91}},
-        Apply{peg_fail, Tuple{p}}, Do{
+    If{Apply{not_equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 91}},
+        Apply{parser_fail, Tuple{ps, p}}, Do{
         Set{q, Apply{peg_inc, Tuple{p}}},
-        If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{q}}, 94}},
+        If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 94}},
             Do{Set{neg, true}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
-        While{Apply{peg_is_blank, Tuple{Apply{peg_char_at, Tuple{q}}}},
+        While{Apply{peg_is_blank, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
         Set{start, q},
         Set{endp, q},
         While{go, Do{
-            Set{c, Apply{peg_char_at, Tuple{q}}},
+            Set{c, Apply{parser_char_at, Tuple{ps, q}}},
             If{Apply{int_lt, Tuple{c, 0}}, Set{go, false},
             If{Apply{equal, Tuple{c, 93}}, Set{go, false},
             If{Apply{equal, Tuple{c, 92}},
                 If{
                     Apply{int_lt,
                         Tuple{
-                            Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}},
+                            Apply{parser_char_at, Tuple{ps, Apply{peg_inc, Tuple{q}}}},
                             0}}, Set{go, false}, Do{
                     Set{q, Apply{int_add, Tuple{q, 2}}},
                     Set{endp, q}}},
@@ -333,25 +333,24 @@ Def{peg_token_class, Lambda{Tuple{p}, Do{
                 Set{q, Apply{peg_inc, Tuple{q}}}, Do{
                 Set{q, Apply{peg_inc, Tuple{q}}},
                 Set{endp, q}}}}}}}},
-        Set{spec, Apply{str_sub, Tuple{peg_src, start, endp}}},
+        Set{spec, Apply{parser_text, Tuple{ps, start, endp}}},
         If{
-            If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{q}}, 93}},
+            If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 93}},
                 Apply{int_gt, Tuple{endp, start}}, false},
             If{Apply{equal, Tuple{Apply{peg_charset, Tuple{spec}}, none}},
-                Apply{peg_fail, Tuple{p}}, Do{
-                Set{peg_pv,
-                    Apply{mexpr,
+                Apply{parser_fail, Tuple{ps, p}}, Do{
+                Apply{parser_set_value, Tuple{ps, Apply{mexpr,
                         Tuple{If{neg, Quote{NoneOf}, Quote{OneOf}},
-                            Tuple{spec}}}},
+                            Tuple{spec}}}}},
                 Apply{peg_inc, Tuple{q}}}},
-            Apply{peg_fail, Tuple{p}}}}}}}}
+            Apply{parser_fail, Tuple{ps, p}}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{ident}, peg_token_ident}}
-Apply{_define_rule, Tuple{Quote{rule_name}, peg_token_rule_name}}
-Apply{_define_rule, Tuple{Quote{integer}, peg_token_int}}
-Apply{_define_rule, Tuple{Quote{string}, peg_token_string}}
-Apply{_define_rule, Tuple{Quote{keyword}, peg_token_keyword}}
-Apply{_define_rule, Tuple{Quote{charclass}, peg_token_class}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{ident}, peg_token_ident}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{rule_name}, peg_token_rule_name}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{integer}, peg_token_int}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{string}, peg_token_string}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{keyword}, peg_token_keyword}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{charclass}, peg_token_class}}
 
 " === Actions === "
 
@@ -388,8 +387,8 @@ Def{peg_or, Apply{sym_intern, Tuple{"%or"}}}
 " def_run is declared with ::= at the end of the file. Until then it matches "
 "   nothing. "
 
-Apply{_define_rule,
-    Tuple{Quote{def_run}, Lambda{Tuple{p}, Apply{peg_fail, Tuple{p}}}}}
+Apply{parser_define_rule,
+    Tuple{syntax_parser, Quote{def_run}, Lambda{Tuple{ps, p}, Apply{parser_fail, Tuple{ps, p}}}}}
 
 Def{peg_ret_handler, QuasiQuote{Lambda{Tuple{Return{v}, k}, v}}}
 
@@ -492,14 +491,14 @@ Def{peg_nbrk, 0}
 
 Def{peg_ncnt, 0}
 
-Def{peg_parse_plain, peg_parse_from}
+Def{peg_parse_plain, parser_parse_from}
 
 Set{
-    peg_parse_from,
+    parser_parse_from,
     Lambda{
-        Tuple{r, s, pos},
+        Tuple{ps, r, s, pos},
         Do{Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0},
-            Apply{peg_parse_plain, Tuple{r, s, pos}}}
+            Apply{peg_parse_plain, Tuple{ps, r, s, pos}}}
     }}
 
 Def{
@@ -836,42 +835,42 @@ Def{
 Def{
     peg_token_istr_open,
     Lambda{
-        Tuple{p},
+        Tuple{ps, p},
         Do{
-            Set{p, Apply{peg_skip_ws, Tuple{p}}},
+            Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
             If{
                 If{
-                    Apply{equal, Tuple{Apply{peg_char_at, Tuple{p}}, 102}},
+                    Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 102}},
                     Apply{equal,
                         Tuple{
-                            Apply{peg_char_at,
-                                Tuple{Apply{int_add, Tuple{p, 1}}}}, 34}},
+                            Apply{parser_char_at,
+                                Tuple{ps, Apply{int_add, Tuple{p, 1}}}}, 34}},
                     false
                 },
-                Do{Set{peg_pv, none}, Apply{int_add, Tuple{p, 2}}},
-                Apply{peg_fail, Tuple{p}}
+                Do{Apply{parser_set_value, Tuple{ps, none}}, Apply{int_add, Tuple{p, 2}}},
+                Apply{parser_fail, Tuple{ps, p}}
             }
         }
     }}
 
 Defun{peg_token_istr_hole,
     Lambda{
-        Tuple{p},
+        Tuple{ps, p},
         If{
-            Apply{equal, Tuple{Apply{peg_char_at, Tuple{p}}, 123}},
-            Do{Set{peg_pv, "{"}, Apply{int_add, Tuple{p, 1}}},
-            Apply{peg_fail, Tuple{p}}
+            Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 123}},
+            Do{Apply{parser_set_value, Tuple{ps, "{"}}, Apply{int_add, Tuple{p, 1}}},
+            Apply{parser_fail, Tuple{ps, p}}
         }
     }}
 
 Def{
     peg_token_istr_close,
     Lambda{
-        Tuple{p},
+        Tuple{ps, p},
         If{
-            Apply{equal, Tuple{Apply{peg_char_at, Tuple{p}}, 34}},
-            Do{Set{peg_pv, "\""}, Apply{int_add, Tuple{p, 1}}},
-            Apply{peg_fail, Tuple{p}}
+            Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 34}},
+            Do{Apply{parser_set_value, Tuple{ps, "\""}}, Apply{int_add, Tuple{p, 1}}},
+            Apply{parser_fail, Tuple{ps, p}}
         }
     }}
 
@@ -927,13 +926,13 @@ Def{
         }
     }}
 
-Apply{_define_rule, Tuple{Quote{istr_open}, peg_token_istr_open}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{istr_open}, peg_token_istr_open}}
 
-Apply{_define_rule, Tuple{Quote{istr_text}, peg_token_istr_text}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{istr_text}, peg_token_istr_text}}
 
-Apply{_define_rule, Tuple{Quote{istr_hole}, peg_token_istr_hole}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{istr_hole}, peg_token_istr_hole}}
 
-Apply{_define_rule, Tuple{Quote{istr_close}, peg_token_istr_close}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{istr_close}, peg_token_istr_close}}
 
 " the field names of each type that record declares: type -> Tuple of the "
 "   names "
@@ -1481,47 +1480,46 @@ Set{
 " The rule decides where the text ends, and |} must follow it. "
 " The value is the value of the rule as a constant. "
 
-Def{peg_token_embed, Lambda{Tuple{p}, Do{
-    Set{p, Apply{peg_skip_ws, Tuple{p}}},
+Def{peg_token_embed, Lambda{Tuple{ps, p}, Do{
+    Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
     Def{q, p},
     Def{r, none},
     Def{v, none},
-    If{Apply{peg_is_alpha, Tuple{Apply{peg_char_at, Tuple{p}}}}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{q}}}},
+    If{Apply{peg_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, p}}}}, Do{
+        While{Apply{peg_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
         If{
-            If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{q}}, 123}},
+            If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 123}},
                 Apply{equal,
-                    Tuple{Apply{peg_char_at, Tuple{Apply{peg_inc, Tuple{q}}}},
+                    Tuple{Apply{parser_char_at, Tuple{ps, Apply{peg_inc, Tuple{q}}}},
                         124}}, false}, Do{
             Set{r,
-                Apply{sym_intern, Tuple{Apply{str_sub, Tuple{peg_src, p, q}}}}},
+                Apply{sym_intern, Tuple{Apply{parser_text, Tuple{ps, p, q}}}}},
             If{
-                Apply{equal,
-                    Tuple{Apply{table_get, Tuple{peg_ids, r, none}}, none}},
-                Apply{peg_fail, Tuple{p}}, Do{
+                Apply{_not, Tuple{Apply{parser_has_rule, Tuple{ps, r}}}},
+                Apply{parser_fail, Tuple{ps, p}}, Do{
                 Set{q,
-                    Apply{peg_call_rule,
-                        Tuple{r, Apply{int_add, Tuple{q, 2}}}}},
+                    Apply{parser_call_rule,
+                        Tuple{ps, r, Apply{int_add, Tuple{q, 2}}}}},
                 If{Apply{int_lt, Tuple{q, 0}}, -1, Do{
-                    Set{v, peg_pv},
+                    Set{v, Apply{parser_value, Tuple{ps}}},
                     Set{q,
-                        Apply{peg_literal,
-                            Tuple{"|}", Apply{peg_skip_ws, Tuple{q}}}}},
+                        Apply{parser_literal,
+                            Tuple{ps, "|}", Apply{parser_skip_ws, Tuple{ps, q}}}}},
                     If{Apply{int_lt, Tuple{q, 0}}, -1, Do{
-                        Set{peg_pv, Apply{mexpr, Tuple{Quote{Quote}, Tuple{v}}}},
+                        Apply{parser_set_value, Tuple{ps, Apply{mexpr, Tuple{Quote{Quote}, Tuple{v}}}}},
                         q}}}}}}},
-            Apply{peg_fail, Tuple{p}}}},
-        Apply{peg_fail, Tuple{p}}}}}}
+            Apply{parser_fail, Tuple{ps, p}}}},
+        Apply{parser_fail, Tuple{ps, p}}}}}}
 
-Apply{_define_rule, Tuple{Quote{embed}, peg_token_embed}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{embed}, peg_token_embed}}
 
 " -> or the word if after the blanks at p, which are not consumed "
-Def{peg_token_arrow_next, Lambda{Tuple{p}, Do{
-    Def{q, Apply{peg_skip_ws, Tuple{p}}},
-    Def{c, Apply{peg_char_at, Tuple{q}}},
-    Def{d, Apply{peg_char_at, Tuple{Apply{int_add, Tuple{q, 1}}}}},
-    Set{peg_pv, none},
+Def{peg_token_arrow_next, Lambda{Tuple{ps, p}, Do{
+    Def{q, Apply{parser_skip_ws, Tuple{ps, p}}},
+    Def{c, Apply{parser_char_at, Tuple{ps, q}}},
+    Def{d, Apply{parser_char_at, Tuple{ps, Apply{int_add, Tuple{q, 1}}}}},
+    Apply{parser_set_value, Tuple{ps, none}},
     If{If{Apply{equal, Tuple{c, 45}}, Apply{equal, Tuple{d, 62}}, false}, p,
     If{
         If{Apply{equal, Tuple{c, 105}},
@@ -1530,12 +1528,12 @@ Def{peg_token_arrow_next, Lambda{Tuple{p}, Do{
                     Tuple{
                         Apply{peg_is_alnum,
                             Tuple{
-                                Apply{peg_char_at,
-                                    Tuple{Apply{int_add, Tuple{q, 2}}}}}}}},
+                                Apply{parser_char_at,
+                                    Tuple{ps, Apply{int_add, Tuple{q, 2}}}}}}}},
                 false}, false}, p,
-        Apply{peg_fail, Tuple{p}}}}}}}
+        Apply{parser_fail, Tuple{ps, p}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{arrow_next}, peg_token_arrow_next}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{arrow_next}, peg_token_arrow_next}}
 
 " === Grammar of the grammar === "
 " A rule is declared with  name ::= alt | alt ...  An alternative is items and "
@@ -1582,33 +1580,33 @@ Def{peg_alt, Lambda{Tuple{items, act}, Do{
                 UnQuote{
                     Apply{arg, Tuple{Apply{peg_first, Tuple{act}}, 1}}}}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{same}, Quote{Same{}}}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{same}, Quote{Same{}}}}
 
-Apply{_define_rule, Tuple{Quote{syntax_decl}, Quote{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{syntax_decl}, Quote{
     Act{Seq{rule_name, "::=", g_choice},
         Lambda{Tuple{Tuple{n, _, e}},
             Do{
                 QuasiQuote{
-                    Apply{_define_rule,
-                        Tuple{Quote{UnQuote{n}}, Quote{UnQuote{e}}}}}}}}}}}
+                    Apply{parser_define_rule,
+                        Tuple{syntax_parser, Quote{UnQuote{n}}, Quote{UnQuote{e}}}}}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{g_choice}, Quote{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{g_choice}, Quote{
     Act{Seq{Delimited1{g_alt, "|"}},
         Lambda{Tuple{Tuple{es}}, Do{Apply{peg_choice, Tuple{es}}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{g_alt}, Quote{Choice{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{g_alt}, Quote{Choice{
     Act{Seq{"..."}, Lambda{Tuple{Tuple{_}}, Do{Quote{Prev{}}}}},
     Act{Seq{Many1{g_item}, Option{Seq{same, block}}},
         Lambda{Tuple{Tuple{items, act}},
             Do{Apply{peg_alt, Tuple{items, act}}}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{g_item}, Quote{Choice{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{g_item}, Quote{Choice{
     Act{Seq{same, ident, Tight{":"}, g_suffix},
         Lambda{Tuple{Tuple{_, l, _, e}}, Do{Tuple{l, e}}}},
     Act{Seq{same, g_suffix},
         Lambda{Tuple{Tuple{_, e}}, Do{Tuple{Quote{_}, e}}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{g_suffix}, Quote{Choice{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{g_suffix}, Quote{Choice{
     Act{Seq{g_primary, Tight{"*"}},
         Lambda{Tuple{Tuple{e, _}}, Do{QuasiQuote{Many{UnQuote{e}}}}}},
     Act{Seq{g_primary, Tight{"+"}},
@@ -1621,7 +1619,7 @@ Apply{_define_rule, Tuple{Quote{g_suffix}, Quote{Choice{
         Lambda{Tuple{Tuple{_, e}}, Do{QuasiQuote{Not{UnQuote{e}}}}}},
     g_primary}}}}
 
-Apply{_define_rule, Tuple{Quote{g_primary}, Quote{Choice{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{g_primary}, Quote{Choice{
     string,
     keyword,
     charclass,
@@ -1644,12 +1642,12 @@ Apply{_define_rule, Tuple{Quote{g_primary}, Quote{Choice{
 "   'e and !e, and blocks. "
 " Rules of the same names are declared again with ::= after they are read. "
 
-Apply{_define_rule, Tuple{Quote{toplevel}, Quote{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{toplevel}, Quote{
     Act{Seq{expr, Choice{";", Not{same}, And{expr}}}, peg_first}}}}
 
-Apply{_define_rule, Tuple{Quote{expr}, Quote{Choice{syntax_decl, unary}}}}
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{expr}, Quote{Choice{syntax_decl, unary}}}}
 
-Apply{_define_rule, Tuple{Quote{unary}, Quote{Choice{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{unary}, Quote{Choice{
     postfix,
     Act{Seq{"'", unary},
         Lambda{Tuple{Tuple{_, a}}, Apply{mexpr, Tuple{Quote{Quote}, Tuple{a}}}}},
@@ -1660,13 +1658,13 @@ Apply{_define_rule, Tuple{Quote{unary}, Quote{Choice{
         Lambda{Tuple{Tuple{_, a}},
             Apply{mexpr, Tuple{Quote{UnQuote}, Tuple{a}}}}}}}}}
 
-Apply{_define_rule, Tuple{Quote{postfix}, Quote{Choice{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{postfix}, Quote{Choice{
     Act{Seq{postfix, Tight{"("}, Delimited{expr, ","}, ")"},
         Lambda{Tuple{Tuple{f, _, args, _}},
             QuasiQuote{Apply{UnQuote{f}, UnQuote{args}}}}},
     primary}}}}
 
-Apply{_define_rule, Tuple{Quote{primary}, Quote{Choice{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{primary}, Quote{Choice{
     block,
     Act{Seq{ident, Tight{"{"}, Delimited{expr, ","}, "}"},
         Lambda{Tuple{Tuple{h, _, args, _}}, Apply{mexpr, Tuple{h, args}}}},
@@ -1674,7 +1672,7 @@ Apply{_define_rule, Tuple{Quote{primary}, Quote{Choice{
     integer,
     string}}}}
 
-Apply{_define_rule, Tuple{Quote{block}, Quote{
+Apply{parser_define_rule, Tuple{syntax_parser, Quote{block}, Quote{
     Act{Seq{"{", Many{Seq{expr, Option{";"}}}, "}"},
         Lambda{Tuple{Tuple{_, es, _}}, Apply{peg_block, Tuple{es}}}}}}}
 
@@ -1683,7 +1681,7 @@ Apply{_define_rule, Tuple{Quote{block}, Quote{
 "   parse_mexpr. "
 Def{parse_mexpr, parse}
 Set{parse, Lambda{Tuple{s}, Do{
-    Def{r, Apply{peg_parse, Tuple{Quote{toplevel}, s}}},
+    Def{r, Apply{parser_parse, Tuple{syntax_parser, Quote{toplevel}, s}}},
     If{Apply{peg_is_head, Tuple{Apply{arg, Tuple{r, 0}}, Quote{SyntaxError}}},
         Do{
             Def{base, Perform{Origin{}}},
@@ -1696,7 +1694,7 @@ Set{parse, Lambda{Tuple{s}, Do{
 " The rules above declare themselves again, in the form that they make. "
 " A rule declared again replaces the rule that read this text. "
 
-syntax_decl ::= n:rule_name "::=" e:g_choice { `Apply{_define_rule, Tuple{Quote{!n}, Quote{!e}}} }
+syntax_decl ::= n:rule_name "::=" e:g_choice { `Apply{parser_define_rule, Tuple{syntax_parser, Quote{!n}, Quote{!e}}} }
 
 g_choice ::= es:delimited1(g_alt, "|") { peg_choice(es) }
 
@@ -2161,11 +2159,11 @@ peg_import(p, a, o) := {
     }
     m := arg(p, n - 1)
     load := `Apply{_import_module, Tuple{!file, Quote{!m}}}
-    ds := stack_mark()
+    ds := parser_stack_mark(syntax_parser)
     if (arity(a) > 0) {
         name := arg(arg(a, 0), 2)
-        stack_push(`Def{!name, !load})
-    } else stack_push(load)
+        parser_stack_push(syntax_parser, `Def{!name, !load})
+    } else parser_stack_push(syntax_parser, load)
     if (arity(o) > 0) {
         kind := arg(arg(o, 0), 0)
         ns := arg(arg(o, 0), 1)
@@ -2173,19 +2171,19 @@ peg_import(p, a, o) := {
             j := 0
             while (j < arity(ns)) {
                 x := arg(ns, j)
-                stack_push(
+                parser_stack_push(syntax_parser,
                     `Def{!x, Apply{_record_get, Tuple{!load, Quote{!x}}}})
                 j = j + 1
             }
         } else {
             hidden := if (kind == 'hiding) ns else Tuple{}
-            stack_push(
+            parser_stack_push(syntax_parser,
                 `Apply{eval,
                     Tuple{Apply{_import_defs, Tuple{!load, Quote{!hidden}}}}})
         }
     }
-    stack_push(none)
-    stack_expr('Do, ds)
+    parser_stack_push(syntax_parser, none)
+    parser_stack_expr(syntax_parser, 'Do, ds)
 }
 
 " the name that a definition marked export defines: x for Def{x, e}, f for "
@@ -2197,7 +2195,7 @@ peg_export_name(d) := if (head(d) == 'Def or head(d) == 'Defun) arg(d, 0)
 "   followed by its optional semicolon. The module is "
 " n := (() -> { statements; _module(names, values) })(). "
 peg_module(n, es) := {
-    blocks := stack_mark()
+    blocks := parser_stack_mark(syntax_parser)
     names := Nil{}
     i := 0
     while (i < arity(es)) {
@@ -2210,10 +2208,10 @@ peg_module(n, es) := {
                 s = d
             }
         }
-        stack_push(s)
+        parser_stack_push(syntax_parser, s)
     }
-    stack_push(`Apply{_module, Tuple{Quote{!names}, !names}})
-    `Def{!n, Apply{Lambda{Tuple{}, !stack_expr('Do, blocks)}, Tuple{}}}
+    parser_stack_push(syntax_parser, `Apply{_module, Tuple{Quote{!names}, !names}})
+    `Def{!n, Apply{Lambda{Tuple{}, !parser_stack_expr(syntax_parser, 'Do, blocks)}, Tuple{}}}
 }
 
 " === Macro === "
@@ -2458,11 +2456,11 @@ peg_pat_var(p) := type(p) == Symbol and p != '_ and p != 'true and
 
 " the variables of a pattern in order "
 peg_pat_names(p) := {
-    start := stack_mark()
+    start := parser_stack_mark(syntax_parser)
     collect := none
     collect = p -> {
         if (type(p) == Symbol) {
-            if (peg_pat_var(p)) stack_push(p)
+            if (peg_pat_var(p)) parser_stack_push(syntax_parser, p)
             return none
         }
         if (type(p) != Expr or head(p) == 'Quote) return none
@@ -2474,7 +2472,7 @@ peg_pat_names(p) := {
         }
     }
     collect(p)
-    stack_expr('Tuple, start)
+    parser_stack_expr(syntax_parser, 'Tuple, start)
 }
 
 " a name that is in the tuple twice, or none "
@@ -2504,16 +2502,16 @@ peg_pat_has_or(p) := {
 
 " the alternatives of p or q or ... "
 peg_or_alts(p) := {
-    start := stack_mark()
+    start := parser_stack_mark(syntax_parser)
     collect := none
     collect = p -> {
         if (type(p) == Expr and head(p) == peg_or) {
             collect(arg(p, 0))
             collect(arg(p, 1))
-        } else stack_push(p)
+        } else parser_stack_push(syntax_parser, p)
     }
     collect(p)
-    stack_expr('Tuple, start)
+    parser_stack_expr(syntax_parser, 'Tuple, start)
 }
 
 " the tests all true "
@@ -2591,8 +2589,8 @@ peg_pat_walk(p, st) := {
                 sym_name(p)))
         if (table_get(st[0], p, false)) {
             d := peg_fresh("%d")
-            stack_push(0)
-            stack_push(`Apply{equal, Tuple{!p, !d}})
+            parser_stack_push(syntax_parser, 0)
+            parser_stack_push(syntax_parser, `Apply{equal, Tuple{!p, !d}})
             return d
         }
         table_set(st[0], p, true)
@@ -2635,11 +2633,11 @@ peg_pat_walk(p, st) := {
             i = i - 1
         }
         t := peg_fresh("%o")
-        stack_push(0)
-        stack_push(`Apply{!chain, Tuple{!t}})
+        parser_stack_push(syntax_parser, 0)
+        parser_stack_push(syntax_parser, `Apply{!chain, Tuple{!t}})
         if (arity(ns) > 0) {
-            stack_push(1)
-            stack_push(Tuple{t, alts})
+            parser_stack_push(syntax_parser, 1)
+            parser_stack_push(syntax_parser, Tuple{t, alts})
         }
         return t
     }
@@ -2666,9 +2664,9 @@ peg_pats(ps) := {
     st := array_new(2)
     st[0] = table_new()
     st[1] = table_new()
-    start := stack_mark()
+    start := parser_stack_mark(syntax_parser)
     ps2 := peg_pat_walk(ps, st)
-    all := stack_expr('Tuple, start)
+    all := parser_stack_expr(syntax_parser, 'Tuple, start)
     nt := 0
     i := 0
     while (i < arity(all)) {
@@ -2806,18 +2804,18 @@ peg_def_arm(f, ps0, g, e0) := {
 
 " a definition of a special arm matches def_run with the definitions that "
 "   follow it "
-peg_token_special(p) := {
-    q := peg_call_rule('def_arm, p)
+peg_token_special(ps, p) := {
+    q := parser_call_rule(ps, 'def_arm, p)
     if (q < 0) return q
-    v := peg_pv
+    v := parser_value(ps)
     if (arg(v, 1)) {
-        peg_pv = v
+        parser_set_value(ps, v)
         return q
     }
-    peg_fail(p)
+    parser_fail(ps, p)
 }
 
-_define_rule('special_arm, peg_token_special)
+parser_define_rule(syntax_parser, 'special_arm, peg_token_special)
 
 " The arms of the same f in a row are joined by | : f(p, ...) := e, f(q, ...) "
 "   := e, ... is "
@@ -2832,7 +2830,7 @@ peg_def_run(a, rest) := {
         i = i + 1
     }
     arms := mexpr('Tuple, armarr)
-    stmts := stack_mark()
+    stmts := parser_stack_mark(syntax_parser)
     i = 0
     while (i < arity(arms)) {
         f := arg(arg(arms, i), 0)
@@ -2844,11 +2842,11 @@ peg_def_run(a, rest) := {
             lambda = peg_fuse(arg(arg(arms, k), 2), lambda)
             k = k - 1
         }
-        stack_push(
+        parser_stack_push(syntax_parser,
             `Defun{!f, !lambda})
         i = j
     }
-    done := stack_expr('Do, stmts)
+    done := parser_stack_expr(syntax_parser, 'Do, stmts)
     if (arity(done) == 1) arg(done, 0) else done
 }
 

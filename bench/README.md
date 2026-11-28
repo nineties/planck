@@ -41,7 +41,7 @@ The measuring programs need the builtins `os_time_ns`, `gc_allocated_bytes`, `gc
 | `effects_state` | state passing through handlers | `examples/state.pk` |
 | `exceptions` | handlers that resume many times | `examples/exception.pk` |
 | `macro` | `macro`, quasi-quotation, `eval` of a quoted expression | `tests/macro.pk`, `examples/macro.pk` |
-| `syntax_extension` | `::=` grammar rules, `peg_parse`, extending the syntax | `examples/extend.pk`, `examples/calc.pk` |
+| `syntax_extension` | `::=` grammar rules, `parser_parse`, extending the syntax | `examples/extend.pk`, `examples/calc.pk` |
 | `gc_alloc` | allocation of lists, tuples and arrays (garbage collector) | none |
 | `pretty_error` | `lib/pretty.pk`, `lib/error.pk` | `tests/lib.pk` |
 | `modules_records` | `module`, `export`, `record` | `tests/module.pk`, `examples/with.pk` |

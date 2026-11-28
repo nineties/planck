@@ -17,8 +17,8 @@ pair ::= k:word "=" v:(number | quoted) { Tuple{k, v} }
 pairs ::= xs:delimited(pair, ",") { xs }
 first ::= c:. { c }
 
-r := peg_parse('pairs, "a=12, name=\"koichi\", b_2=7")
+r := parser_parse(syntax_parser, 'pairs, "a=12, name=\"koichi\", b_2=7")
 print(arg(r, 0))
-print(arg(peg_parse('first, "  xyz"), 0))
-print(head(arg(peg_parse('pair, "a=?"), 0)))
-print(head(arg(peg_parse('first, "   "), 0)))
+print(arg(parser_parse(syntax_parser, 'first, "  xyz"), 0))
+print(head(arg(parser_parse(syntax_parser, 'pair, "a=?"), 0)))
+print(head(arg(parser_parse(syntax_parser, 'first, "   "), 0)))
