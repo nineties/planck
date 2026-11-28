@@ -110,7 +110,7 @@ Apply{Lambda{Tuple{}, Do{
         e}}},
     Set{table_new, Lambda{Tuple{}, Do{
         Def{t, Apply{array_new, Tuple{2}}},
-        Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
+        Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{64}}}},
         Apply{array_set, Tuple{t, 1, 0}},
         Apply{_wrap_table, Tuple{Tuple{t}}}}}},
     Set{table_get, Lambda{Tuple{TypeOf{tb, Table}, k, default}, Do{
