@@ -2232,7 +2232,7 @@ fun expand_macro
     macros := e -> e
     " the macros that the module being rewritten exports, the last one first "
     macro_exports := Nil{}
-    eval_expanded := eval
+    eval_expanded := _eval_here
     " a rewriting that takes more than macro_limit steps in one eval stops with "
     "   an error "
     macro_limit := 1000
@@ -2326,8 +2326,8 @@ fun expand_macro
             macro_steps = 0
             x := expand_macro(e, 0)
             macro_steps = saved
-            eval_expanded(_rewrite_globals(x))
-        } else eval_expanded(_rewrite_globals(e))
+            eval_expanded(x)
+        } else eval_expanded(e)
     }
 })()
 

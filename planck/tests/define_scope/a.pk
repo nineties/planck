@@ -1,0 +1,5 @@
+# Copyright (C) 2026 nineties
+
+ds_f(0) := "a zero"
+ds_helper := "helper"
+ds_f(n) := f"a {ds_helper}"

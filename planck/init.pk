@@ -182,39 +182,42 @@ Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 "   planck/syntax.pk has replaced parse and planck/peg.pk has defined "
 "   peg_file_error_text. "
 Def{peg_file_error_text, none}
-Def{_file_defs, none}
-Def{_rewrite_globals, none}
-Def{_rewrite_global, none}
-Defun{_rewrite_global, Lambda{Tuple{Def{n, v}},
-    Do{Apply{table_set, Tuple{_file_defs, n, true}},
-        QuasiQuote{Def{UnQuote{n}, UnQuote{v}}}}}}
-Defun{_rewrite_global, Lambda{Tuple{Defun{n, f}},
-    If{Apply{table_get, Tuple{_file_defs, n, false}},
-        QuasiQuote{Defun{UnQuote{n}, UnQuote{f}}},
-        Do{Apply{table_set, Tuple{_file_defs, n, true}},
-            QuasiQuote{Do{Def{UnQuote{n}, none},
-                Defun{UnQuote{n}, UnQuote{f}}}}}}}}
-Defun{_rewrite_global, Lambda{Tuple{Do{Rest{es}}},
+Def{_export_defs, none}
+Defun{_export_defs, Lambda{Tuple{s, Def{n, v}},
+    Apply{scope_export, Tuple{s, n}}}}
+Defun{_export_defs, Lambda{Tuple{s, Defun{n, f}},
+    Apply{scope_export, Tuple{s, n}}}}
+Defun{_export_defs, Lambda{Tuple{s, Do{Rest{es}}},
     Do{Def{n, Apply{arity, Tuple{es}}},
-        Def{xs, Apply{array_new, Tuple{n}}},
         Def{i, 0},
         While{Apply{int_lt, Tuple{i, n}}, Do{
-            Apply{array_set, Tuple{xs, i, Apply{_rewrite_globals,
-                Tuple{Apply{arg, Tuple{es, i}}}}}},
-            Set{i, Apply{int_add, Tuple{i, 1}}}}},
-        Apply{mexpr, Tuple{Quote{Do}, xs}}}}}
-Defun{_rewrite_global, Lambda{Tuple{e}, e}}
-Set{_rewrite_globals, Lambda{Tuple{e},
-    If{Apply{equal, Tuple{_file_defs, none}}, e,
-        Apply{_rewrite_global, Tuple{e}}}}}
+            Apply{_export_defs, Tuple{s, Apply{arg, Tuple{es, i}}}},
+            Set{i, Apply{int_add, Tuple{i, 1}}}}}}}}
+Defun{_export_defs, Lambda{Tuple{s, e}, none}}
+Def{_scope, none}
+Def{_eval0, eval}
+Def{_eval_here,
+    Lambda{Tuple{e},
+        If{Apply{equal, Tuple{_scope, none}},
+            Apply{_eval0, Tuple{e}},
+            Do{Def{r, Apply{scope_eval, Tuple{_scope, e}}},
+                Apply{_export_defs, Tuple{_scope, e}},
+                r}}}}
+Def{_eval_in_scope,
+    Lambda{Tuple{s, e},
+        Do{Def{prev, _scope},
+            Set{_scope, s},
+            Apply{scope_eval, Tuple{s,
+                QuasiQuote{Apply{eval, Tuple{Quote{UnQuote{e}}}}}}},
+            Set{_scope, prev},
+            Apply{_export_defs, Tuple{s, e}}}}}
 
 Def{load, Apply{Lambda{Tuple{}, Do{
     Def{_parse0, parse},
     Lambda{Tuple{path}, Do{
         Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
         Def{s0, s},
-        Def{prev, _file_defs},
-        Set{_file_defs, Apply{table_new, Tuple{}}},
+        Def{scope, Apply{scope_new, Tuple{}}},
         Def{r, none},
         Def{e, none},
         Def{go, true},
@@ -240,9 +243,8 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                         Apply{print, Tuple{text}}},
                     Apply{os_exit, Tuple{1}}},
                 Do{
-                    Apply{eval, Tuple{Apply{_rewrite_globals, Tuple{e}}}},
+                    Apply{_eval_in_scope, Tuple{scope, e}},
                     Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
-        Set{_file_defs, prev},
         none}}}}, Tuple{}}}
 
 " === Syntax === "

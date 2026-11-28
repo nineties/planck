@@ -54,10 +54,8 @@ import_lib := (() -> {
             trees := read_preprocessed(f"planck/lib/{name}.pkm", state, text)
             if (trees == none) load(path)
             else {
-                prev := _file_defs
-                _file_defs = table_new()
-                for (e in trees) eval(e)
-                _file_defs = prev
+                scope := scope_new()
+                for (e in trees) _eval_in_scope(scope, e)
             }
         }
         if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
