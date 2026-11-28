@@ -15,7 +15,7 @@ print(calc_expr{| 1 + 2 * (10 - 4) / 3 |})
 i := 0
 t := 0
 while (i < 180) {
-    r := peg_parse('calc_expr, "100 - 20 * (3 + 4) / 7 + 2 * 2 * 2 - 1")
+    r := peg_parse(syntax_parser, 'calc_expr, "100 - 20 * (3 + 4) / 7 + 2 * 2 * 2 - 1")
     t = t + arg(r, 0)
     i = i + 1
 }

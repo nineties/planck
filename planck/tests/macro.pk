@@ -2,7 +2,7 @@
 
 import test (*)
 
-tree(s) := arg(peg_parse('toplevel, s), 0)
+tree(s) := arg(peg_parse(syntax_parser, 'toplevel, s), 0)
 
 check(tree("macro Foo{x} := x") == 'Macro{Lambda{Tuple{Foo{x}}, x}}, true)
 check(tree("module m { export macro Foo{x} := x }") != none, true)

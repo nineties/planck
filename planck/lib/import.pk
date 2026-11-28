@@ -4,7 +4,7 @@ used_libs := table_new()
 
 import_lib := (() -> {
     grammar_chain := f"{hash(unwrap(os_read_file("planck/init.pk")))}.{hash(unwrap(os_read_file("planck/peg.pk")))}.{hash(unwrap(os_read_file("planck/syntax.pk")))}"
-    grammar_state() := f"{grammar_chain}@{peg_version}"
+    grammar_state() := f"{grammar_chain}@{peg_version(syntax_parser)}"
 
     preprocess_hook := none
 
@@ -48,7 +48,7 @@ import_lib := (() -> {
         path := f"planck/lib/{name}.pk"
         text := unwrap(os_read_file(path))
         state := grammar_state()
-        declared := peg_version
+        declared := peg_version(syntax_parser)
         if (preprocess_hook != none) preprocess_hook(name, path, state, text)
         else {
             trees := read_preprocessed(f"planck/lib/{name}.pkm", state, text)
@@ -57,7 +57,7 @@ import_lib := (() -> {
                 for (e in trees) eval(e)
             }
         }
-        if (peg_version != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
+        if (peg_version(syntax_parser) != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
         none
     }
 
@@ -74,12 +74,12 @@ _import_module(file, m) := {
 " the definitions of the fields of the module that are not in hidden, which "
 "   import runs by eval "
 _import_defs(m @ Module, hidden) := {
-    ds := stack_mark()
+    ds := peg_stack_mark(syntax_parser)
     for (Tuple{k, v} in arg(_record_data(m), 0)) {
         skip := false
         for (h in hidden) if (h == k) skip = true
-        if (not skip) stack_push(`Def{!k, Quote{!v}})
+        if (not skip) peg_stack_push(syntax_parser, `Def{!k, Quote{!v}})
     }
-    stack_push(none)
-    stack_expr('Do, ds)
+    peg_stack_push(syntax_parser, none)
+    peg_stack_expr(syntax_parser, 'Do, ds)
 }
