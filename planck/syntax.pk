@@ -960,7 +960,8 @@ Def{
                                 Lambda{
                                     Tuple{TypeOf{d, Quote{UnQuote{t}}}},
                                     Apply{Quote{UnQuote{unwrap_fields}}, Tuple{d}}},
-                                _record_data}}}}},
+                                _record_data}}},
+                    Apply{env_global, Tuple{}}}},
             Tuple{t,
                 Apply{eval,
                     Tuple{
@@ -969,7 +970,8 @@ Def{
                                 UnQuote{fields},
                                 Apply{
                                     Quote{UnQuote{wrap_fields}},
-                                    Tuple{UnQuote{fields}}}}}}}}
+                                    Tuple{UnQuote{fields}}}}},
+                    Apply{env_global, Tuple{}}}}}
         }
     }}
 
@@ -2179,7 +2181,8 @@ peg_import(p, a, o) := {
             hidden := if (kind == 'hiding) ns else Tuple{}
             parser_stack_push(syntax_parser,
                 `Apply{eval,
-                    Tuple{Apply{_import_defs, Tuple{!load, Quote{!hidden}}}}})
+                    Tuple{Apply{_import_defs, Tuple{!load, Quote{!hidden}}},
+                        Apply{env_global, Tuple{}}}})
         }
     }
     parser_stack_push(syntax_parser, none)
@@ -2235,6 +2238,7 @@ fun expand_macro
 
 (() -> {
     macro_on := false
+    macro_env := env_new()
     macros := e -> e
     " the macros that the module being rewritten exports, the last one first "
     macro_exports := Nil{}
@@ -2267,7 +2271,7 @@ fun expand_macro
 
     " Macro{f}: the function of f is added to the macros, and none stays "
     expand_macro_define(m, exported) := {
-        f := eval_expanded(expand_macro(arg(m, 0), 0))
+        f := eval_expanded(expand_macro(arg(m, 0), 0), macro_env)
         macros = Fusion{f, macros}
         if (exported) macro_exports = Cons{f, macro_exports}
         none
@@ -2326,14 +2330,14 @@ fun expand_macro
 
     " eval rewrites the tree by the macros first. Nothing is rewritten until the "
     "   first macro is read. "
-    eval = e -> {
+    eval = (e, env) -> {
         if (macro_on) {
             saved := macro_steps
             macro_steps = 0
             x := expand_macro(e, 0)
             macro_steps = saved
-            eval_expanded(x)
-        } else eval_expanded(e)
+            eval_expanded(x, env)
+        } else eval_expanded(e, env)
     }
 })()
 
@@ -2364,7 +2368,7 @@ _record_with(t, make) := {
                 mexpr('Quote, Tuple{if (arg(fs, i) == name) v else arg(_record_data(d), i)}))
             i = i + 1
         }
-        eval(mexpr('Apply, Tuple{mexpr('Quote, Tuple{make}), mexpr('Tuple, args)}))
+        eval(mexpr('Apply, Tuple{mexpr('Quote, Tuple{make}), mexpr('Tuple, args)}), env_global())
     }
 }
 

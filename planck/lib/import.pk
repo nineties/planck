@@ -52,9 +52,9 @@ import_lib := (() -> {
         if (preprocess_hook != none) preprocess_hook(name, path, state, text)
         else {
             trees := read_preprocessed(f"planck/lib/{name}.pkm", state, text)
-            if (trees == none) load(path)
+            if (trees == none) load(path, env_global())
             else {
-                for (e in trees) eval(e)
+                for (e in trees) eval(e, env_global())
             }
         }
         if (parser_version(syntax_parser) != declared) grammar_chain = f"{grammar_chain}:{name}={hash(text)}"
@@ -68,7 +68,7 @@ import_lib := (() -> {
 "   the variable of the name m "
 _import_module(file, m) := {
     import_lib(file)
-    eval(m)
+    eval(m, env_global())
 }
 
 " the definitions of the fields of the module that are not in hidden, which "

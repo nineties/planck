@@ -14,11 +14,11 @@ spin = (0) -> none
      | (n) -> { unless(n < 0, none); spin(n - 1) }
 spin(6000)
 
-print(eval('(Twice{4})))
+print(eval('(Twice{4}), env_global()))
 i := 0
 t := 0
 while (i < 10000) {
-    t = t + eval('(Fourth{3}))
+    t = t + eval('(Fourth{3}), env_global())
     i = i + 1
 }
 print(t)

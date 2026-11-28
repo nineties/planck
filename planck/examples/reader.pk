@@ -12,8 +12,8 @@ print(Unless{1 < 2, "no", "yes"})
 print(Unless{1 > 2, "no", "yes"})
 
 old_eval := eval
-eval = e -> {
-    v := old_eval(e)
+eval = (e, env) -> {
+    v := old_eval(e, env)
     print(f"=> {v}")
     v
 }

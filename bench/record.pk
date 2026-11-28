@@ -28,7 +28,7 @@ sample(name, t, a, g) := {
 collect(path) := {
     acc_table = table.new()
     acc_names = []
-    load(path)
+    load(path, env_global())
     (acc_table, reverse(acc_names))
 }
 

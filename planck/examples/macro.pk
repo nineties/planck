@@ -22,7 +22,7 @@ print(g('Twice{7}))
 macro Twice{x} := `(!x + !x + !x)
 print(Twice{10})
 
-print(eval('(Twice{4})))
+print(eval('(Twice{4}), env_global()))
 
 module shapes {
     macro Inside{x} := `(!x + 100)
