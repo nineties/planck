@@ -62,6 +62,20 @@ Def{print,
                     Tuple{Apply{arg, Tuple{Apply{arg, Tuple{_kwrest, 0}}, 1}}}},
                 Apply{os_put, Tuple{"\n"}}}}}}
 
+Def{expr_is_head, Lambda{Tuple{e, h},
+    If{Apply{equal, Tuple{Apply{type, Tuple{e}}, Expr}},
+        Apply{equal, Tuple{Apply{head, Tuple{e}}, h}},
+        false}}}
+
+Def{expr_map_args, Lambda{Tuple{f, m}, Do{
+    Def{i, 0},
+    Def{n, Apply{arity, Tuple{m}}},
+    Def{r, Apply{array_new, Tuple{n}}},
+    While{Apply{int_lt, Tuple{i, n}}, Do{
+        Apply{array_set, Tuple{r, i, Apply{f, Tuple{Apply{arg, Tuple{m, i}}}}}},
+        Set{i, Apply{int_add, Tuple{i, 1}}}}},
+    Apply{mexpr, Tuple{Apply{head, Tuple{m}}, r}}}}}
+
 " === Tables === "
 " A table is a Table, whose field is an array | buckets | number of entries |. "
 "   Each bucket is a chain of entries "

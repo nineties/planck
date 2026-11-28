@@ -17,14 +17,14 @@ module strbuf {
 }
 
 module string {
-    export is_digit := peg_is_digit
+    export is_digit := parser_is_digit
     export is_upper(c) := c >= 65 and c <= 90
     export is_lower(c) := c >= 97 and c <= 122
     export is_alpha(c) := is_upper(c) or is_lower(c)
     export is_alnum(c) := is_alpha(c) or is_digit(c)
-    export is_space := peg_is_blank
-    export is_ident_start := peg_is_alpha
-    export is_ident_char := peg_is_alnum
+    export is_space := parser_is_blank
+    export is_ident_start := parser_is_alpha
+    export is_ident_char := parser_is_alnum
 
     export ascii_printable := " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
