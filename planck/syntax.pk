@@ -1682,7 +1682,15 @@ Apply{_define_rule, Tuple{Quote{block}, Quote{
 " The rest of the file is read by them. The M-expression reader remains as "
 "   parse_mexpr. "
 Def{parse_mexpr, parse}
-Set{parse, Lambda{Tuple{s}, Apply{peg_parse, Tuple{Quote{toplevel}, s}}}}
+Set{parse, Lambda{Tuple{s}, Do{
+    Def{r, Apply{peg_parse, Tuple{Quote{toplevel}, s}}},
+    If{Apply{peg_is_head, Tuple{Apply{arg, Tuple{r, 0}}, Quote{SyntaxError}}},
+        Do{
+            Def{base, Perform{Origin{}}},
+            Perform{SyntaxFault{
+                Apply{peg_error_text_from,
+                    Tuple{base, Apply{arg, Tuple{r, 0}}}}}}},
+        r}}}}
 
 " === The grammar of the grammar, declared with ::= === "
 " The rules above declare themselves again, in the form that they make. "

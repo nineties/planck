@@ -178,20 +178,39 @@ Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 " The top-level definitions of the file are made while path is the file being "
 "   loaded. "
 " load reads the file statement by statement: parse(s) of the rest s. "
-" A syntax error is printed as file:line:column: syntax error: message, once "
-"   planck/syntax.pk has replaced parse and planck/peg.pk has defined "
-"   peg_file_error_text. "
-Def{peg_file_error_text, none}
+" A syntax error is printed as file:line:column: syntax error: message. The "
+"   parse of planck/syntax.pk performs Origin{}, which load answers with the "
+"   position of the rest being read, and SyntaxFault{text}. "
 Def{load, Apply{Lambda{Tuple{}, Do{
-    Def{_parse0, parse},
     Lambda{Tuple{path}, Do{
         Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
         Def{s0, s},
+        Def{origin, Lambda{Tuple{}, Do{
+            Def{n,
+                Apply{int_sub,
+                    Tuple{Apply{str_len, Tuple{s0}}, Apply{str_len, Tuple{s}}}}},
+            Def{l, 1},
+            Def{c, 1},
+            Def{i, 0},
+            While{Apply{int_lt, Tuple{i, n}}, Do{
+                If{Apply{equal, Tuple{Apply{str_ord, Tuple{s0, i}}, 10}},
+                    Do{Set{l, Apply{int_add, Tuple{l, 1}}}, Set{c, 1}},
+                    Set{c, Apply{int_add, Tuple{c, 1}}}},
+                Set{i, Apply{int_add, Tuple{i, 1}}}}},
+            Apply{mexpr, Tuple{Quote{Loc}, Tuple{path, l, c}}}}}},
         Def{r, none},
         Def{e, none},
         Def{go, true},
         While{go, Do{
-            Set{r, Apply{parse, Tuple{s}}},
+            Set{r,
+                Handle{Apply{parse, Tuple{s}},
+                    Lambda{Tuple{x, k},
+                        If{Apply{equal, Tuple{Apply{head, Tuple{x}},
+                                Quote{Origin}}},
+                            Apply{k, Tuple{Apply{origin, Tuple{}}}},
+                            Do{
+                                Apply{print, Tuple{Apply{arg, Tuple{x, 0}}}},
+                                Apply{os_exit, Tuple{1}}}}}}},
             Set{e, Apply{arg, Tuple{r, 0}}},
             If{Apply{equal, Tuple{e, Eof{}}}, Set{go, false},
             If{
@@ -200,16 +219,9 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                         Tuple{Apply{head, Tuple{e}},
                             Quote{SyntaxError}}}, false},
                 Do{
-                    Def{text,
-                        If{Apply{not_equal, Tuple{parse, _parse0}},
-                            Apply{peg_file_error_text,
-                                Tuple{path, s0, s, e}}, none}},
-                    If{Apply{equal, Tuple{text, none}},
-                        Do{
-                            Apply{os_put, Tuple{path}},
-                            Apply{os_put, Tuple{": syntax error: "}},
-                            Apply{print, Tuple{e}}},
-                        Apply{print, Tuple{text}}},
+                    Apply{os_put, Tuple{path}},
+                    Apply{os_put, Tuple{": syntax error: "}},
+                    Apply{print, Tuple{e}},
                     Apply{os_exit, Tuple{1}}},
                 Do{
                     Apply{eval, Tuple{e}},
@@ -224,8 +236,8 @@ Apply{load, Tuple{"planck/syntax.pk"}}
 
 " planck/lib/import.pk defines import_lib(name), which loads "
 "   planck/lib/<name>.pk once. It is written in the syntax above. "
-Apply{load, Tuple{"planck/lib/import.pk"}}
+load("planck/lib/import.pk")
 
 " planck/lib/pretty.pk defines show, repr and the print that takes pretty and "
 "   end. It is loaded here, so that every program has them. "
-Apply{import_lib, Tuple{"pretty"}}
+import_lib("pretty")

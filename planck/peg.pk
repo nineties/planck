@@ -649,40 +649,30 @@ Def{peg_parse, Lambda{Tuple{r, s}, Do{
         Apply{str_sub,
             Tuple{s, Apply{arg, Tuple{x, 1}}, Apply{str_len, Tuple{s}}}}}}}}
 
-" peg_file_error_text(path, s0, s, e) is the text of the syntax error e that "
-"   parse(s) returned, or none when e is not one. "
-" s is the rest of the text s0 of the file path, where the parse started: the "
-"   position of e is counted from the position of s in s0. "
-Set{peg_file_error_text, Lambda{Tuple{path, s0, s, e}, Do{
-    If{Apply{peg_is_head, Tuple{e, Quote{SyntaxError}}}, Do{
-        Def{loc0,
-            Apply{peg_count_loc,
-                Tuple{s0, Apply{int_sub,
-                    Tuple{Apply{str_len, Tuple{s0}},
-                        Apply{str_len, Tuple{s}}}},
-                    Apply{mexpr, Tuple{Quote{Loc}, Tuple{path, 1, 1}}}}}},
-        Def{loc, Apply{peg_error_loc, Tuple{e}}},
-        Def{l, Apply{arg, Tuple{loc, 1}}},
-        Def{c, Apply{arg, Tuple{loc, 2}}},
-        Def{n, Apply{arity, Tuple{e}}},
-        Def{a, Apply{array_new, Tuple{n}}},
-        Def{i, 0},
-        While{Apply{int_lt, Tuple{i, Apply{int_sub, Tuple{n, 1}}}}, Do{
-            Apply{array_set, Tuple{a, i, Apply{arg, Tuple{e, i}}}},
-            Set{i, Apply{int_add, Tuple{i, 1}}}}},
-        Apply{array_set,
-            Tuple{a, Apply{int_sub, Tuple{n, 1}},
-                Apply{mexpr,
-                    Tuple{Quote{Loc},
-                        Tuple{path,
+" peg_error_text_from(base, e) is the text of the syntax error e that "
+"   peg_parse returned for text that starts at the position base: "
+"   Loc{file, line, column}. "
+Def{peg_error_text_from, Lambda{Tuple{base, e}, Do{
+    Def{loc, Apply{peg_error_loc, Tuple{e}}},
+    Def{l, Apply{arg, Tuple{loc, 1}}},
+    Def{c, Apply{arg, Tuple{loc, 2}}},
+    Def{n, Apply{arity, Tuple{e}}},
+    Def{a, Apply{array_new, Tuple{n}}},
+    Def{i, 0},
+    While{Apply{int_lt, Tuple{i, Apply{int_sub, Tuple{n, 1}}}}, Do{
+        Apply{array_set, Tuple{a, i, Apply{arg, Tuple{e, i}}}},
+        Set{i, Apply{int_add, Tuple{i, 1}}}}},
+    Apply{array_set,
+        Tuple{a, Apply{int_sub, Tuple{n, 1}},
+            Apply{mexpr,
+                Tuple{Quote{Loc},
+                    Tuple{Apply{arg, Tuple{base, 0}},
+                        Apply{int_sub,
+                            Tuple{Apply{int_add,
+                                Tuple{Apply{arg, Tuple{base, 1}}, l}}, 1}},
+                        If{Apply{equal, Tuple{l, 1}},
                             Apply{int_sub,
                                 Tuple{Apply{int_add,
-                                    Tuple{Apply{arg, Tuple{loc0, 1}}, l}}, 1}},
-                            If{Apply{equal, Tuple{l, 1}},
-                                Apply{int_sub,
-                                    Tuple{Apply{int_add,
-                                        Tuple{Apply{arg, Tuple{loc0, 2}}, c}},
-                                        1}},
-                                c}}}}}},
-        Apply{peg_error_text, Tuple{Apply{mexpr, Tuple{Quote{SyntaxError}, a}}}}},
-        none}}}}
+                                    Tuple{Apply{arg, Tuple{base, 2}}, c}}, 1}},
+                            c}}}}}},
+    Apply{peg_error_text, Tuple{Apply{mexpr, Tuple{Quote{SyntaxError}, a}}}}}}}
