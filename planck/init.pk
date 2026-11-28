@@ -110,7 +110,7 @@ Apply{Lambda{Tuple{}, Do{
         e}}},
     Set{table_new, Lambda{Tuple{}, Do{
         Def{t, Apply{array_new, Tuple{2}}},
-        Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{16}}}},
+        Apply{array_set, Tuple{t, 0, Apply{array_new, Tuple{64}}}},
         Apply{array_set, Tuple{t, 1, 0}},
         Apply{_wrap_table, Tuple{Tuple{t}}}}}},
     Set{table_get, Lambda{Tuple{TypeOf{tb, Table}, k, default}, Do{
@@ -174,6 +174,38 @@ Apply{Lambda{Tuple{}, Do{
                 Def{r, Tuple{Apply{array_get, Tuple{e, 0}}, Apply{array_get, Tuple{e, 1}}}},
                 Set{e, Apply{array_get, Tuple{e, 2}}},
                 r}}}}}}}}}, Tuple{}}
+
+" === Vectors === "
+" A vector is an array that grows. vector_new() makes an empty one, "
+"   vector_push(v, x) adds x at the end, vector_len(v) is the length, "
+"   vector_get(v, i) is the element i and vector_truncate(v, n) sets the length n. "
+Def{vector_new, Lambda{Tuple{}, Do{
+    Def{v, Apply{array_new, Tuple{2}}},
+    Apply{array_set, Tuple{v, 0, Apply{array_new, Tuple{64}}}},
+    Apply{array_set, Tuple{v, 1, 0}},
+    v}}}
+
+Def{vector_len, Lambda{Tuple{v}, Apply{array_get, Tuple{v, 1}}}}
+
+Def{vector_get, Lambda{Tuple{v, i},
+    Apply{array_get, Tuple{Apply{array_get, Tuple{v, 0}}, i}}}}
+
+Def{vector_truncate, Lambda{Tuple{v, n}, Apply{array_set, Tuple{v, 1, n}}}}
+
+Def{vector_push, Lambda{Tuple{v, x}, Do{
+    Def{buf, Apply{array_get, Tuple{v, 0}}},
+    Def{n, Apply{array_get, Tuple{v, 1}}},
+    If{Apply{int_lt, Tuple{n, Apply{array_len, Tuple{buf}}}}, none, Do{
+        Def{bigger, Apply{array_new, Tuple{Apply{int_mul, Tuple{n, 2}}}}},
+        Def{i, 0},
+        While{Apply{int_lt, Tuple{i, n}}, Do{
+            Apply{array_set, Tuple{bigger, i, Apply{array_get, Tuple{buf, i}}}},
+            Set{i, Apply{int_add, Tuple{i, 1}}}}},
+        Apply{array_set, Tuple{v, 0, bigger}},
+        Set{buf, bigger}}},
+    Apply{array_set, Tuple{buf, n, x}},
+    Apply{array_set, Tuple{v, 1, Apply{int_add, Tuple{n, 1}}}},
+    x}}}
 
 " === Results of files === "
 " unwrap(r) is x for Ok{x}, and performs Error{none, message} for "
@@ -241,38 +273,6 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                     Apply{eval, Tuple{e, env}},
                     Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
         none}}}}, Tuple{}}}
-
-" === Vectors === "
-" A vector is an array that grows. vector_new() makes an empty one, "
-"   vector_push(v, x) adds x at the end, vector_len(v) is the length, "
-"   vector_get(v, i) is the element i and vector_truncate(v, n) sets the length n. "
-Def{vector_new, Lambda{Tuple{}, Do{
-    Def{v, Apply{array_new, Tuple{2}}},
-    Apply{array_set, Tuple{v, 0, Apply{array_new, Tuple{64}}}},
-    Apply{array_set, Tuple{v, 1, 0}},
-    v}}}
-
-Def{vector_len, Lambda{Tuple{v}, Apply{array_get, Tuple{v, 1}}}}
-
-Def{vector_get, Lambda{Tuple{v, i},
-    Apply{array_get, Tuple{Apply{array_get, Tuple{v, 0}}, i}}}}
-
-Def{vector_truncate, Lambda{Tuple{v, n}, Apply{array_set, Tuple{v, 1, n}}}}
-
-Def{vector_push, Lambda{Tuple{v, x}, Do{
-    Def{buf, Apply{array_get, Tuple{v, 0}}},
-    Def{n, Apply{array_get, Tuple{v, 1}}},
-    If{Apply{int_lt, Tuple{n, Apply{array_len, Tuple{buf}}}}, none, Do{
-        Def{bigger, Apply{array_new, Tuple{Apply{int_mul, Tuple{n, 2}}}}},
-        Def{i, 0},
-        While{Apply{int_lt, Tuple{i, n}}, Do{
-            Apply{array_set, Tuple{bigger, i, Apply{array_get, Tuple{buf, i}}}},
-            Set{i, Apply{int_add, Tuple{i, 1}}}}},
-        Apply{array_set, Tuple{v, 0, bigger}},
-        Set{buf, bigger}}},
-    Apply{array_set, Tuple{buf, n, x}},
-    Apply{array_set, Tuple{v, 1, Apply{int_add, Tuple{n, 1}}}},
-    x}}}
 
 " === Syntax === "
 " planck/syntax.pk replaces parse. The files after it are read by the new "
