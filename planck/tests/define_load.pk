@@ -1,3 +1,4 @@
+dl_f := none
 dl_f(0) := "loaded zero"
 dl_f(n) := "loaded"
 dl_g(0) := "loaded g zero"

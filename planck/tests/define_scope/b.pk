@@ -1,3 +1,4 @@
 # Copyright (C) 2026 nineties
 
+ds_f := none
 ds_f(0) := "b zero"
