@@ -179,9 +179,8 @@ Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 "   loaded. "
 " load reads the file statement by statement: parse(s) of the rest s. "
 " A syntax error is printed as file:line:column: syntax error: message. The "
-"   parse_in_load of planck/syntax.pk performs Origin{}, which load answers with the "
+"   parse of planck/syntax.pk performs Origin{}, which load answers with the "
 "   position of the rest being read, and SyntaxFault{text}. "
-Def{parse_in_load, parse}
 Def{load, Apply{Lambda{Tuple{}, Do{
     Lambda{Tuple{path}, Do{
         Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
@@ -204,7 +203,7 @@ Def{load, Apply{Lambda{Tuple{}, Do{
         Def{go, true},
         While{go, Do{
             Set{r,
-                Handle{Apply{parse_in_load, Tuple{s}},
+                Handle{Apply{parse, Tuple{s}},
                     Lambda{Tuple{x, k},
                         If{Apply{equal, Tuple{Apply{head, Tuple{x}},
                                 Quote{Origin}}},

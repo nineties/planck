@@ -1682,9 +1682,8 @@ Apply{_define_rule, Tuple{Quote{block}, Quote{
 " The rest of the file is read by them. The M-expression reader remains as "
 "   parse_mexpr. "
 Def{parse_mexpr, parse}
-Set{parse, Lambda{Tuple{s}, Apply{peg_parse, Tuple{Quote{toplevel}, s}}}}
-Set{parse_in_load, Lambda{Tuple{s}, Do{
-    Def{r, Apply{parse, Tuple{s}}},
+Set{parse, Lambda{Tuple{s}, Do{
+    Def{r, Apply{peg_parse, Tuple{Quote{toplevel}, s}}},
     If{Apply{peg_is_head, Tuple{Apply{arg, Tuple{r, 0}}, Quote{SyntaxError}}},
         Do{
             Def{base, Perform{Origin{}}},
