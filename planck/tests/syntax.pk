@@ -1602,7 +1602,7 @@ check(peg_error_text(tree("1 +")), "1:4: syntax error: unexpected end of input")
 check(peg_error_text('SyntaxError{"x"}), "syntax error: x")
 file_error(path, s0, n) := {
     s := str_sub(s0, n, str_len(s0))
-    peg_file_error_text(path, s0, s, tree(s))
+    peg_error_text_from(peg_count_loc(s0, n, `Loc{!path, 1, 1}), tree(s))
 }
 check(file_error("g.pk", "a := 1\nb := 2 )\nc := 3\n", 7),
     "g.pk:2:8: syntax error: unexpected input: \")\"")

@@ -1683,6 +1683,15 @@ Apply{_define_rule, Tuple{Quote{block}, Quote{
 "   parse_mexpr. "
 Def{parse_mexpr, parse}
 Set{parse, Lambda{Tuple{s}, Apply{peg_parse, Tuple{Quote{toplevel}, s}}}}
+Set{parse_in_load, Lambda{Tuple{s}, Do{
+    Def{r, Apply{parse, Tuple{s}}},
+    If{Apply{peg_is_head, Tuple{Apply{arg, Tuple{r, 0}}, Quote{SyntaxError}}},
+        Do{
+            Def{base, Perform{Origin{}}},
+            Perform{SyntaxFault{
+                Apply{peg_error_text_from,
+                    Tuple{base, Apply{arg, Tuple{r, 0}}}}}}},
+        r}}}}
 
 " === The grammar of the grammar, declared with ::= === "
 " The rules above declare themselves again, in the form that they make. "
