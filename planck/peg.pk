@@ -232,9 +232,8 @@ Def{peg_error_text_from, Lambda{Tuple{base, e}, Do{
 
 " === The parser === "
 " A parser is made by peg_new_parser(). Its state is hidden in the closure "
-"   below. It is read and changed only by the operations that are defined from "
-"   the closure after it. "
-Def{peg_ops, Apply{Lambda{Tuple{}, Do{
+"   below, which defines the operations that read and change it. "
+Apply{Lambda{Tuple{}, Do{
 " === The state of a parser === ",
 " A parser is an array of its state: the rules and their ids, the number of ",
 "   the rules, the sources of the rules, the version (the number of the ",
@@ -714,24 +713,25 @@ Def{peg_parse_from, Lambda{Tuple{ps, r, s, pos}, Do{
 Def{peg_text, Lambda{Tuple{ps, p, q}, Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, p, q}}}},
 Def{peg_has_rule, Lambda{Tuple{ps, name},
     Apply{not_equal, Tuple{Apply{table_get, Tuple{Apply{peg_ids, Tuple{ps}}, name, none}}, none}}}},
-Tuple{peg_new_parser, _define_rule, peg_call_rule, peg_parse_from, peg_char_at, peg_fail, peg_skip_ws, peg_literal, peg_text, peg_has_rule, peg_pv, peg_set_pv, peg_version, peg_stack_mark, peg_stack_push, peg_stack_pop, peg_stack_expr}}}, Tuple{}}}
-Def{peg_new_parser, Apply{arg, Tuple{peg_ops, 0}}}
-Def{_define_rule, Apply{arg, Tuple{peg_ops, 1}}}
-Def{peg_call_rule, Apply{arg, Tuple{peg_ops, 2}}}
-Def{peg_parse_from, Apply{arg, Tuple{peg_ops, 3}}}
-Def{peg_char_at, Apply{arg, Tuple{peg_ops, 4}}}
-Def{peg_fail, Apply{arg, Tuple{peg_ops, 5}}}
-Def{peg_skip_ws, Apply{arg, Tuple{peg_ops, 6}}}
-Def{peg_literal, Apply{arg, Tuple{peg_ops, 7}}}
-Def{peg_text, Apply{arg, Tuple{peg_ops, 8}}}
-Def{peg_has_rule, Apply{arg, Tuple{peg_ops, 9}}}
-Def{peg_pv, Apply{arg, Tuple{peg_ops, 10}}}
-Def{peg_set_pv, Apply{arg, Tuple{peg_ops, 11}}}
-Def{peg_version, Apply{arg, Tuple{peg_ops, 12}}}
-Def{peg_stack_mark, Apply{arg, Tuple{peg_ops, 13}}}
-Def{peg_stack_push, Apply{arg, Tuple{peg_ops, 14}}}
-Def{peg_stack_pop, Apply{arg, Tuple{peg_ops, 15}}}
-Def{peg_stack_expr, Apply{arg, Tuple{peg_ops, 16}}}
+Def{export, Lambda{Tuple{name, f},
+    Apply{eval, Tuple{QuasiQuote{Def{UnQuote{name}, Quote{UnQuote{f}}}}}}}},
+Apply{export, Tuple{Quote{peg_new_parser}, peg_new_parser}},
+Apply{export, Tuple{Quote{_define_rule}, _define_rule}},
+Apply{export, Tuple{Quote{peg_call_rule}, peg_call_rule}},
+Apply{export, Tuple{Quote{peg_parse_from}, peg_parse_from}},
+Apply{export, Tuple{Quote{peg_char_at}, peg_char_at}},
+Apply{export, Tuple{Quote{peg_fail}, peg_fail}},
+Apply{export, Tuple{Quote{peg_skip_ws}, peg_skip_ws}},
+Apply{export, Tuple{Quote{peg_literal}, peg_literal}},
+Apply{export, Tuple{Quote{peg_text}, peg_text}},
+Apply{export, Tuple{Quote{peg_has_rule}, peg_has_rule}},
+Apply{export, Tuple{Quote{peg_pv}, peg_pv}},
+Apply{export, Tuple{Quote{peg_set_pv}, peg_set_pv}},
+Apply{export, Tuple{Quote{peg_version}, peg_version}},
+Apply{export, Tuple{Quote{peg_stack_mark}, peg_stack_mark}},
+Apply{export, Tuple{Quote{peg_stack_push}, peg_stack_push}},
+Apply{export, Tuple{Quote{peg_stack_pop}, peg_stack_pop}},
+Apply{export, Tuple{Quote{peg_stack_expr}, peg_stack_expr}}}}, Tuple{}}
 
 " peg_parse(ps, rule, s) parses a prefix of s by the rule. It returns "
 "   Tuple{value, rest} where rest is the text after the value, "
