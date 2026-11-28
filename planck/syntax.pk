@@ -352,22 +352,10 @@ Apply{_define_rule, Tuple{Quote{integer}, peg_token_int}}
 Apply{_define_rule, Tuple{Quote{string}, peg_token_string}}
 Apply{_define_rule, Tuple{Quote{keyword}, peg_token_keyword}}
 Apply{_define_rule, Tuple{Quote{charclass}, peg_token_class}}
-Apply{_define_rule, Tuple{Quote{here}, peg_token_here}}
 
 " === Actions === "
 
 Def{peg_first, Lambda{Tuple{t}, Apply{arg, Tuple{t, 0}}}}
-
-" the tree t without the At of the calls in it, except in the parts !e: an "
-"   f(a, ...) in a quote is a tree to be matched or built, not a call "
-Defun{peg_unat, Lambda{Tuple{t},
-    If{Apply{not_equal, Tuple{Apply{type, Tuple{t}}, Expr}}, t,
-    If{
-        If{Apply{equal, Tuple{Apply{head, Tuple{t}}, Quote{At}}},
-            Apply{equal, Tuple{Apply{arity, Tuple{t}}, 2}}, false},
-        Apply{peg_unat, Tuple{Apply{arg, Tuple{t, 1}}}},
-    If{Apply{equal, Tuple{Apply{head, Tuple{t}}, Quote{UnQuote}}}, t,
-        Apply{peg_map_args, Tuple{peg_unat, t}}}}}}}
 
 " Tuple{a, b, c} -> Cons{a, Cons{b, Cons{c, Nil{}}}} "
 Def{peg_to_list, Lambda{Tuple{t}, Do{
@@ -509,9 +497,9 @@ Def{peg_parse_plain, peg_parse_from}
 Set{
     peg_parse_from,
     Lambda{
-        Tuple{r, s, pos, loc},
+        Tuple{r, s, pos},
         Do{Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0},
-            Apply{peg_parse_plain, Tuple{r, s, pos, loc}}}
+            Apply{peg_parse_plain, Tuple{r, s, pos}}}
     }}
 
 Def{
@@ -1756,8 +1744,8 @@ index ::= e:expr { _peg_rewrite(e) }
 unary ::= postfix
         | "-" a:unary { `int_sub(0, !a) }
         | "+" a:unary { a }
-        | "'" a:unary { mexpr('Quote, Tuple{peg_unat(a)}) }
-        | "`" a:unary { mexpr('QuasiQuote, Tuple{peg_unat(a)}) }
+        | "'" a:unary { mexpr('Quote, Tuple{a}) }
+        | "`" a:unary { mexpr('QuasiQuote, Tuple{a}) }
         | "!" a:unary { mexpr('UnQuote, Tuple{a}) }
 
 " the type after @: a name, or a field of a module (a.B) "
@@ -1898,7 +1886,7 @@ call_args ::= a:call_list "," k:kw_list { peg_tuple_cat(a, k) }
             | kw_list
             | delimited(call_pos, ",")
 
-postfix ::= l:here f:postfix nospace("(") &(call_args ")") args:delimited(call_arg, ",") ")" { peg_at(l, `Apply{!f, !args}) }
+postfix ::= f:postfix nospace("(") &(call_args ")") args:delimited(call_arg, ",") ")" { `Apply{!f, !args} }
           | x:postfix "@" t:type_ref { `TypeOf{!x, !t} }
           | t:postfix nospace(".") f:ident { `Apply{_record_get, Tuple{!t, Quote{!f}}} }
           | a:postfix nospace("[") i:index "]" !assign_op { `Apply{_index_get, Tuple{!a, !i}} }
