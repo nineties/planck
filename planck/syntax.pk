@@ -14,6 +14,10 @@
 
 Def{_not, Lambda{Tuple{x}, If{x, false, true}}}
 
+Def{peg_inc, Lambda{Tuple{n}, Apply{int_add, Tuple{n, 1}}}}
+
+Def{peg_grammar, none}
+
 Def{syntax_parser, Apply{parser_new, Tuple{}}}
 
 " === Tokens === "
@@ -50,8 +54,8 @@ Def{peg_scan_ident, Lambda{Tuple{ps, p, suffix}, Do{
     Set{p, Apply{parser_skip_ws, Tuple{ps, p}}},
     Def{q, Apply{peg_inc, Tuple{p}}},
     Def{name, ""},
-    If{Apply{peg_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, p}}}}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
+    If{Apply{parser_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, p}}}}, Do{
+        While{Apply{parser_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
         If{suffix, Do{
             Def{c, Apply{parser_char_at, Tuple{ps, q}}},
@@ -80,7 +84,7 @@ Def{peg_token_rule_name,
     Lambda{Tuple{ps, p}, Apply{peg_scan_ident, Tuple{ps, p, false}}}}
 
 Def{peg_digit_value, Lambda{Tuple{c},
-    If{Apply{peg_is_digit, Tuple{c}}, Apply{int_sub, Tuple{c, 48}},
+    If{Apply{parser_is_digit, Tuple{c}}, Apply{int_sub, Tuple{c, 48}},
     If{If{Apply{int_le, Tuple{97, c}}, Apply{int_le, Tuple{c, 102}}, false},
         Apply{int_sub, Tuple{c, 87}},
     If{If{Apply{int_le, Tuple{65, c}}, Apply{int_le, Tuple{c, 70}}, false},
@@ -102,12 +106,12 @@ Def{peg_token_int, Lambda{Tuple{ps, p}, Do{
     Def{big, false},
     If{
         If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 45}},
-            Apply{peg_is_digit,
+            Apply{parser_is_digit,
                 Tuple{
                     Apply{parser_char_at,
                         Tuple{ps, Apply{peg_inc, Tuple{q}}}}}}, false},
         Do{Set{sign, -1}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
-    If{Apply{peg_is_digit, Tuple{Apply{parser_char_at, Tuple{ps, q}}}}, Do{
+    If{Apply{parser_is_digit, Tuple{Apply{parser_char_at, Tuple{ps, q}}}}, Do{
         If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 48}}, Do{
             Set{d, Apply{parser_char_at, Tuple{ps, Apply{peg_inc, Tuple{q}}}}},
             If{
@@ -289,9 +293,9 @@ Def{peg_token_keyword, Lambda{Tuple{ps, p}, Do{
     Def{q, Apply{peg_inc, Tuple{p}}},
     If{
         If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, p}}, 39}},
-            Apply{peg_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
+            Apply{parser_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             false}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
+        While{Apply{parser_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
         Apply{parser_set_value, Tuple{ps, Key{Apply{parser_text, Tuple{ps, Apply{peg_inc, Tuple{p}}, q}}}}},
         q},
@@ -313,7 +317,7 @@ Def{peg_token_class, Lambda{Tuple{ps, p}, Do{
         Set{q, Apply{peg_inc, Tuple{p}}},
         If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 94}},
             Do{Set{neg, true}, Set{q, Apply{peg_inc, Tuple{q}}}}, none},
-        While{Apply{peg_is_blank, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
+        While{Apply{parser_is_blank, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
         Set{start, q},
         Set{endp, q},
@@ -329,7 +333,7 @@ Def{peg_token_class, Lambda{Tuple{ps, p}, Do{
                             0}}, Set{go, false}, Do{
                     Set{q, Apply{int_add, Tuple{q, 2}}},
                     Set{endp, q}}},
-            If{Apply{peg_is_blank, Tuple{c}},
+            If{Apply{parser_is_blank, Tuple{c}},
                 Set{q, Apply{peg_inc, Tuple{q}}}, Do{
                 Set{q, Apply{peg_inc, Tuple{q}}},
                 Set{endp, q}}}}}}}},
@@ -337,7 +341,7 @@ Def{peg_token_class, Lambda{Tuple{ps, p}, Do{
         If{
             If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 93}},
                 Apply{int_gt, Tuple{endp, start}}, false},
-            If{Apply{equal, Tuple{Apply{peg_charset, Tuple{spec}}, none}},
+            If{Apply{equal, Tuple{Apply{parser_charset, Tuple{spec}}, none}},
                 Apply{parser_fail, Tuple{ps, p}}, Do{
                 Apply{parser_set_value, Tuple{ps, Apply{mexpr,
                         Tuple{If{neg, Quote{NoneOf}, Quote{OneOf}},
@@ -401,11 +405,11 @@ Def{
     Lambda{
         Tuple{h, tag},
         If{
-            Apply{peg_is_head, Tuple{h, Quote{Lambda}}},
+            Apply{expr_is_head, Tuple{h, Quote{Lambda}}},
             If{
                 Apply{int_gt,
                     Tuple{Apply{arity, Tuple{Apply{arg, Tuple{h, 0}}}}, 0}},
-                Apply{peg_is_head,
+                Apply{expr_is_head,
                     Tuple{Apply{arg, Tuple{Apply{arg, Tuple{h, 0}}, 0}}, tag}},
                 false
             },
@@ -432,7 +436,7 @@ Defun{peg_scan,
                                 If{
                                     Apply{equal,
                                         Tuple{Apply{arity, Tuple{e}}, 1}},
-                                    Apply{peg_is_head,
+                                    Apply{expr_is_head,
                                         Tuple{Apply{arg, Tuple{e, 0}}, tag}},
                                     false
                                 },
@@ -490,16 +494,6 @@ Def{peg_nret, 0}
 Def{peg_nbrk, 0}
 
 Def{peg_ncnt, 0}
-
-Def{peg_parse_plain, parser_parse_from}
-
-Set{
-    parser_parse_from,
-    Lambda{
-        Tuple{ps, r, s, pos},
-        Do{Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0},
-            Apply{peg_parse_plain, Tuple{ps, r, s, pos}}}
-    }}
 
 Def{
     peg_wrap,
@@ -716,7 +710,7 @@ Def{
         Tuple{b},
         If{
             If{
-                Apply{peg_is_head, Tuple{b, Quote{Handle}}},
+                Apply{expr_is_head, Tuple{b, Quote{Handle}}},
                 If{
                     Apply{equal, Tuple{Apply{arity, Tuple{b}}, 2}},
                     If{
@@ -1193,7 +1187,7 @@ Def{
     Lambda{
         Tuple{es},
         Apply{mexpr,
-            Tuple{Quote{Do}, Apply{peg_map_args, Tuple{peg_first, es}}}}}}
+            Tuple{Quote{Do}, Apply{expr_map_args, Tuple{peg_first, es}}}}}}
 
 " === a[i], a[i] = v and t[p -> e | ...] === "
 
@@ -1487,8 +1481,8 @@ Def{peg_token_embed, Lambda{Tuple{ps, p}, Do{
     Def{q, p},
     Def{r, none},
     Def{v, none},
-    If{Apply{peg_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, p}}}}, Do{
-        While{Apply{peg_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
+    If{Apply{parser_is_alpha, Tuple{Apply{parser_char_at, Tuple{ps, p}}}}, Do{
+        While{Apply{parser_is_alnum, Tuple{Apply{parser_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
         If{
             If{Apply{equal, Tuple{Apply{parser_char_at, Tuple{ps, q}}, 123}},
@@ -1528,7 +1522,7 @@ Def{peg_token_arrow_next, Lambda{Tuple{ps, p}, Do{
             If{Apply{equal, Tuple{d, 102}},
                 Apply{_not,
                     Tuple{
-                        Apply{peg_is_alnum,
+                        Apply{parser_is_alnum,
                             Tuple{
                                 Apply{parser_char_at,
                                     Tuple{ps, Apply{int_add, Tuple{q, 2}}}}}}}},
@@ -1569,9 +1563,9 @@ Def{peg_if, Lambda{Tuple{c, a, b},
 " the items and the action of an alternative: Act{Seq{items...}, "
 "   Lambda{Tuple{Tuple{labels...}}, action}} "
 Def{peg_alt, Lambda{Tuple{items, act}, Do{
-    Def{labels, Apply{peg_map_args, Tuple{peg_first, items}}},
+    Def{labels, Apply{expr_map_args, Tuple{peg_first, items}}},
     Def{elems,
-        Apply{peg_map_args,
+        Apply{expr_map_args,
             Tuple{Lambda{Tuple{t}, Apply{arg, Tuple{t, 1}}}, items}}},
     Def{seq, Apply{mexpr, Tuple{Quote{Seq}, elems}}},
     If{Apply{equal, Tuple{act, Tuple{}}},
@@ -1683,12 +1677,13 @@ Apply{parser_define_rule, Tuple{syntax_parser, Quote{block}, Quote{
 "   parse_mexpr. "
 Def{parse_mexpr, parse}
 Set{parse, Lambda{Tuple{s}, Do{
+    Set{peg_nret, 0}, Set{peg_nbrk, 0}, Set{peg_ncnt, 0},
     Def{r, Apply{parser_parse, Tuple{syntax_parser, Quote{toplevel}, s}}},
-    If{Apply{peg_is_head, Tuple{Apply{arg, Tuple{r, 0}}, Quote{SyntaxError}}},
+    If{Apply{expr_is_head, Tuple{Apply{arg, Tuple{r, 0}}, Quote{SyntaxError}}},
         Do{
             Def{base, Perform{Origin{}}},
             Perform{SyntaxFault{
-                Apply{peg_error_text_from,
+                Apply{parser_error_text_from,
                     Tuple{base, Apply{arg, Tuple{r, 0}}}}}}},
         r}}}}
 
@@ -2078,6 +2073,7 @@ primary ::= if_expr
           | 'while "(" c:expr ")" b:expr { peg_while(c, b) }
           | 'handle b:expr 'with h:union { `Handle{!b, !h} }
           | 'perform v:unary { `Perform{!v} }
+          | 'grammar "(" p:expr ")" "{" ds:(syntax_decl ";"?)* "}" { peg_grammar(p, ds) }
           | block
           | embed
           | h:ident nospace("{") args:delimited(expr, ",") "}" { mexpr(h, args) }
@@ -2943,4 +2939,18 @@ reverse = (xs) -> {
 panic = (msg) -> {
     print(f"{msg}")
     os_exit(1)
+}
+
+peg_grammar = (p, ds) -> {
+    g := sym_intern("%grammar")
+    n := arity(ds)
+    es := array_new(n + 1)
+    i := 0
+    while (i < n) {
+        a := arg(arg(arg(ds, i), 0), 1)
+        es[i] = mexpr('Apply, Tuple{'parser_define_rule, Tuple{g, arg(a, 1), arg(a, 2)}})
+        i += 1
+    }
+    es[n] = g
+    mexpr('Apply, Tuple{mexpr('Lambda, Tuple{Tuple{g}, mexpr('Do, es)}), Tuple{p}})
 }
