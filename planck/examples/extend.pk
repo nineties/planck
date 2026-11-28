@@ -19,7 +19,7 @@ print(calc_expr{| 1 + 2 * (10 - 4) / 3 |})
 print(calc_expr{| 100 - 20 - 3 |})
 
 calc(s) := {
-    r := peg_parse(syntax_parser, 'calc_expr, s)
+    r := parser_parse(syntax_parser, 'calc_expr, s)
     if (arg(r, 1) == "") arg(r, 0) else Error{"unexpected", arg(r, 1)}
 }
 print(calc("2 * (3 + 4"))
