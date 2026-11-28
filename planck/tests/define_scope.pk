@@ -1,0 +1,9 @@
+# Copyright (C) 2026 nineties
+
+import test (*)
+
+load("planck/tests/define_scope/a.pk")
+check(Tuple{ds_f(0), ds_f(1)}, Tuple{"a zero", "a helper"})
+load("planck/tests/define_scope/b.pk")
+check(ds_f(0), "b zero")
+finish()
