@@ -526,65 +526,6 @@ Def{peg_line_at, Lambda{Tuple{p}, Do{
         Set{q, Apply{peg_inc, Tuple{q}}}},
     Apply{str_sub, Tuple{peg_src, p, q}}}}}
 
-" the position of the start of peg_src: Loc{file, line, column}. peg_lp is a "
-"   position of the text that peg_ll and peg_lc are the line and the column "
-"   of, "
-" so that the positions after it are counted from there. "
-Def{peg_loc0, none}
-Def{peg_lp, 0}
-Def{peg_ll, 1}
-Def{peg_lc, 1}
-
-" the token here consumes nothing and its value is the position p. "
-"   peg_loc_at(p) is the Loc of the first token at or after p "
-Def{peg_token_here, Lambda{Tuple{p}, Do{Set{peg_pv, p}, p}}}
-Def{peg_loc_at, Lambda{Tuple{p0}, Do{
-    Def{p, Apply{peg_skip_ws, Tuple{p0}}},
-    Def{row, Apply{peg_row, Tuple{p}}},
-    Def{lslot, Apply{int_sub, Tuple{peg_memo_w, 2}}},
-    Def{cslot, Apply{int_sub, Tuple{peg_memo_w, 1}}},
-    If{Apply{equal, Tuple{Apply{array_get, Tuple{row, lslot}}, none}}, Do{
-        If{Apply{int_lt, Tuple{p, peg_lp}}, Do{
-            Def{i, peg_lp},
-            Def{l, peg_ll},
-            While{Apply{int_gt, Tuple{i, p}}, Do{
-                Set{i, Apply{int_sub, Tuple{i, 1}}},
-                If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{i}}, 10}},
-                    Set{l, Apply{int_sub, Tuple{l, 1}}}, none}}},
-            Def{j, p},
-            While{
-                If{Apply{int_gt, Tuple{j, 0}},
-                    Apply{not_equal,
-                        Tuple{Apply{peg_char_at,
-                                Tuple{Apply{int_sub, Tuple{j, 1}}}}, 10}},
-                    false},
-                Set{j, Apply{int_sub, Tuple{j, 1}}}},
-            Set{peg_ll, l},
-            Set{peg_lc,
-                If{Apply{int_gt, Tuple{j, 0}},
-                    Apply{int_add, Tuple{Apply{int_sub, Tuple{p, j}}, 1}},
-                    Apply{int_add,
-                        Tuple{Apply{arg, Tuple{peg_loc0, 2}}, p}}}},
-            Set{peg_lp, p}}, none},
-        While{Apply{int_lt, Tuple{peg_lp, p}}, Do{
-            If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{peg_lp}}, 10}},
-                Do{Set{peg_ll, Apply{int_add, Tuple{peg_ll, 1}}},
-                    Set{peg_lc, 1}},
-                Set{peg_lc, Apply{int_add, Tuple{peg_lc, 1}}}},
-            Set{peg_lp, Apply{int_add, Tuple{peg_lp, 1}}}}},
-        Apply{array_set, Tuple{row, lslot, peg_ll}},
-        Apply{array_set, Tuple{row, cslot, peg_lc}}}, none},
-    Apply{mexpr,
-        Tuple{Quote{Loc},
-            Tuple{Apply{arg, Tuple{peg_loc0, 0}},
-                Apply{array_get, Tuple{row, lslot}},
-                Apply{array_get, Tuple{row, cslot}}}}}}}}
-
-" peg_at(l, e) is e wrapped in At{loc, e} with the position of the token at l, "
-"   when the text is parsed with a position (peg_loc0 is not none) "
-Def{peg_at, Lambda{Tuple{l, e}, If{Apply{not_equal, Tuple{peg_loc0, none}},
-    Apply{mexpr, Tuple{Quote{At}, Tuple{Apply{peg_loc_at, Tuple{l}}, e}}}, e}}}
-
 " peg_count_loc(s, n, loc) is the position after the first n bytes of s, when "
 "   s starts at the position loc: Loc{file, line, column}. "
 Def{peg_count_loc, Lambda{Tuple{s, n, loc}, Do{
@@ -609,12 +550,7 @@ Def{peg_error_pos, Lambda{Tuple{}, Do{
 " the syntax error of the parse that stopped: SyntaxError{message, loc} or "
 "   SyntaxError{message, the text from the error to the end of the line, loc} "
 "   with the Loc{file, line, column} of the error. "
-" loc0 is the position of the start of peg_src; it is Loc{none, 1, 1} when "
-"   loc0 is none. "
-Def{peg_syntax_error, Lambda{Tuple{loc1}, Do{
-    Def{loc0,
-        If{Apply{equal, Tuple{loc1, none}},
-            Apply{mexpr, Tuple{Quote{Loc}, Tuple{none, 1, 1}}}, loc1}},
+Def{peg_syntax_error, Lambda{Tuple{}, Do{
     Def{e, If{Apply{int_ge, Tuple{peg_far, peg_srclen}},
         Apply{mexpr,
             Tuple{Quote{SyntaxError}, Tuple{"unexpected end of input"}}},
@@ -631,7 +567,8 @@ Def{peg_syntax_error, Lambda{Tuple{loc1}, Do{
     Apply{array_set,
         Tuple{a, n,
             Apply{peg_count_loc,
-                Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}},
+                Tuple{peg_src, Apply{peg_error_pos, Tuple{}},
+                    Apply{mexpr, Tuple{Quote{Loc}, Tuple{none, 1, 1}}}}}}},
     Apply{mexpr, Tuple{Apply{head, Tuple{e}}, a}}}}}
 
 " the position that SyntaxError e has as its last argument, or none "
@@ -663,9 +600,8 @@ Def{peg_error_text, Lambda{Tuple{e}, Do{
             Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 2}}, 10}},
             ": syntax error: ", m}}}}}}}
 
-" peg_parse_from(rule, s, pos, loc) parses s by the rule from the byte "
-"   position pos. loc is the position of the start of s (not of pos), or none "
-"   for no At. "
+" peg_parse_from(rule, s, pos) parses s by the rule from the byte "
+"   position pos. "
 " It returns Tuple{value, next}, Tuple{Eof{}, the length of s} or "
 "   Tuple{SyntaxError{message, loc}, the length of s} (see peg_syntax_error), "
 "   where next is the byte position after the blanks that follow the value. "
@@ -679,7 +615,7 @@ Def{peg_clear_rows, Lambda{Tuple{}, Do{
     Set{peg_row_lo, -1},
     Set{peg_row_hi, -1}}}}
 
-Def{peg_parse_from, Lambda{Tuple{r, s, pos, loc}, Do{
+Def{peg_parse_from, Lambda{Tuple{r, s, pos}, Do{
     If{
         If{Apply{equal, Tuple{peg_memo_src, none}}, true,
             Apply{not_equal, Tuple{peg_memo_src, s}}}, Do{
@@ -688,32 +624,18 @@ Def{peg_parse_from, Lambda{Tuple{r, s, pos, loc}, Do{
             Apply{array_new,
                 Tuple{Apply{peg_inc, Tuple{Apply{str_len, Tuple{s}}}}}}},
         Set{peg_row_lo, -1},
-        Set{peg_row_hi, -1},
-        Set{peg_lp, 0},
-        Set{peg_ll,
-            If{Apply{equal, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 1}}}},
-        Set{peg_lc,
-            If{Apply{equal, Tuple{loc, none}}, 1,
-                Apply{arg, Tuple{loc, 2}}}}},
+        Set{peg_row_hi, -1}},
         Apply{peg_clear_rows, Tuple{}}},
     Set{peg_src, s},
-    If{Apply{not_equal, Tuple{loc, peg_loc0}}, Do{
-        Set{peg_lp, 0},
-        Set{peg_ll,
-            If{Apply{equal, Tuple{loc, none}}, 1, Apply{arg, Tuple{loc, 1}}}},
-        Set{peg_lc,
-            If{Apply{equal, Tuple{loc, none}}, 1,
-                Apply{arg, Tuple{loc, 2}}}}}, none},
-    Set{peg_loc0, loc},
     Set{peg_srclen, Apply{str_len, Tuple{s}}},
     Set{peg_memo_w,
-        Apply{int_add, Tuple{Apply{int_mul, Tuple{peg_nrules, 3}}, 2}}},
+        Apply{int_mul, Tuple{peg_nrules, 3}}},
     Set{peg_far, 0},
     Def{p, Apply{peg_skip_ws, Tuple{pos}}},
     If{Apply{int_ge, Tuple{p, peg_srclen}}, Tuple{Eof{}, peg_srclen}, Do{
         Def{q, Apply{peg_call_rule, Tuple{r, p}}},
         If{Apply{int_lt, Tuple{q, 0}},
-            Tuple{Apply{peg_syntax_error, Tuple{loc}}, peg_srclen},
+            Tuple{Apply{peg_syntax_error, Tuple{}}, peg_srclen},
             Tuple{peg_pv, Apply{peg_skip_ws, Tuple{q}}}}}}}}}
 
 " peg_parse(rule, s) parses a prefix of s by the rule. It returns "
@@ -722,7 +644,7 @@ Def{peg_parse_from, Lambda{Tuple{r, s, pos, loc}, Do{
 "   Tuple{SyntaxError{message, loc}, \"\"} where loc is Loc{none, line, "
 "   column} in s (see peg_syntax_error). "
 Def{peg_parse, Lambda{Tuple{r, s}, Do{
-    Def{x, Apply{peg_parse_from, Tuple{r, s, 0, none}}},
+    Def{x, Apply{peg_parse_from, Tuple{r, s, 0}}},
     Tuple{Apply{arg, Tuple{x, 0}},
         Apply{str_sub,
             Tuple{s, Apply{arg, Tuple{x, 1}}, Apply{str_len, Tuple{s}}}}}}}}
