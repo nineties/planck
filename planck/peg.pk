@@ -30,32 +30,20 @@
 " Direct left recursion (sum ::= sum \"+\" term | term) is handled by growing "
 "   the seed. "
 
-Def{parser_is_digit, none}
-Def{parser_is_alpha, none}
-Def{parser_is_alnum, none}
-Def{parser_is_blank, none}
 Def{parser_charset, none}
-Def{parser_count_loc, none}
 Def{parser_error_text, none}
-Def{parser_error_text_from, none}
 Def{parser_parse, none}
 Def{parser_new, none}
 Def{parser_define_rule, none}
 Def{parser_call_rule, none}
-Def{parser_parse_from, none}
 Def{parser_char_at, none}
 Def{parser_fail, none}
 Def{parser_skip_ws, none}
-Def{parser_literal, none}
 Def{parser_text, none}
 Def{parser_has_rule, none}
 Def{parser_value, none}
 Def{parser_set_value, none}
 Def{parser_version, none}
-Def{parser_stack_mark, none}
-Def{parser_stack_push, none}
-Def{parser_stack_pop, none}
-Def{parser_stack_expr, none}
 " A parser is made by parser_new(). Its state is hidden in the closure "
 "   below, which defines the operations that read and change it. "
 Apply{Lambda{Tuple{}, Do{
@@ -204,10 +192,7 @@ Def{peg_error_text, Lambda{Tuple{e}, Do{
             Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 1}}, 10}}, ":",
             Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 2}}, 10}},
             ": syntax error: ", m}}}}}}},
-" peg_error_text_from(base, e) is the text of the syntax error e that ",
-"   parser_parse returned for text that starts at the position base: ",
-"   Loc{file, line, column}. ",
-Def{peg_error_text_from, Lambda{Tuple{base, e}, Do{
+Def{peg_error_rebase, Lambda{Tuple{base, e}, Do{
     Def{loc, Apply{peg_error_loc, Tuple{e}}},
     Def{l, Apply{arg, Tuple{loc, 1}}},
     Def{c, Apply{arg, Tuple{loc, 2}}},
@@ -230,13 +215,12 @@ Def{peg_error_text_from, Lambda{Tuple{base, e}, Do{
                                 Tuple{Apply{int_add,
                                     Tuple{Apply{arg, Tuple{base, 2}}, c}}, 1}},
                             c}}}}}},
-    Apply{peg_error_text, Tuple{Apply{mexpr, Tuple{Quote{SyntaxError}, a}}}}}}},
+    Apply{mexpr, Tuple{Quote{SyntaxError}, a}}}}},
 " === The state of a parser === ",
 " A parser is an array of its state: the rules and their ids, the number of ",
 "   the rules, the sources of the rules, the version (the number of the ",
 "   definitions), the text, its length, the farthest failure, the value, the ",
-"   memo and its width and text, the rows of the memo that a parse made, and ",
-"   the stack. ",
+"   memo and its width and text, the rows of the memo that a parse made. ",
 Def{peg_rules, Lambda{Tuple{ps}, Apply{array_get, Tuple{ps, 0}}}},
 Def{peg_set_rules, Lambda{Tuple{ps, v}, Apply{array_set, Tuple{ps, 0, v}}}},
 Def{peg_ids, Lambda{Tuple{ps}, Apply{array_get, Tuple{ps, 1}}}},
@@ -265,10 +249,8 @@ Def{peg_row_lo, Lambda{Tuple{ps}, Apply{array_get, Tuple{ps, 12}}}},
 Def{peg_set_row_lo, Lambda{Tuple{ps, v}, Apply{array_set, Tuple{ps, 12, v}}}},
 Def{peg_row_hi, Lambda{Tuple{ps}, Apply{array_get, Tuple{ps, 13}}}},
 Def{peg_set_row_hi, Lambda{Tuple{ps, v}, Apply{array_set, Tuple{ps, 13, v}}}},
-Def{peg_stack, Lambda{Tuple{ps}, Apply{array_get, Tuple{ps, 14}}}},
-Def{peg_set_stack, Lambda{Tuple{ps, v}, Apply{array_set, Tuple{ps, 14, v}}}},
 Def{peg_new_parser, Lambda{Tuple{}, Do{
-    Def{ps, Apply{array_new, Tuple{15}}},
+    Def{ps, Apply{array_new, Tuple{14}}},
     Apply{peg_set_rules, Tuple{ps, Apply{table_new, Tuple{}}}},
     Apply{peg_set_ids, Tuple{ps, Apply{table_new, Tuple{}}}},
     Apply{peg_set_nrules, Tuple{ps, 0}},
@@ -283,23 +265,15 @@ Def{peg_new_parser, Lambda{Tuple{}, Do{
     Apply{peg_set_memo_src, Tuple{ps, none}},
     Apply{peg_set_row_lo, Tuple{ps, -1}},
     Apply{peg_set_row_hi, Tuple{ps, -1}},
-    Apply{peg_set_stack, Tuple{ps, Apply{vector_new, Tuple{}}}},
     ps}}},
-" === The stack of values of a parser === ",
-Def{peg_stack_mark, Lambda{Tuple{ps}, Apply{vector_len, Tuple{Apply{peg_stack, Tuple{ps}}}}}},
-Def{peg_stack_push, Lambda{Tuple{ps, x}, Apply{vector_push, Tuple{Apply{peg_stack, Tuple{ps}}, x}}}},
-Def{peg_stack_pop, Lambda{Tuple{ps, start}, Apply{vector_truncate, Tuple{Apply{peg_stack, Tuple{ps}}, start}}}},
-Def{peg_stack_expr, Lambda{Tuple{ps, h, start}, Do{
-    Def{v, Apply{peg_stack, Tuple{ps}}},
+Def{peg_vector_expr, Lambda{Tuple{v}, Do{
     Def{n, Apply{vector_len, Tuple{v}}},
-    Def{a, Apply{array_new, Tuple{Apply{int_sub, Tuple{n, start}}}}},
-    Def{i, start},
+    Def{a, Apply{array_new, Tuple{n}}},
+    Def{i, 0},
     While{Apply{int_lt, Tuple{i, n}}, Do{
-        Apply{array_set,
-            Tuple{a, Apply{int_sub, Tuple{i, start}}, Apply{vector_get, Tuple{v, i}}}},
+        Apply{array_set, Tuple{a, i, Apply{vector_get, Tuple{v, i}}}},
         Set{i, Apply{int_add, Tuple{i, 1}}}}},
-    Apply{vector_truncate, Tuple{v, start}},
-    Apply{mexpr, Tuple{h, a}}}}},
+    Apply{mexpr, Tuple{Quote{Tuple}, a}}}}},
 " skip blanks, newlines and # comments ",
 Def{peg_fail, Lambda{Tuple{ps, p}, Do{
     If{Apply{int_gt, Tuple{p, Apply{peg_far, Tuple{ps}}}},
@@ -377,16 +351,14 @@ Def{peg_px, Lambda{Tuple{ps, e, p},
 Def{peg_px_seq, Lambda{Tuple{ps, e, p}, Do{
     Def{n, Apply{arity, Tuple{e}}},
     Def{i, 0},
-    Def{vs, Apply{peg_stack_mark, Tuple{ps}}},
+    Def{a, Apply{array_new, Tuple{n}}},
     While{If{Apply{int_lt, Tuple{i, n}}, Apply{int_ge, Tuple{p, 0}}, false}, Do{
         Set{p, Apply{peg_px, Tuple{ps, Apply{arg, Tuple{e, i}}, p}}},
         If{Apply{int_ge, Tuple{p, 0}},
-            Apply{peg_stack_push, Tuple{ps, Apply{peg_pv, Tuple{ps}}}}, none},
+            Apply{array_set, Tuple{a, i, Apply{peg_pv, Tuple{ps}}}}, none},
         Set{i, Apply{peg_inc, Tuple{i}}}}},
     If{Apply{int_ge, Tuple{p, 0}},
-        Apply{peg_set_pv,
-            Tuple{ps, Apply{peg_stack_expr, Tuple{ps, Quote{Tuple}, vs}}}},
-        Apply{peg_stack_pop, Tuple{ps, vs}}},
+        Apply{peg_set_pv, Tuple{ps, Apply{mexpr, Tuple{Quote{Tuple}, a}}}}, none},
     p}}},
 Def{peg_px_choice, Lambda{Tuple{ps, e, p}, Do{
     Def{n, Apply{arity, Tuple{e}}},
@@ -398,32 +370,30 @@ Def{peg_px_choice, Lambda{Tuple{ps, e, p}, Do{
     q}}},
 " the values of e repeated while it consumes input ",
 Def{peg_px_many, Lambda{Tuple{ps, e, p}, Do{
-    Def{vs, Apply{peg_stack_mark, Tuple{ps}}},
+    Def{vs, Apply{vector_new, Tuple{}}},
     Def{q, Apply{peg_px, Tuple{ps, e, p}}},
     While{Apply{int_gt, Tuple{q, p}}, Do{
-        Apply{peg_stack_push, Tuple{ps, Apply{peg_pv, Tuple{ps}}}},
+        Apply{vector_push, Tuple{vs, Apply{peg_pv, Tuple{ps}}}},
         Set{p, q},
         Set{q, Apply{peg_px, Tuple{ps, e, p}}}}},
-    Apply{peg_set_pv,
-        Tuple{ps, Apply{peg_stack_expr, Tuple{ps, Quote{Tuple}, vs}}}},
+    Apply{peg_set_pv, Tuple{ps, Apply{peg_vector_expr, Tuple{vs}}}},
     p}}},
 Def{peg_px_delimited, Lambda{Tuple{ps, e, sep, p}, Do{
     Def{q, Apply{peg_px, Tuple{ps, e, p}}},
-    Def{vs, Apply{peg_stack_mark, Tuple{ps}}},
+    Def{vs, Apply{vector_new, Tuple{}}},
     Def{r, 0},
     If{Apply{int_lt, Tuple{q, 0}}, Do{Apply{peg_set_pv, Tuple{ps, Tuple{}}}, p}, Do{
-        Apply{peg_stack_push, Tuple{ps, Apply{peg_pv, Tuple{ps}}}},
+        Apply{vector_push, Tuple{vs, Apply{peg_pv, Tuple{ps}}}},
         Set{r, Apply{peg_px, Tuple{ps, sep, q}}},
         If{Apply{int_ge, Tuple{r, 0}},
             Set{r, Apply{peg_px, Tuple{ps, e, r}}}, none},
         While{Apply{int_ge, Tuple{r, 0}}, Do{
-            Apply{peg_stack_push, Tuple{ps, Apply{peg_pv, Tuple{ps}}}},
+            Apply{vector_push, Tuple{vs, Apply{peg_pv, Tuple{ps}}}},
             Set{q, r},
             Set{r, Apply{peg_px, Tuple{ps, sep, q}}},
             If{Apply{int_ge, Tuple{r, 0}},
                 Set{r, Apply{peg_px, Tuple{ps, e, r}}}, none}}},
-        Apply{peg_set_pv,
-            Tuple{ps, Apply{peg_stack_expr, Tuple{ps, Quote{Tuple}, vs}}}},
+        Apply{peg_set_pv, Tuple{ps, Apply{peg_vector_expr, Tuple{vs}}}},
         q}}}}},
 Def{peg_px_key, Lambda{Tuple{ps, s, p}, Do{
     Def{q,
@@ -713,35 +683,25 @@ Def{peg_has_rule, Lambda{Tuple{ps, name},
 Set{parser_new, peg_new_parser},
 Set{parser_define_rule, _define_rule},
 Set{parser_call_rule, peg_call_rule},
-Set{parser_parse_from, peg_parse_from},
 Set{parser_char_at, peg_char_at},
 Set{parser_fail, peg_fail},
 Set{parser_skip_ws, peg_skip_ws},
-Set{parser_literal, peg_literal},
 Set{parser_text, peg_text},
 Set{parser_has_rule, peg_has_rule},
 Set{parser_value, peg_pv},
 Set{parser_set_value, peg_set_pv},
 Set{parser_version, peg_version},
-Set{parser_stack_mark, peg_stack_mark},
-Set{parser_stack_push, peg_stack_push},
-Set{parser_stack_pop, peg_stack_pop},
-Set{parser_stack_expr, peg_stack_expr},
-Set{parser_is_digit, peg_is_digit},
-Set{parser_is_alpha, peg_is_alpha},
-Set{parser_is_alnum, peg_is_alnum},
-Set{parser_is_blank, peg_is_blank},
 Set{parser_charset, peg_charset},
-Set{parser_count_loc, peg_count_loc},
-Set{parser_error_text, peg_error_text},
-Set{parser_error_text_from, peg_error_text_from},
+Set{parser_error_text, Lambda{Tuple{e, base},
+    If{Apply{equal, Tuple{base, none}}, Apply{peg_error_text, Tuple{e}},
+        Apply{peg_error_text, Tuple{Apply{peg_error_rebase, Tuple{base, e}}}}}}},
 " parser_parse(ps, rule, s) parses a prefix of s by the rule. It returns ",
 "   Tuple{value, rest} where rest is the text after the value, ",
 "   Tuple{Eof{}, \"\"} when s has only blanks, or ",
 "   Tuple{SyntaxError{message, loc}, \"\"} where loc is Loc{none, line, ",
 "   column} in s (see peg_syntax_error). ",
 Set{parser_parse, Lambda{Tuple{ps, r, s}, Do{
-    Def{x, Apply{parser_parse_from, Tuple{ps, r, s, 0}}},
+    Def{x, Apply{peg_parse_from, Tuple{ps, r, s, 0}}},
     Tuple{Apply{arg, Tuple{x, 0}},
         Apply{str_sub,
             Tuple{s, Apply{arg, Tuple{x, 1}}, Apply{str_len, Tuple{s}}}}}}}}}}, Tuple{}}
