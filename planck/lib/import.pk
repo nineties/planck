@@ -74,12 +74,12 @@ _import_module(file, m) := {
 " the definitions of the fields of the module that are not in hidden, which "
 "   import runs by eval "
 _import_defs(m @ Module, hidden) := {
-    ds := parser_stack_mark(syntax_parser)
+    ds := vector_new()
     for (Tuple{k, v} in arg(_record_data(m), 0)) {
         skip := false
         for (h in hidden) if (h == k) skip = true
-        if (not skip) parser_stack_push(syntax_parser, `Def{!k, Quote{!v}})
+        if (not skip) vector_push(ds, `Def{!k, Quote{!v}})
     }
-    parser_stack_push(syntax_parser, none)
-    parser_stack_expr(syntax_parser, 'Do, ds)
+    vector_push(ds, none)
+    peg_vector_expr('Do, ds)
 }

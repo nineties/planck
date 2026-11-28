@@ -1598,15 +1598,15 @@ check(parser_parse(syntax_parser, 'toplevel, "x := )"),
 check(tree("1 +"), 'SyntaxError{"unexpected end of input", Loc{none, 1, 4}})
 check(tree("\n  b := )\n"),
     'SyntaxError{"unexpected input", ")", Loc{none, 2, 8}})
-check(parser_error_text(tree("1 +")), "1:4: syntax error: unexpected end of input")
-check(parser_error_text('SyntaxError{"x"}), "syntax error: x")
-file_error(path, s0, n) := {
+check(parser_error_text(tree("1 +"), none), "1:4: syntax error: unexpected end of input")
+check(parser_error_text('SyntaxError{"x"}, none), "syntax error: x")
+file_error(base, s0, n) := {
     s := str_sub(s0, n, str_len(s0))
-    parser_error_text_from(parser_count_loc(s0, n, `Loc{!path, 1, 1}), tree(s))
+    parser_error_text(tree(s), base)
 }
-check(file_error("g.pk", "a := 1\nb := 2 )\nc := 3\n", 7),
+check(file_error('Loc{"g.pk", 2, 1}, "a := 1\nb := 2 )\nc := 3\n", 7),
     "g.pk:2:8: syntax error: unexpected input: \")\"")
-check(file_error("g.pk", "a := 1; b := )\n", 7),
+check(file_error('Loc{"g.pk", 1, 8}, "a := 1; b := )\n", 7),
     "g.pk:1:14: syntax error: unexpected input: \")\"")
 
 check(tree("f(1, a = 5)"), 'Apply{f, Tuple{1, _Kw{Quote{a}, 5}}})
