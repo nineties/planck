@@ -1694,12 +1694,7 @@ Apply{_define_rule, Tuple{Quote{block}, Quote{
 " The rest of the file is read by them. The M-expression reader remains as "
 "   parse_mexpr. "
 Def{parse_mexpr, parse}
-Set{parse_from,
-    Lambda{Tuple{s, pos},
-        Apply{peg_parse_from, Tuple{Quote{toplevel}, s, pos, none}}}}
 Set{parse, Lambda{Tuple{s}, Apply{peg_parse, Tuple{Quote{toplevel}, s}}}}
-Def{parse_at,
-    Lambda{Tuple{s, loc}, Apply{peg_parse_at, Tuple{Quote{toplevel}, s, loc}}}}
 
 " === The grammar of the grammar, declared with ::= === "
 " The rules above declare themselves again, in the form that they make. "

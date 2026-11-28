@@ -177,13 +177,11 @@ Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 " load(path) parses and evaluates the file by the current parse and eval. "
 " The top-level definitions of the file are made while path is the file being "
 "   loaded. "
+" load reads the file statement by statement: parse(s) of the rest s. "
 " A syntax error is printed as file:line:column: syntax error: message, once "
 "   planck/syntax.pk has replaced parse and planck/peg.pk has defined "
 "   peg_file_error_text. "
 Def{peg_file_error_text, none}
-" parse_from(s, pos) is the parse of the text s from the byte position pos: "
-"   Tuple{value, next position}. planck/syntax.pk defines it. "
-Def{parse_from, none}
 Def{_file_defs, none}
 Def{_rewrite_globals, none}
 Def{_rewrite_global, none}
@@ -215,24 +213,14 @@ Def{load, Apply{Lambda{Tuple{}, Do{
     Lambda{Tuple{path}, Do{
         Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
         Def{s0, s},
-        Def{pos, 0},
-        Def{next, 0},
         Def{prev, _file_defs},
         Set{_file_defs, Apply{table_new, Tuple{}}},
         Def{r, none},
         Def{e, none},
         Def{go, true},
         While{go, Do{
-            Def{by_pos, Apply{not_equal, Tuple{parse, _parse0}}},
-            Set{r,
-                If{by_pos, Apply{parse_from, Tuple{s0, pos}},
-                    Apply{parse, Tuple{s}}}},
+            Set{r, Apply{parse, Tuple{s}}},
             Set{e, Apply{arg, Tuple{r, 0}}},
-            Set{next,
-                If{by_pos, Apply{arg, Tuple{r, 1}},
-                    Apply{int_sub,
-                        Tuple{Apply{str_len, Tuple{s0}},
-                            Apply{str_len, Tuple{Apply{arg, Tuple{r, 1}}}}}}}},
             If{Apply{equal, Tuple{e, Eof{}}}, Set{go, false},
             If{
                 If{Apply{equal, Tuple{Apply{type, Tuple{e}}, Expr}},
@@ -243,7 +231,7 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                     Def{text,
                         If{Apply{not_equal, Tuple{parse, _parse0}},
                             Apply{peg_file_error_text,
-                                Tuple{path, s0, pos}}, none}},
+                                Tuple{path, s0, s, e}}, none}},
                     If{Apply{equal, Tuple{text, none}},
                         Do{
                             Apply{os_put, Tuple{path}},
@@ -253,10 +241,7 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                     Apply{os_exit, Tuple{1}}},
                 Do{
                     Apply{eval, Tuple{Apply{_rewrite_globals, Tuple{e}}}},
-                    Set{pos, next},
-                    Set{s,
-                        If{Apply{not_equal, Tuple{parse, _parse0}}, s0,
-                            Apply{arg, Tuple{r, 1}}}}}}}}},
+                    Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
         Set{_file_defs, prev},
         none}}}}, Tuple{}}}
 
