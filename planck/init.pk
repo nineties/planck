@@ -182,42 +182,11 @@ Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 "   planck/syntax.pk has replaced parse and planck/peg.pk has defined "
 "   peg_file_error_text. "
 Def{peg_file_error_text, none}
-Def{_export_defs, none}
-Defun{_export_defs, Lambda{Tuple{s, Def{n, v}},
-    Apply{scope_export, Tuple{s, n}}}}
-Defun{_export_defs, Lambda{Tuple{s, Defun{n, f}},
-    Apply{scope_export, Tuple{s, n}}}}
-Defun{_export_defs, Lambda{Tuple{s, Do{Rest{es}}},
-    Do{Def{n, Apply{arity, Tuple{es}}},
-        Def{i, 0},
-        While{Apply{int_lt, Tuple{i, n}}, Do{
-            Apply{_export_defs, Tuple{s, Apply{arg, Tuple{es, i}}}},
-            Set{i, Apply{int_add, Tuple{i, 1}}}}}}}}
-Defun{_export_defs, Lambda{Tuple{s, e}, none}}
-Def{_scope, none}
-Def{_eval0, eval}
-Def{_eval_here,
-    Lambda{Tuple{e},
-        If{Apply{equal, Tuple{_scope, none}},
-            Apply{_eval0, Tuple{e}},
-            Do{Def{r, Apply{scope_eval, Tuple{_scope, e}}},
-                Apply{_export_defs, Tuple{_scope, e}},
-                r}}}}
-Def{_eval_in_scope,
-    Lambda{Tuple{s, e},
-        Do{Def{prev, _scope},
-            Set{_scope, s},
-            Apply{scope_eval, Tuple{s,
-                QuasiQuote{Apply{eval, Tuple{Quote{UnQuote{e}}}}}}},
-            Set{_scope, prev},
-            Apply{_export_defs, Tuple{s, e}}}}}
-
 Def{load, Apply{Lambda{Tuple{}, Do{
     Def{_parse0, parse},
     Lambda{Tuple{path}, Do{
         Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
         Def{s0, s},
-        Def{scope, Apply{scope_new, Tuple{}}},
         Def{r, none},
         Def{e, none},
         Def{go, true},
@@ -243,7 +212,7 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                         Apply{print, Tuple{text}}},
                     Apply{os_exit, Tuple{1}}},
                 Do{
-                    Apply{_eval_in_scope, Tuple{scope, e}},
+                    Apply{eval, Tuple{e}},
                     Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
         none}}}}, Tuple{}}}
 
