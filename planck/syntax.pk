@@ -63,7 +63,7 @@ Def{peg_scan_ident, Lambda{Tuple{ps, p, suffix}, Do{
                                   Tuple{ps, Apply{peg_inc, Tuple{q}}}}, 61}},
                       false}},
                 Set{q, Apply{peg_inc, Tuple{q}}}, none}}, none},
-        Set{name, Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, p, q}}},
+        Set{name, Apply{peg_text, Tuple{ps, p, q}}},
         If{If{Apply{table_get, Tuple{peg_reserved, name, false}}, true,
               If{Apply{equal, Tuple{q, Apply{int_add, Tuple{p, 1}}}},
                  If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{ps, p}}, 102}},
@@ -138,7 +138,7 @@ Def{peg_token_int, Lambda{Tuple{ps, p}, Do{
         If{big,
             Apply{peg_set_pv, Tuple{ps, QuasiQuote{
                     Apply{str_to_int,
-                        Tuple{UnQuote{Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, p, q}}}}}}}},
+                        Tuple{UnQuote{Apply{peg_text, Tuple{ps, p, q}}}}}}}},
             Apply{peg_set_pv, Tuple{ps, If{Apply{equal, Tuple{sign, -1}}, v,
                     Apply{int_sub, Tuple{0, v}}}}}},
         q},
@@ -212,7 +212,7 @@ Apply{Lambda{Tuple{}, Do{
                     If{Apply{equal, Tuple{e, none}},
                         Do{Set{c, -1}, Set{q, Apply{peg_fail, Tuple{ps, q}}}}, Do{
                         Apply{peg_stack_push,
-                            Tuple{ps, Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, start, q}}}},
+                            Tuple{ps, Apply{peg_text, Tuple{ps, start, q}}}},
                         Apply{peg_stack_push, Tuple{ps, e}},
                         Set{q, Apply{int_add, Tuple{q, 2}}},
                         Set{start, q}}}},
@@ -222,7 +222,7 @@ Apply{Lambda{Tuple{}, Do{
             If{Apply{equal, Tuple{c, 34}},
                 Do{
                     Apply{peg_stack_push,
-                        Tuple{ps, Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, start, q}}}},
+                        Tuple{ps, Apply{peg_text, Tuple{ps, start, q}}}},
                     Apply{peg_set_pv, Tuple{ps, Apply{join, Tuple{ps, m}}}},
                     Apply{peg_inc, Tuple{q}}},
                 Do{Apply{peg_stack_pop, Tuple{ps, m}}, Apply{peg_fail, Tuple{ps, q}}}}}}}}},
@@ -236,7 +236,7 @@ Apply{Lambda{Tuple{}, Do{
         Def{e, none},
         Def{flush, Lambda{Tuple{x}, Do{
             Apply{peg_stack_push,
-                Tuple{ps, Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, start, q}}}},
+                Tuple{ps, Apply{peg_text, Tuple{ps, start, q}}}},
             Apply{peg_stack_push, Tuple{ps, x}},
             Set{q, Apply{int_add, Tuple{q, 2}}},
             Set{start, q},
@@ -277,7 +277,7 @@ Apply{Lambda{Tuple{}, Do{
         If{ok,
             Do{
                 Apply{peg_stack_push,
-                    Tuple{ps, Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, start, q}}}},
+                    Tuple{ps, Apply{peg_text, Tuple{ps, start, q}}}},
                 Apply{peg_set_pv, Tuple{ps, Apply{join, Tuple{ps, m}}}},
                 q},
             Do{Apply{peg_stack_pop, Tuple{ps, m}}, Apply{peg_fail, Tuple{ps, q}}}}}}},
@@ -293,7 +293,7 @@ Def{peg_token_keyword, Lambda{Tuple{ps, p}, Do{
             false}, Do{
         While{Apply{peg_is_alnum, Tuple{Apply{peg_char_at, Tuple{ps, q}}}},
             Set{q, Apply{peg_inc, Tuple{q}}}},
-        Apply{peg_set_pv, Tuple{ps, Key{Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, Apply{peg_inc, Tuple{p}}, q}}}}},
+        Apply{peg_set_pv, Tuple{ps, Key{Apply{peg_text, Tuple{ps, Apply{peg_inc, Tuple{p}}, q}}}}},
         q},
         Apply{peg_fail, Tuple{ps, p}}}}}}
 
@@ -333,7 +333,7 @@ Def{peg_token_class, Lambda{Tuple{ps, p}, Do{
                 Set{q, Apply{peg_inc, Tuple{q}}}, Do{
                 Set{q, Apply{peg_inc, Tuple{q}}},
                 Set{endp, q}}}}}}}},
-        Set{spec, Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, start, endp}}},
+        Set{spec, Apply{peg_text, Tuple{ps, start, endp}}},
         If{
             If{Apply{equal, Tuple{Apply{peg_char_at, Tuple{ps, q}}, 93}},
                 Apply{int_gt, Tuple{endp, start}}, false},
@@ -1494,10 +1494,9 @@ Def{peg_token_embed, Lambda{Tuple{ps, p}, Do{
                     Tuple{Apply{peg_char_at, Tuple{ps, Apply{peg_inc, Tuple{q}}}},
                         124}}, false}, Do{
             Set{r,
-                Apply{sym_intern, Tuple{Apply{str_sub, Tuple{Apply{peg_src, Tuple{ps}}, p, q}}}}},
+                Apply{sym_intern, Tuple{Apply{peg_text, Tuple{ps, p, q}}}}},
             If{
-                Apply{equal,
-                    Tuple{Apply{table_get, Tuple{Apply{peg_ids, Tuple{ps}}, r, none}}, none}},
+                Apply{_not, Tuple{Apply{peg_has_rule, Tuple{ps, r}}}},
                 Apply{peg_fail, Tuple{ps, p}}, Do{
                 Set{q,
                     Apply{peg_call_rule,
