@@ -1,1 +1,1 @@
-planck/tests/errors/export_in_function.pk: syntax error: SyntaxError{"unexpected input", "export g(y) := y"}
+planck/tests/errors/export_in_function.pk: syntax error: SyntaxError{"unexpected input", "export g(y) := y", Loc{none, 2, 5}}

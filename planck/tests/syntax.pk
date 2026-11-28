@@ -3,7 +3,7 @@
 import test (*)
 
 tree(s) := arg(peg_parse('toplevel, s), 0)
-tree_at(s, loc) := arg(parse_at(s, loc), 0)
+tree_at(s, loc) := arg(peg_parse_from('toplevel, s, 0, loc), 0)
 at(l, c, e) := mexpr('At, Tuple{Loc{"f.pk", l, c}, e})
 rest(s) := arg(peg_parse('toplevel, s), 1)
 
@@ -31,7 +31,7 @@ check(tree_at("`f(x, !g(y))", Loc{"f.pk", 1, 1}),
                                 Tuple{at(1, 8, 'Apply{g, Tuple{y}})})})})}))
 check(tree_at("(f(p)) -> p", Loc{"f.pk", 1, 1}),
     'Lambda{Tuple{Apply{Quote{f}, Tuple{p}}}, p})
-check(arg(parse_at("f(x)\ng(y)", Loc{"f.pk", 1, 1}), 1), "g(y)")
+check(arg(parse("f(x)\ng(y)"), 1), "g(y)")
 check(tree("g(1, f(2))"), 'Apply{g, Tuple{1, Apply{f, Tuple{2}}}})
 check(arg(parse("f(x)"), 0), 'Apply{f, Tuple{x}})
 
@@ -1170,11 +1170,11 @@ braces ::= "{" xs:num* "}" { xs }
 check(braces{| {1 2} |}, 'Tuple{1, 2})
 check(tree("F{x}"), 'F{x})
 check(tree("num {1}"), 'num)
-check(tree("num{| x |}"), 'SyntaxError{"unexpected input", "x |}"})
-check(tree("diff{| 10 - 3 2 |}"), 'SyntaxError{"unexpected input", "2 |}"})
-check(tree("diff{| 10 -\n 3 4 |}"), 'SyntaxError{"unexpected input", "4 |}"})
-check(tree("num{| 1"), 'SyntaxError{"unexpected end of input"})
-check(tree("num{| 1 |"), 'SyntaxError{"unexpected input", "|"})
+check(tree("num{| x |}"), 'SyntaxError{"unexpected input", "x |}", Loc{none, 1, 7}})
+check(tree("diff{| 10 - 3 2 |}"), 'SyntaxError{"unexpected input", "2 |}", Loc{none, 1, 15}})
+check(tree("diff{| 10 -\n 3 4 |}"), 'SyntaxError{"unexpected input", "4 |}", Loc{none, 2, 4}})
+check(tree("num{| 1"), 'SyntaxError{"unexpected end of input", Loc{none, 1, 8}})
+check(tree("num{| 1 |"), 'SyntaxError{"unexpected input", "|", Loc{none, 1, 9}})
 check(head(tree("nosuch{| 1 |}")), 'SyntaxError)
 
 check(expr{| f(`!a) |}, 'Apply{f, Tuple{QuasiQuote{UnQuote{a}}}})
@@ -1615,8 +1615,10 @@ blk := {
 check(blk, Tuple{"n", "p"})
 
 check(peg_parse('toplevel, "x := )"),
-    Tuple{'SyntaxError{"unexpected input", ")"}, ""})
-check(tree("1 +"), 'SyntaxError{"unexpected end of input"})
+    Tuple{'SyntaxError{"unexpected input", ")", Loc{none, 1, 6}}, ""})
+check(tree("1 +"), 'SyntaxError{"unexpected end of input", Loc{none, 1, 4}})
+check(tree("\n  b := )\n"),
+    'SyntaxError{"unexpected input", ")", Loc{none, 2, 8}})
 check(tree_at("x := )", Loc{"f.pk", 1, 1}),
     'SyntaxError{"unexpected input", ")", Loc{"f.pk", 1, 6}})
 check(tree_at("\n  b := )\n", Loc{"f.pk", 3, 4}),
@@ -1629,9 +1631,16 @@ check(peg_error_text(tree_at("x := )", Loc{"f.pk", 1, 1})),
     "f.pk:1:6: syntax error: unexpected input: \")\"")
 check(peg_error_text(tree_at("1 +", Loc{"<repl>", 1, 1})),
     "<repl>:1:4: syntax error: unexpected end of input")
-check(peg_error_text(tree("1 +")), "syntax error: unexpected end of input")
-check(peg_file_error_text("g.pk", "a := 1\nb := 2 )\nc := 3\n", 7),
+check(peg_error_text(tree("1 +")), "1:4: syntax error: unexpected end of input")
+check(peg_error_text('SyntaxError{"x"}), "syntax error: x")
+file_error(path, s0, n) := {
+    s := str_sub(s0, n, str_len(s0))
+    peg_file_error_text(path, s0, s, tree(s))
+}
+check(file_error("g.pk", "a := 1\nb := 2 )\nc := 3\n", 7),
     "g.pk:2:8: syntax error: unexpected input: \")\"")
+check(file_error("g.pk", "a := 1; b := )\n", 7),
+    "g.pk:1:14: syntax error: unexpected input: \")\"")
 
 check(tree("f(1, a = 5)"), 'Apply{f, Tuple{1, _Kw{Quote{a}, 5}}})
 check(tree("f(a = 1, b = 2)"),

@@ -606,13 +606,15 @@ Def{peg_error_pos, Lambda{Tuple{}, Do{
             Apply{peg_skip_ws, Tuple{peg_far}}}},
     If{Apply{int_gt, Tuple{p, peg_srclen}}, peg_srclen, p}}}}
 
-" the syntax error of the parse that stopped: SyntaxError{message} or "
-"   SyntaxError{message, the text from the error to the end of the line}. "
-" When the text has a position (loc0 is the position of the start of peg_src), "
-"   the position of the error is the last argument: "
-" SyntaxError{message, loc} or SyntaxError{message, text, loc} with the "
-"   Loc{file, line, column} of the error. "
-Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
+" the syntax error of the parse that stopped: SyntaxError{message, loc} or "
+"   SyntaxError{message, the text from the error to the end of the line, loc} "
+"   with the Loc{file, line, column} of the error. "
+" loc0 is the position of the start of peg_src; it is Loc{none, 1, 1} when "
+"   loc0 is none. "
+Def{peg_syntax_error, Lambda{Tuple{loc1}, Do{
+    Def{loc0,
+        If{Apply{equal, Tuple{loc1, none}},
+            Apply{mexpr, Tuple{Quote{Loc}, Tuple{none, 1, 1}}}, loc1}},
     Def{e, If{Apply{int_ge, Tuple{peg_far, peg_srclen}},
         Apply{mexpr,
             Tuple{Quote{SyntaxError}, Tuple{"unexpected end of input"}}},
@@ -620,18 +622,17 @@ Def{peg_syntax_error, Lambda{Tuple{loc0}, Do{
             Tuple{Quote{SyntaxError},
                 Tuple{"unexpected input",
                     Apply{peg_line_at, Tuple{peg_far}}}}}}},
-    If{Apply{equal, Tuple{loc0, none}}, e,
-        Do{Def{n, Apply{arity, Tuple{e}}},
-            Def{a, Apply{array_new, Tuple{Apply{int_add, Tuple{n, 1}}}}},
-            Def{i, 0},
-            While{Apply{int_lt, Tuple{i, n}}, Do{
-                Apply{array_set, Tuple{a, i, Apply{arg, Tuple{e, i}}}},
-                Set{i, Apply{int_add, Tuple{i, 1}}}}},
-            Apply{array_set,
-                Tuple{a, n,
-                    Apply{peg_count_loc,
-                        Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}},
-            Apply{mexpr, Tuple{Apply{head, Tuple{e}}, a}}}}}}}
+    Def{n, Apply{arity, Tuple{e}}},
+    Def{a, Apply{array_new, Tuple{Apply{int_add, Tuple{n, 1}}}}},
+    Def{i, 0},
+    While{Apply{int_lt, Tuple{i, n}}, Do{
+        Apply{array_set, Tuple{a, i, Apply{arg, Tuple{e, i}}}},
+        Set{i, Apply{int_add, Tuple{i, 1}}}}},
+    Apply{array_set,
+        Tuple{a, n,
+            Apply{peg_count_loc,
+                Tuple{peg_src, Apply{peg_error_pos, Tuple{}}, loc0}}}},
+    Apply{mexpr, Tuple{Apply{head, Tuple{e}}, a}}}}}
 
 " the position that SyntaxError e has as its last argument, or none "
 Def{peg_error_loc, Lambda{Tuple{e}, Do{
@@ -641,7 +642,8 @@ Def{peg_error_loc, Lambda{Tuple{e}, Do{
 
 " peg_error_text(e) is the text of the syntax error e: file:line:column: "
 "   syntax error: message, and the text after the error in quotes. "
-" Without a position it is syntax error: message. "
+" When the file of the position is none it is line:column: syntax error: "
+"   message. Without a position it is syntax error: message. "
 Def{peg_error_text, Lambda{Tuple{e}, Do{
     Def{loc, Apply{peg_error_loc, Tuple{e}}},
     Def{n,
@@ -655,19 +657,18 @@ Def{peg_error_text, Lambda{Tuple{e}, Do{
     If{Apply{equal, Tuple{loc, none}},
         Apply{str_cat, Tuple{"syntax error: ", m}},
         Apply{str_join, Tuple{Tuple{
-            Apply{arg, Tuple{loc, 0}}, ":",
+            If{Apply{equal, Tuple{Apply{arg, Tuple{loc, 0}}, none}}, "",
+                Apply{str_cat, Tuple{Apply{arg, Tuple{loc, 0}}, ":"}}},
             Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 1}}, 10}}, ":",
             Apply{int_to_str, Tuple{Apply{arg, Tuple{loc, 2}}, 10}},
             ": syntax error: ", m}}}}}}}
 
 " peg_parse_from(rule, s, pos, loc) parses s by the rule from the byte "
 "   position pos. loc is the position of the start of s (not of pos), or none "
-"   for no positions: then there is no At. "
+"   for no At. "
 " It returns Tuple{value, next}, Tuple{Eof{}, the length of s} or "
 "   Tuple{SyntaxError{message, loc}, the length of s} (see peg_syntax_error), "
 "   where next is the byte position after the blanks that follow the value. "
-" While s is the same text, the memo and the line count are kept, so reading a "
-"   file statement by statement does not copy the rest of the text. "
 Def{peg_clear_rows, Lambda{Tuple{}, Do{
     Def{i, peg_row_lo},
     While{
@@ -715,28 +716,51 @@ Def{peg_parse_from, Lambda{Tuple{r, s, pos, loc}, Do{
             Tuple{Apply{peg_syntax_error, Tuple{loc}}, peg_srclen},
             Tuple{peg_pv, Apply{peg_skip_ws, Tuple{q}}}}}}}}}
 
-" peg_parse_at(rule, s, loc) parses a prefix of s by the rule. It returns "
-"   Tuple{value, rest} where rest is the text after the value. "
-Def{peg_parse_at, Lambda{Tuple{r, s, loc}, Do{
-    Def{x, Apply{peg_parse_from, Tuple{r, s, 0, loc}}},
+" peg_parse(rule, s) parses a prefix of s by the rule. It returns "
+"   Tuple{value, rest} where rest is the text after the value, "
+"   Tuple{Eof{}, \"\"} when s has only blanks, or "
+"   Tuple{SyntaxError{message, loc}, \"\"} where loc is Loc{none, line, "
+"   column} in s (see peg_syntax_error). "
+Def{peg_parse, Lambda{Tuple{r, s}, Do{
+    Def{x, Apply{peg_parse_from, Tuple{r, s, 0, none}}},
     Tuple{Apply{arg, Tuple{x, 0}},
         Apply{str_sub,
             Tuple{s, Apply{arg, Tuple{x, 1}}, Apply{str_len, Tuple{s}}}}}}}}
 
-" peg_parse(rule, s) is peg_parse_at(rule, s, none) "
-Def{peg_parse, Lambda{Tuple{r, s}, Apply{peg_parse_at, Tuple{r, s, none}}}}
-
-" peg_file_error_text(path, s0, pos) is the text of the syntax error that "
-"   parse_from(s0, pos) returned, or none when there is none. "
-" pos is the byte position in the text s0 of the file path where the parse "
-"   started. "
-Set{peg_file_error_text, Lambda{Tuple{path, s0, pos}, Do{
-    Def{e,
-        Apply{arg,
-            Tuple{
-                Apply{peg_parse_from,
-                    Tuple{Quote{toplevel}, s0, pos,
-                        Apply{mexpr,
-                            Tuple{Quote{Loc}, Tuple{path, 1, 1}}}}}, 0}}},
-    If{Apply{peg_is_head, Tuple{e, Quote{SyntaxError}}},
-        Apply{peg_error_text, Tuple{e}}, none}}}}
+" peg_file_error_text(path, s0, s, e) is the text of the syntax error e that "
+"   parse(s) returned, or none when e is not one. "
+" s is the rest of the text s0 of the file path, where the parse started: the "
+"   position of e is counted from the position of s in s0. "
+Set{peg_file_error_text, Lambda{Tuple{path, s0, s, e}, Do{
+    If{Apply{peg_is_head, Tuple{e, Quote{SyntaxError}}}, Do{
+        Def{loc0,
+            Apply{peg_count_loc,
+                Tuple{s0, Apply{int_sub,
+                    Tuple{Apply{str_len, Tuple{s0}},
+                        Apply{str_len, Tuple{s}}}},
+                    Apply{mexpr, Tuple{Quote{Loc}, Tuple{path, 1, 1}}}}}},
+        Def{loc, Apply{peg_error_loc, Tuple{e}}},
+        Def{l, Apply{arg, Tuple{loc, 1}}},
+        Def{c, Apply{arg, Tuple{loc, 2}}},
+        Def{n, Apply{arity, Tuple{e}}},
+        Def{a, Apply{array_new, Tuple{n}}},
+        Def{i, 0},
+        While{Apply{int_lt, Tuple{i, Apply{int_sub, Tuple{n, 1}}}}, Do{
+            Apply{array_set, Tuple{a, i, Apply{arg, Tuple{e, i}}}},
+            Set{i, Apply{int_add, Tuple{i, 1}}}}},
+        Apply{array_set,
+            Tuple{a, Apply{int_sub, Tuple{n, 1}},
+                Apply{mexpr,
+                    Tuple{Quote{Loc},
+                        Tuple{path,
+                            Apply{int_sub,
+                                Tuple{Apply{int_add,
+                                    Tuple{Apply{arg, Tuple{loc0, 1}}, l}}, 1}},
+                            If{Apply{equal, Tuple{l, 1}},
+                                Apply{int_sub,
+                                    Tuple{Apply{int_add,
+                                        Tuple{Apply{arg, Tuple{loc0, 2}}, c}},
+                                        1}},
+                                c}}}}}},
+        Apply{peg_error_text, Tuple{Apply{mexpr, Tuple{Quote{SyntaxError}, a}}}}},
+        none}}}}
