@@ -36,7 +36,7 @@ result(name, ref, commit, planck0, date, rounds, t, heap, gcs) := {
     table.set(rows, key, (t, heap, gcs))
 }
 
-load(in_path)
+load(in_path, env_global())
 
 pad3(n) := if (n < 10) f"00{n}" else if (n < 100) f"0{n}" else f"{n}"
 milli(x) := f"{x // 1000}.{pad3(x % 1000)}"

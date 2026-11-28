@@ -37,7 +37,7 @@ bench_run(name) := {
     a0 := gc_allocated_bytes()
     g0 := gc_count()
     t0 := os_time_ns()
-    load(f"{bench_dir}/cases/{name}.pk")
+    load(f"{bench_dir}/cases/{name}.pk", env_global())
     t1 := os_time_ns()
     a1 := gc_allocated_bytes()
     g1 := gc_count()

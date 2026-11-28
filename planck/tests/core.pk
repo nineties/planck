@@ -7,7 +7,7 @@ Def{passed, 0}
 Def{failed, 0}
 
 Def{check, Lambda{Tuple{e, expected}, Do{
-    Def{actual, Apply{eval, Tuple{e}}},
+    Def{actual, Apply{eval, Tuple{e, Apply{env_global, Tuple{}}}}},
     If{Apply{equal, Tuple{actual, expected}},
         Set{passed, Apply{int_add, Tuple{passed, 1}}},
         Do{
@@ -230,7 +230,7 @@ Apply{check,
 
 " === eval and parse === "
 Apply{check,
-    Tuple{Quote{Apply{eval, Tuple{Quote{Apply{int_mul, Tuple{6, 7}}}}}}, 42}}
+    Tuple{Quote{Apply{eval, Tuple{Quote{Apply{int_mul, Tuple{6, 7}}}, Apply{env_global, Tuple{}}}}}, 42}}
 Apply{check,
     Tuple{Quote{Apply{parse, Tuple{"F{1, x}  rest"}}},
         Tuple{Quote{F{1, x}}, "rest"}}}
@@ -242,7 +242,8 @@ Apply{check,
                     Apply{arg,
                         Tuple{
                             Apply{parse, Tuple{"Apply{int_add, Tuple{1, 2}}"}},
-                            0}}}}}, 3}}
+                            0}},
+                    Apply{env_global, Tuple{}}}}}, 3}}
 " parse reports the end of the input with Eof{}, after skipping white space "
 Apply{check,
     Tuple{Quote{Apply{parse, Tuple{" \n\t "}}}, Tuple{Quote{Eof{}}, ""}}}
@@ -323,7 +324,7 @@ Apply{check, Tuple{Quote{Apply{saved_k, Tuple{9}}}, 10}}
 " === Replacing parse and eval === "
 
 " The top-level loop looks up parse and eval by name on every expression. "
-" parse: string -> Tuple{m-expr, rest}, eval: m-expr -> value. "
+" parse: string -> Tuple{m-expr, rest}, eval: (m-expr, env) -> value. "
 
 Def{old_parse, parse}
 Def{expand, none}
@@ -355,9 +356,9 @@ Def{parse, old_parse}
 Def{old_eval, eval}
 Def{evals, 0}
 Def{eval,
-    Lambda{Tuple{e},
+    Lambda{Tuple{e, env},
         Do{Set{evals, Apply{int_add, Tuple{evals, 1}}},
-            Apply{old_eval, Tuple{e}}}}}
+            Apply{old_eval, Tuple{e, env}}}}}
 Def{evals_0, evals}
 Def{evals_1, evals}
 Def{evals_2, evals}

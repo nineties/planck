@@ -67,7 +67,7 @@ check(expand_macro('Defun{Twice, 1}, 0), 'Defun{Twice, 1})
 macro Twice{x} := `(!x + !x + !x)
 check(Twice{10}, 30)
 
-check(eval('Twice{4}), 12)
+check(eval('Twice{4}, env_global()), 12)
 
 scoped() := {
     macro Local{x} := `Done{!x}

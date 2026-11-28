@@ -80,7 +80,7 @@ check(if (true) {
 check(dh_out(0), "outer")
 dl_f(x) := "program"
 dl_old := dl_f
-load("planck/tests/define_load.pk")
+load("planck/tests/define_load.pk", env_global())
 check(Tuple{dl_f(0), dl_f(1), dl_old(0)},
     Tuple{"loaded zero", "loaded", "program"})
 dl_f(2) := "again"

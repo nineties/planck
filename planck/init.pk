@@ -174,7 +174,7 @@ Defun{unwrap,
 Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 
 " === Loading files === "
-" load(path) parses and evaluates the file by the current parse and eval. "
+" load(path, env) parses and evaluates the file in env by the current parse and eval. "
 " The top-level definitions of the file are made while path is the file being "
 "   loaded. "
 " load reads the file statement by statement: parse(s) of the rest s. "
@@ -182,7 +182,7 @@ Defun{unwrap, Lambda{Tuple{r}, Apply{arg, Tuple{r, 0}}}}
 "   parse of planck/syntax.pk performs Origin{}, which load answers with the "
 "   position of the rest being read, and SyntaxFault{text}. "
 Def{load, Apply{Lambda{Tuple{}, Do{
-    Lambda{Tuple{path}, Do{
+    Lambda{Tuple{path, env}, Do{
         Def{s, Apply{unwrap, Tuple{Apply{os_read_file, Tuple{path}}}}},
         Def{s0, s},
         Def{origin, Lambda{Tuple{}, Do{
@@ -224,7 +224,7 @@ Def{load, Apply{Lambda{Tuple{}, Do{
                     Apply{print, Tuple{e}},
                     Apply{os_exit, Tuple{1}}},
                 Do{
-                    Apply{eval, Tuple{e}},
+                    Apply{eval, Tuple{e, env}},
                     Set{s, Apply{arg, Tuple{r, 1}}}}}}}},
         none}}}}, Tuple{}}}
 
@@ -263,12 +263,12 @@ Def{vector_push, Lambda{Tuple{v, x}, Do{
 " === Syntax === "
 " planck/syntax.pk replaces parse. The files after it are read by the new "
 "   syntax. "
-Apply{load, Tuple{"planck/peg.pk"}}
-Apply{load, Tuple{"planck/syntax.pk"}}
+Apply{load, Tuple{"planck/peg.pk", Apply{env_global, Tuple{}}}}
+Apply{load, Tuple{"planck/syntax.pk", Apply{env_global, Tuple{}}}}
 
 " planck/lib/import.pk defines import_lib(name), which loads "
 "   planck/lib/<name>.pk once. It is written in the syntax above. "
-load("planck/lib/import.pk")
+load("planck/lib/import.pk", env_global())
 
 " planck/lib/pretty.pk defines show, repr and the print that takes pretty and "
 "   end. It is loaded here, so that every program has them. "
